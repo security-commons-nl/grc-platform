@@ -624,7 +624,7 @@ class TenantRelationship(SQLModel, table=True):
     end_date: Optional[datetime] = None
 
     # What is shared by default
-    share_measures: bool = True  # Auto-share measures
+    share_controls: bool = True  # Auto-share controls
     share_scopes: bool = True  # Auto-share scopes (e.g., infrastructure)
     share_assessments: bool = False  # Share assessment results
 
@@ -641,23 +641,23 @@ class TenantRelationship(SQLModel, table=True):
     )
 
 
-class SharedMeasure(SQLModel, table=True):
+class SharedControl(SQLModel, table=True):
     """
-    Shares a measure from one tenant (provider) to others (consumers).
+    Shares a control from one tenant (provider) to others (consumers).
     Enables central controls to be visible in consuming tenants' compliance.
     """
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    # The original measure (owned by provider tenant)
-    measure_id: int = Field(foreign_key="measure.id")
+    # The original control (owned by provider tenant)
+    control_id: int = Field(foreign_key="control.id")
 
-    # The tenant receiving/using this shared measure
+    # The tenant receiving/using this shared control
     consumer_tenant_id: int = Field(foreign_key="tenant.id")
 
     # Optional: specific tenant relationship this falls under
     relationship_id: Optional[int] = Field(default=None, foreign_key="tenantrelationship.id")
 
-    # How this measure applies to the consumer
+    # How this control applies to the consumer
     applicability_notes: Optional[str] = None  # "Applies to all VDI users"
 
     # Consumer can add local context
@@ -707,8 +707,8 @@ class SharedScope(SQLModel, table=True):
     # Can consumer's risks link to this scope?
     allow_risk_linking: bool = True
 
-    # Can consumer create local measures for this scope?
-    allow_local_measures: bool = True
+    # Can consumer create local controls for this scope?
+    allow_local_controls: bool = True
 
     # Status
     is_active: bool = True
@@ -740,7 +740,7 @@ class VirtualScopeMember(SQLModel, table=True):
 
 class AccessRequest(SQLModel, table=True):
     """
-    Request for temporary access to view details of shared measures/scopes.
+    Request for temporary access to view details of shared controls/scopes.
     Default is summary-only; details require explicit permission.
     """
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -907,12 +907,15 @@ class RiskTemplate(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-class MeasureTemplate(SQLModel, table=True):
+class Measure(SQLModel, table=True):
     """
-    Catalog/template of common measures.
-    Global (tenant_id=NULL) or tenant-specific additions.
+    Catalog of reusable, generic measures (maatregelen).
+    These are normative building blocks from standards/best practices.
+    Context-independent and policy-oriented.
 
-    Note: These are CONCRETE measures, not the abstract requirements from Standards.
+    Example: "Toegang tot informatie wordt beperkt tot geautoriseerde personen."
+
+    Note: Measures are implemented via Controls (context-specific implementations).
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: Optional[int] = Field(default=None, foreign_key="tenant.id")
@@ -921,7 +924,7 @@ class MeasureTemplate(SQLModel, table=True):
     name: str  # "Multi-Factor Authenticatie implementeren"
     description: str
 
-    # Control classification
+    # Classification
     control_type: Optional[str] = None  # "Preventive", "Detective", "Corrective"
     automation_level: Optional[str] = None  # "Manual", "Semi-automated", "Automated"
 
@@ -947,6 +950,9 @@ class MeasureTemplate(SQLModel, table=True):
 
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    control_links: List["ControlMeasureLink"] = Relationship(back_populates="measure")
 
 
 # =============================================================================
@@ -1028,7 +1034,7 @@ class GapAnalysis(SQLModel, table=True):
     # Compliance impact
     current_compliance_pct: Optional[float] = None  # Before migration
     projected_compliance_pct: Optional[float] = None  # After migration (based on mappings)
-    gap_count: int = 0  # Requirements needing new measures
+    gap_count: int = 0  # Requirements needing new controls
 
     # AI analysis
     ai_analysis_summary: Optional[str] = None
@@ -1062,8 +1068,8 @@ class GapAnalysisItem(SQLModel, table=True):
     mapping_confidence: Optional[float] = None  # 0.0 to 1.0
 
     # Current state
-    is_covered: bool = False  # Do existing measures cover this?
-    existing_measure_id: Optional[int] = Field(default=None, foreign_key="measure.id")
+    is_covered: bool = False  # Do existing controls cover this?
+    existing_control_id: Optional[int] = Field(default=None, foreign_key="control.id")
 
     # Gap assessment
     has_gap: bool = True
@@ -1072,7 +1078,7 @@ class GapAnalysisItem(SQLModel, table=True):
 
     # Resolution
     resolution_status: ImplementationStatus = ImplementationStatus.NOT_STARTED
-    planned_measure_id: Optional[int] = Field(default=None, foreign_key="measuretemplate.id")
+    planned_measure_id: Optional[int] = Field(default=None, foreign_key="measure.id")  # From measure catalog
     notes: Optional[str] = None
 
     # AI recommendations
@@ -1119,26 +1125,26 @@ class ScopeDependency(SQLModel, table=True):
     dependency_type: Optional[str] = None  # "data_flow", "service", "infrastructure"
     criticality: ClassificationLevel = ClassificationLevel.INTERNAL
 
-class MeasureRiskLink(SQLModel, table=True):
-    """Many-to-Many link between Measure and Risk"""
+class ControlRiskLink(SQLModel, table=True):
+    """Many-to-Many link between Control and Risk"""
     risk_id: Optional[int] = Field(default=None, foreign_key="risk.id", primary_key=True)
-    measure_id: Optional[int] = Field(default=None, foreign_key="measure.id", primary_key=True)
+    control_id: Optional[int] = Field(default=None, foreign_key="control.id", primary_key=True)
     mitigation_percent: int = 100
 
-    risk: "Risk" = Relationship(back_populates="measure_links")
-    measure: "Measure" = Relationship(back_populates="risk_links")
+    risk: "Risk" = Relationship(back_populates="control_links")
+    control: "Control" = Relationship(back_populates="risk_links")
 
 
-class MeasureRequirementLink(SQLModel, table=True):
+class ControlRequirementLink(SQLModel, table=True):
     """
-    Many-to-Many link between Measure and Requirement.
-    One measure can cover multiple requirements (partially or fully).
+    Many-to-Many link between Control and Requirement.
+    One control can cover multiple requirements (partially or fully).
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    measure_id: int = Field(foreign_key="measure.id")
+    control_id: int = Field(foreign_key="control.id")
     requirement_id: int = Field(foreign_key="requirement.id")
 
-    # How much does this measure cover the requirement?
+    # How much does this control cover the requirement?
     coverage_percentage: int = 100  # 0-100%
 
     # Coverage details
@@ -1156,6 +1162,27 @@ class MeasureRequirementLink(SQLModel, table=True):
     verified_at: Optional[datetime] = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ControlMeasureLink(SQLModel, table=True):
+    """
+    Many-to-Many link between Control (implementation) and Measure (catalog).
+    A Control can implement multiple Measures, and a Measure can be
+    implemented by multiple Controls in different contexts.
+    """
+    control_id: Optional[int] = Field(default=None, foreign_key="control.id", primary_key=True)
+    measure_id: Optional[int] = Field(default=None, foreign_key="measure.id", primary_key=True)
+
+    # How much of the measure does this control implement?
+    coverage_percentage: int = 100  # 0-100%
+
+    # Notes about implementation specifics
+    notes: Optional[str] = None
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    control: "Control" = Relationship(back_populates="measure_links")
+    measure: "Measure" = Relationship(back_populates="control_links")
 
 
 class RiskThreatLink(SQLModel, table=True):
@@ -1221,7 +1248,7 @@ class Requirement(SQLModel, table=True):
     category: Optional[str] = None  # e.g., "Access Control", "Cryptography"
 
     standard: Optional[Standard] = Relationship(back_populates="requirements")
-    measures: List["Measure"] = Relationship(back_populates="requirement")
+    controls: List["Control"] = Relationship(back_populates="requirement")
     applicability_statements: List["ApplicabilityStatement"] = Relationship(back_populates="requirement")
     questions: List["AssessmentQuestion"] = Relationship(back_populates="requirement")
 
@@ -1342,10 +1369,10 @@ class Scope(SQLModel, table=True):
 
 class CoverageType(str, Enum):
     """How a requirement is covered in the SoA"""
-    LOCAL = "Local"  # Covered by own measure
-    SHARED = "Shared"  # Covered by shared/central measure
-    COMBINED = "Combined"  # Both local and shared measures
-    NOT_COVERED = "Not Covered"  # Applicable but no measure yet
+    LOCAL = "Local"  # Covered by own control
+    SHARED = "Shared"  # Covered by shared/central control
+    COMBINED = "Combined"  # Both local and shared controls
+    NOT_COVERED = "Not Covered"  # Applicable but no control yet
     NOT_APPLICABLE = "Not Applicable"  # Requirement doesn't apply
 
 
@@ -1354,7 +1381,7 @@ class ApplicabilityStatement(SQLModel, table=True):
     Statement of Applicability (SoA) - declares which requirements
     are applicable to which scope and why.
 
-    Supports both local and shared (central) measures.
+    Supports both local and shared (central) controls.
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: int = Field(foreign_key="tenant.id", index=True)
@@ -1368,18 +1395,18 @@ class ApplicabilityStatement(SQLModel, table=True):
     # --- Coverage Source ---
     coverage_type: CoverageType = CoverageType.NOT_COVERED
 
-    # Local measure (owned by this tenant)
-    local_measure_id: Optional[int] = Field(default=None, foreign_key="measure.id")
+    # Local control (owned by this tenant)
+    local_control_id: Optional[int] = Field(default=None, foreign_key="control.id")
 
-    # Shared measure (from service provider)
-    shared_measure_id: Optional[int] = Field(default=None, foreign_key="sharedmeasure.id")
+    # Shared control (from service provider)
+    shared_control_id: Optional[int] = Field(default=None, foreign_key="sharedcontrol.id")
 
     # If shared: which tenant provides this coverage?
     provider_tenant_id: Optional[int] = Field(default=None, foreign_key="tenant.id")
 
-    # --- Local Assessment of Shared Measure ---
-    # Consumer can assess if the shared measure adequately covers their needs
-    shared_measure_adequate: Optional[bool] = None  # Does the shared measure fully cover this?
+    # --- Local Assessment of Shared Control ---
+    # Consumer can assess if the shared control adequately covers their needs
+    shared_control_adequate: Optional[bool] = None  # Does the shared control fully cover this?
     local_gap_description: Optional[str] = None  # What gaps exist?
     local_compensating_controls: Optional[str] = None  # Any additional local controls needed?
 
@@ -1401,10 +1428,10 @@ class ApplicabilityStatement(SQLModel, table=True):
     # Relationships
     scope: Optional[Scope] = Relationship(back_populates="applicability_statements")
     requirement: Optional[Requirement] = Relationship(back_populates="applicability_statements")
-    local_measure: Optional["Measure"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[ApplicabilityStatement.local_measure_id]"}
+    local_control: Optional["Control"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[ApplicabilityStatement.local_control_id]"}
     )
-    shared_measure: Optional["SharedMeasure"] = Relationship()
+    shared_control: Optional["SharedControl"] = Relationship()
     provider_tenant: Optional["Tenant"] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[ApplicabilityStatement.provider_tenant_id]"}
     )
@@ -1455,7 +1482,7 @@ class Risk(SQLModel, table=True):
 
     # --- Residual Risk / Vulnerability (after controls) ---
     # This represents the "Kwetsbaarheid" in the In Control model
-    # How vulnerable are we AFTER considering existing measures?
+    # How vulnerable are we AFTER considering existing controls?
     residual_likelihood: Optional[RiskLevel] = None
     residual_impact: Optional[RiskLevel] = None
 
@@ -1467,7 +1494,7 @@ class Risk(SQLModel, table=True):
     # Higher score = more vulnerable = less effective controls
     vulnerability_score: Optional[int] = None  # 0-100, higher = more vulnerable
 
-    # Control effectiveness (aggregated from linked measures)
+    # Control effectiveness (aggregated from linked controls)
     control_effectiveness_pct: Optional[int] = None  # 0-100%
 
     # ==========================================================================
@@ -1523,29 +1550,31 @@ class Risk(SQLModel, table=True):
 
     # Relationships
     scope: Optional[Scope] = Relationship(back_populates="risks")
-    measure_links: List["MeasureRiskLink"] = Relationship(back_populates="risk")
+    control_links: List["ControlRiskLink"] = Relationship(back_populates="risk")
 
 
 # =============================================================================
-# IMPLEMENTATION (MEASURES)
+# CONTROLS (Context-specific implementations)
 # =============================================================================
 
-class Measure(SQLModel, table=True):
+class Control(SQLModel, table=True):
     """
-    The actual implementation/control measure (e.g., "YubiKeys for admins").
-    Satisfies Requirements and mitigates Risks.
+    Context-specific, testable implementation of measures.
+    Tied to a specific scope (organization, process, system).
 
-    NOTE: IMS tracks measures but does NOT execute them.
-    Technical execution happens in operational systems (TopDesk, Azure AD, etc.)
+    Examples:
+    - "Azure AD: MFA + Conditional Access" (for Measure: "Implement access control")
+    - "YubiKeys for admin accounts in Finance dept"
+
+    NOTE: Controls are testable and can fail. They implement abstract Measures.
+    IMS tracks controls but does NOT execute them - execution happens in
+    operational systems (TopDesk, Azure AD, etc.)
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: int = Field(foreign_key="tenant.id", index=True)
     scope_id: Optional[int] = Field(default=None, foreign_key="scope.id")
 
-    # From template? (for catalog-based measures)
-    template_id: Optional[int] = Field(default=None, foreign_key="measuretemplate.id")
-
-    # Legacy single requirement link (use MeasureRequirementLink for many-to-many)
+    # Legacy single requirement link (use ControlRequirementLink for many-to-many)
     requirement_id: Optional[int] = Field(default=None, foreign_key="requirement.id")
 
     title: str
@@ -1558,7 +1587,7 @@ class Measure(SQLModel, table=True):
     status: Status = Status.DRAFT
     implementation_date: Optional[datetime] = None
 
-    # Effectiveness
+    # Effectiveness (testable!)
     last_tested: Optional[datetime] = None
     test_result: Optional[AuditResult] = None
     effectiveness_percentage: Optional[int] = None  # 0-100%
@@ -1566,13 +1595,13 @@ class Measure(SQLModel, table=True):
     owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
 
     # --- External System Integration ---
-    # Where is this measure actually managed/executed?
+    # Where is this control actually managed/executed?
     external_system: Optional[str] = None  # e.g., "TopDesk", "Azure AD", "ServiceNow"
     external_reference: Optional[str] = None  # e.g., "CHG-12345", "Policy-001"
     external_url: Optional[str] = None  # Direct link to item in external system
 
     # --- Shared Services Support ---
-    is_shared: bool = False  # Can this measure be shared with other tenants?
+    is_shared: bool = False  # Can this control be shared with other tenants?
     shared_with_all_consumers: bool = False  # Auto-share with all related consumers?
     share_evidence: bool = True  # Include evidence when sharing?
 
@@ -1580,9 +1609,10 @@ class Measure(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    requirement: Optional[Requirement] = Relationship(back_populates="measures")
-    risk_links: List["MeasureRiskLink"] = Relationship(back_populates="measure")
-    evidences: List["Evidence"] = Relationship(back_populates="measure")
+    requirement: Optional[Requirement] = Relationship(back_populates="controls")
+    risk_links: List["ControlRiskLink"] = Relationship(back_populates="control")
+    evidences: List["Evidence"] = Relationship(back_populates="control")
+    measure_links: List["ControlMeasureLink"] = Relationship(back_populates="control")
 
 
 # =============================================================================
@@ -1727,10 +1757,10 @@ class Assessment(SQLModel, table=True):
 
 
 class Evidence(SQLModel, table=True):
-    """Proof that a measure is working"""
+    """Proof that a control is working"""
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: int = Field(foreign_key="tenant.id", index=True)
-    measure_id: Optional[int] = Field(default=None, foreign_key="measure.id")
+    control_id: Optional[int] = Field(default=None, foreign_key="control.id")
     assessment_id: Optional[int] = Field(default=None, foreign_key="assessment.id")
 
     title: str
@@ -1747,7 +1777,7 @@ class Evidence(SQLModel, table=True):
     ai_analysis: Optional[str] = None
     ai_result: Optional[AuditResult] = None
 
-    measure: Optional[Measure] = Relationship(back_populates="evidences")
+    control: Optional[Control] = Relationship(back_populates="evidences")
 
 
 # =============================================================================
@@ -1853,7 +1883,7 @@ class Finding(SQLModel, table=True):
     severity: FindingSeverity = FindingSeverity.MEDIUM
 
     # What's affected
-    measure_id: Optional[int] = Field(default=None, foreign_key="measure.id")
+    control_id: Optional[int] = Field(default=None, foreign_key="control.id")
     requirement_id: Optional[int] = Field(default=None, foreign_key="requirement.id")
 
     # Is this incidental or part of a structural issue?
@@ -1908,7 +1938,7 @@ class CorrectiveAction(SQLModel, table=True):
 
     # Result
     result_notes: Optional[str] = None
-    measure_created_id: Optional[int] = Field(default=None, foreign_key="measure.id")  # If action resulted in new measure
+    control_created_id: Optional[int] = Field(default=None, foreign_key="control.id")  # If action resulted in new control
 
     # --- External System Integration ---
     # Where is this action actually being executed?
@@ -3685,7 +3715,7 @@ class IntegrationConfig(SQLModel, table=True):
     credentials_reference: Optional[str] = None  # Reference to secrets manager
 
     # What does this integration do?
-    sync_measures: bool = False  # Sync measures to/from
+    sync_controls: bool = False  # Sync controls to/from
     sync_incidents: bool = False  # Sync incidents
     sync_changes: bool = False  # Sync change requests
     sync_users: bool = False  # Sync users (e.g., from Azure AD)

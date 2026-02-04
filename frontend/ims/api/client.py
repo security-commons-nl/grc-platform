@@ -92,7 +92,61 @@ class APIClient:
             return response.json()
 
     # =========================================================================
-    # MEASURES
+    # CONTROLS (Context-specific implementations)
+    # =========================================================================
+
+    async def get_controls(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        tenant_id: Optional[int] = None,
+        scope_id: Optional[int] = None,
+        status: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get list of controls (context-specific implementations)."""
+        async with self._get_client() as client:
+            params = {"skip": skip, "limit": limit}
+            if tenant_id:
+                params["tenant_id"] = tenant_id
+            if scope_id:
+                params["scope_id"] = scope_id
+            if status:
+                params["status"] = status
+
+            response = await client.get("/controls/", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_control(self, control_id: int) -> Dict[str, Any]:
+        """Get a single control by ID."""
+        async with self._get_client() as client:
+            response = await client.get(f"/controls/{control_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def create_control(self, control_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new control."""
+        async with self._get_client() as client:
+            response = await client.post("/controls/", json=control_data)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_control(self, control_id: int, control_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a control."""
+        async with self._get_client() as client:
+            response = await client.patch(f"/controls/{control_id}", json=control_data)
+            response.raise_for_status()
+            return response.json()
+
+    async def delete_control(self, control_id: int) -> Dict[str, Any]:
+        """Delete a control."""
+        async with self._get_client() as client:
+            response = await client.delete(f"/controls/{control_id}")
+            response.raise_for_status()
+            return response.json()
+
+    # =========================================================================
+    # MEASURES (Catalog - reusable building blocks)
     # =========================================================================
 
     async def get_measures(
@@ -100,36 +154,43 @@ class APIClient:
         skip: int = 0,
         limit: int = 100,
         tenant_id: Optional[int] = None,
-        scope_id: Optional[int] = None,
+        category: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Get list of measures."""
+        """Get list of measures from catalog (reusable building blocks)."""
         async with self._get_client() as client:
             params = {"skip": skip, "limit": limit}
             if tenant_id:
                 params["tenant_id"] = tenant_id
-            if scope_id:
-                params["scope_id"] = scope_id
+            if category:
+                params["category"] = category
 
-            response = await client.get("/risks/measures/", params=params)
+            response = await client.get("/measures/", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_measure(self, measure_id: int) -> Dict[str, Any]:
+        """Get a single measure from catalog by ID."""
+        async with self._get_client() as client:
+            response = await client.get(f"/measures/{measure_id}")
             response.raise_for_status()
             return response.json()
 
     async def create_measure(self, measure_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new measure."""
+        """Create a new measure in catalog."""
         async with self._get_client() as client:
             response = await client.post("/measures/", json=measure_data)
             response.raise_for_status()
             return response.json()
 
     async def update_measure(self, measure_id: int, measure_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update a measure."""
+        """Update a measure in catalog."""
         async with self._get_client() as client:
             response = await client.patch(f"/measures/{measure_id}", json=measure_data)
             response.raise_for_status()
             return response.json()
 
     async def delete_measure(self, measure_id: int) -> Dict[str, Any]:
-        """Delete a measure."""
+        """Delete a measure from catalog (soft delete)."""
         async with self._get_client() as client:
             response = await client.delete(f"/measures/{measure_id}")
             response.raise_for_status()

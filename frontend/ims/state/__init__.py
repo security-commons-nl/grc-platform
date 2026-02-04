@@ -6,6 +6,7 @@ from ims.state.assessment import AssessmentState
 from ims.state.incident import IncidentState
 from ims.state.scope import ScopeState
 from ims.state.measure import MeasureState
+from ims.state.control import ControlState
 from ims.state.compliance import ComplianceState
 from ims.state.asset import AssetState
 from ims.state.supplier import SupplierState

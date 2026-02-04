@@ -42,7 +42,7 @@ def sidebar() -> rx.Component:
                 nav_link("Dashboard", "/", "layout-dashboard"),
                 nav_link("Frameworks", "/frameworks", "library"),
                 nav_link("Risico's", "/risks", "triangle-alert"),
-                nav_link("Maatregelen", "/measures", "shield"),
+                nav_link("Controls", "/controls", "shield-check"),
                 nav_link("Compliance", "/compliance", "clipboard-list"),
                 nav_link("Assessments", "/assessments", "clipboard-check"),
                 nav_link("Incidenten", "/incidents", "circle-alert"),

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(python -m alembic upgrade head)",
+      "Bash(python -c \"\nimport asyncio\nfrom sqlalchemy import text\nfrom sqlalchemy.ext.asyncio import create_async_engine\nfrom app.core.config import settings\n\nasync def check_constraints\\(\\):\n    engine = create_async_engine\\(settings.SQLALCHEMY_DATABASE_URI\\)\n    async with engine.connect\\(\\) as conn:\n        # Check all tables\n        result = await conn.execute\\(text\\(''''''\n            SELECT table_name FROM information_schema.tables \n            WHERE table_schema = ''public'' AND table_type = ''BASE TABLE''\n            ORDER BY table_name\n        ''''''\\)\\)\n        tables = [row[0] for row in result.fetchall\\(\\)]\n        print\\(''Tables:'', tables\\)\n        \n        # Check if sharedmeasure exists\n        if ''sharedmeasure'' in tables:\n            print\\(''\\\\nsharedmeasure constraints:''\\)\n            result = await conn.execute\\(text\\(''''''\n                SELECT conname FROM pg_constraint \n                WHERE conrelid = ''sharedmeasure''::regclass\n            ''''''\\)\\)\n            for row in result.fetchall\\(\\):\n                print\\(f''  - {row[0]}''\\)\n        \n        if ''measuretemplate'' in tables:\n            print\\(''\\\\nmeasuretemplate exists - needs migration''\\)\n        if ''measure'' in tables:\n            print\\(''\\\\nmeasure exists - needs migration''\\)\n        if ''control'' in tables:\n            print\\(''\\\\ncontrol already exists - migration may have partially run''\\)\n            \n    await engine.dispose\\(\\)\n\nasyncio.run\\(check_constraints\\(\\)\\)\n\")"
+    ]
+  }
+}

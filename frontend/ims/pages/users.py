@@ -57,8 +57,8 @@ def user_row(user: dict) -> rx.Component:
                 rx.avatar(
                     fallback=rx.cond(
                         user["full_name"] != None,
-                        user["full_name"][0],
-                        user["username"][0],
+                        user["full_name"].to(str)[0],
+                        user["username"].to(str)[0],
                     ),
                     size="2",
                 ),
@@ -506,15 +506,15 @@ def scope_role_item(scope_data: dict) -> rx.Component:
     return rx.box(
         rx.hstack(
             rx.vstack(
-                rx.text(scope_data["scope"]["name"], weight="medium", size="2"),
-                rx.text(scope_data["scope"]["scope_type"], size="1", color="gray"),
+                rx.text(scope_data["scope"]["name"].to(str), weight="medium", size="2"),
+                rx.text(scope_data["scope"]["scope_type"].to(str), size="1", color="gray"),
                 align_items="start",
                 spacing="0",
             ),
             rx.spacer(),
             rx.hstack(
                 rx.foreach(
-                    scope_data["roles"],
+                    scope_data["roles"].to(list),
                     lambda role: rx.hstack(
                         role_badge(role),
                         rx.icon_button(
@@ -745,7 +745,7 @@ def users_content() -> rx.Component:
 
         # Dialogs
         user_form_dialog(),
-        role_assignment_dialog(),
+        # role_assignment_dialog(),
         delete_confirm_dialog(),
 
         width="100%",

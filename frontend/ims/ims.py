@@ -13,6 +13,7 @@ from ims.pages.assessments import assessments_page
 from ims.pages.incidents import incidents_page
 from ims.pages.scopes import scopes_page
 from ims.pages.measures import measures_page
+from ims.pages.controls import controls_page
 from ims.pages.compliance import compliance_page
 from ims.pages.assets import assets_page
 from ims.pages.suppliers import suppliers_page
@@ -28,6 +29,7 @@ from ims.state.assessment import AssessmentState
 from ims.state.incident import IncidentState
 from ims.state.scope import ScopeState
 from ims.state.measure import MeasureState
+from ims.state.control import ControlState
 from ims.state.compliance import ComplianceState
 from ims.state.asset import AssetState
 from ims.state.supplier import SupplierState
@@ -56,6 +58,7 @@ app.add_page(login_page, route="/login", title="Login - IMS")
 app.add_page(dashboard_page, route="/", title="Dashboard - IMS")
 app.add_page(risks_page, route="/risks", title="Risico's - IMS")
 app.add_page(measures_page, route="/measures", title="Maatregelen - IMS")
+app.add_page(controls_page, route="/controls", title="Controls - IMS")
 app.add_page(assessments_page, route="/assessments", title="Assessments - IMS")
 app.add_page(incidents_page, route="/incidents", title="Incidenten - IMS")
 app.add_page(policies_page, route="/policies", title="Beleid - IMS")

@@ -1,6 +1,9 @@
 """
-Measure Management Endpoints
-Handles security/compliance measures (controls) with effectiveness tracking.
+Measure Catalog Endpoints
+Handles the catalog/library of reusable, generic measures (maatregelen).
+
+Measures are normative building blocks that define WHAT should be done.
+Controls are the context-specific implementations that define HOW it's done.
 """
 from typing import List, Optional
 from datetime import datetime
@@ -13,11 +16,8 @@ from app.core.db import get_session
 from app.core.crud import CRUDBase
 from app.models.core_models import (
     Measure,
-    MeasureRiskLink,
-    MeasureRequirementLink,
-    Risk,
-    Requirement,
-    Status,
+    ControlMeasureLink,
+    Control,
 )
 from app.services.knowledge_service import knowledge_service
 
@@ -27,31 +27,55 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# MEASURE CRUD
+# MEASURE CATALOG CRUD
 # =============================================================================
 
 @router.get("/", response_model=List[Measure])
 async def list_measures(
     skip: int = 0,
     limit: int = 100,
-    tenant_id: Optional[int] = Query(None, description="Filter by tenant"),
-    scope_id: Optional[int] = Query(None, description="Filter by scope"),
-    status: Optional[Status] = Query(None, description="Filter by status"),
-    owner_id: Optional[int] = Query(None, description="Filter by owner"),
+    tenant_id: Optional[int] = Query(None, description="Filter by tenant (NULL = global)"),
+    category: Optional[str] = Query(None, description="Filter by measure category"),
+    control_type: Optional[str] = Query(None, description="Filter by control type"),
+    is_active: bool = Query(True, description="Filter by active status"),
     session: AsyncSession = Depends(get_session),
 ):
-    """List measures with optional filters."""
-    filters = {}
+    """
+    List measures from the catalog.
+
+    Global measures (tenant_id=NULL) are available to all tenants.
+    Tenant-specific measures are only available to that tenant.
+    """
+    filters = {"is_active": is_active}
     if tenant_id:
         filters["tenant_id"] = tenant_id
-    if scope_id:
-        filters["scope_id"] = scope_id
-    if status:
-        filters["status"] = status
-    if owner_id:
-        filters["owner_id"] = owner_id
+    if category:
+        filters["measure_category"] = category
+    if control_type:
+        filters["control_type"] = control_type
 
     return await crud_measure.get_multi(session, skip=skip, limit=limit, filters=filters)
+
+
+@router.get("/global", response_model=List[Measure])
+async def list_global_measures(
+    skip: int = 0,
+    limit: int = 100,
+    category: Optional[str] = Query(None, description="Filter by measure category"),
+    session: AsyncSession = Depends(get_session),
+):
+    """List only global measures (tenant_id=NULL) available to all tenants."""
+    query = select(Measure).where(
+        Measure.tenant_id.is_(None),
+        Measure.is_active == True
+    )
+
+    if category:
+        query = query.where(Measure.measure_category == category)
+
+    query = query.offset(skip).limit(limit)
+    result = await session.execute(query)
+    return result.scalars().all()
 
 
 @router.post("/", response_model=Measure)
@@ -60,22 +84,21 @@ async def create_measure(
     session: AsyncSession = Depends(get_session),
 ):
     """
-    Create a new measure (control).
+    Create a new measure in the catalog.
 
-    Also indexes in knowledge base for AI RAG.
+    Set tenant_id=NULL to create a global measure available to all tenants.
     """
-    measure.status = measure.status or Status.DRAFT
     created_measure = await crud_measure.create(session, obj_in=measure)
 
     # Index in knowledge base for AI RAG
     try:
-        content = f"Maatregel: {created_measure.title}\n\nBeschrijving: {created_measure.description or ''}\n\nImplementatie: {created_measure.implementation_details or ''}"
+        content = f"Maatregel: {created_measure.name}\n\nBeschrijving: {created_measure.description or ''}\n\nImplementatie richtlijn: {created_measure.implementation_guidance or ''}"
         await knowledge_service.add_knowledge(
             session=session,
-            key=f"measure_{created_measure.id}",
-            title=created_measure.title or f"Measure {created_measure.id}",
+            key=f"measure_catalog_{created_measure.id}",
+            title=created_measure.name or f"Measure {created_measure.id}",
             content=content,
-            category="measure"
+            category="measure_catalog"
         )
     except Exception as e:
         logger.warning(f"Failed to index measure {created_measure.id} in knowledge base: {e}")
@@ -88,7 +111,7 @@ async def get_measure(
     measure_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Get a measure by ID."""
+    """Get a measure from the catalog by ID."""
     return await crud_measure.get_or_404(session, measure_id)
 
 
@@ -98,9 +121,8 @@ async def update_measure(
     measure_update: dict,
     session: AsyncSession = Depends(get_session),
 ):
-    """Update a measure."""
+    """Update a measure in the catalog."""
     db_measure = await crud_measure.get_or_404(session, measure_id)
-    measure_update["updated_at"] = datetime.utcnow()
     return await crud_measure.update(session, db_obj=db_measure, obj_in=measure_update)
 
 
@@ -109,289 +131,172 @@ async def delete_measure(
     measure_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a measure."""
-    deleted = await crud_measure.delete(session, id=measure_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Measure not found")
-    return {"message": "Measure deleted"}
+    """
+    Soft-delete a measure from the catalog.
 
-
-# =============================================================================
-# MEASURE STATUS TRANSITIONS
-# =============================================================================
-
-@router.post("/{measure_id}/activate", response_model=Measure)
-async def activate_measure(
-    measure_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Activate a draft measure."""
+    Sets is_active=False rather than hard delete to preserve references.
+    """
     db_measure = await crud_measure.get_or_404(session, measure_id)
-
-    if db_measure.status != Status.DRAFT:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only draft measures can be activated. Current status: {db_measure.status}"
-        )
-
-    return await crud_measure.update(session, db_obj=db_measure, obj_in={
-        "status": Status.ACTIVE,
-        "updated_at": datetime.utcnow(),
-    })
-
-
-@router.post("/{measure_id}/deactivate", response_model=Measure)
-async def deactivate_measure(
-    measure_id: int,
-    reason: Optional[str] = Query(None),
-    session: AsyncSession = Depends(get_session),
-):
-    """Deactivate an active measure."""
-    db_measure = await crud_measure.get_or_404(session, measure_id)
-
-    if db_measure.status != Status.ACTIVE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only active measures can be deactivated. Current status: {db_measure.status}"
-        )
-
-    return await crud_measure.update(session, db_obj=db_measure, obj_in={
-        "status": Status.INACTIVE,
-        "updated_at": datetime.utcnow(),
-    })
+    await crud_measure.update(session, db_obj=db_measure, obj_in={"is_active": False})
+    return {"message": "Measure deactivated"}
 
 
 # =============================================================================
-# EFFECTIVENESS TRACKING
+# MEASURE-CONTROL LINKAGE (Which controls implement this measure?)
 # =============================================================================
 
-@router.patch("/{measure_id}/effectiveness", response_model=Measure)
-async def update_effectiveness(
+@router.get("/{measure_id}/controls", response_model=List[Control])
+async def get_implementing_controls(
     measure_id: int,
-    effectiveness_score: int = Query(..., ge=0, le=100, description="Effectiveness percentage (0-100)"),
-    last_tested_at: Optional[datetime] = None,
+    tenant_id: Optional[int] = Query(None, description="Filter controls by tenant"),
     session: AsyncSession = Depends(get_session),
 ):
     """
-    Update the effectiveness score of a measure.
+    Get all controls that implement this measure.
 
-    Effectiveness is typically assessed through:
-    - Testing results
-    - Audit findings
-    - Incident analysis
+    Shows where and how this catalog measure is actually implemented
+    across different contexts (scopes, tenants).
     """
-    db_measure = await crud_measure.get_or_404(session, measure_id)
+    await crud_measure.get_or_404(session, measure_id)
 
-    update_data = {
-        "effectiveness_score": effectiveness_score,
-        "updated_at": datetime.utcnow(),
+    query = (
+        select(Control)
+        .join(ControlMeasureLink, ControlMeasureLink.control_id == Control.id)
+        .where(ControlMeasureLink.measure_id == measure_id)
+    )
+
+    if tenant_id:
+        query = query.where(Control.tenant_id == tenant_id)
+
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+@router.get("/{measure_id}/coverage")
+async def get_measure_coverage(
+    measure_id: int,
+    tenant_id: Optional[int] = Query(None),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Get coverage statistics for this measure.
+
+    Shows how many controls implement this measure and their effectiveness.
+    """
+    from sqlalchemy import func
+
+    await crud_measure.get_or_404(session, measure_id)
+
+    query = (
+        select(
+            func.count(Control.id).label("control_count"),
+            func.avg(Control.effectiveness_percentage).label("avg_effectiveness"),
+        )
+        .join(ControlMeasureLink, ControlMeasureLink.control_id == Control.id)
+        .where(ControlMeasureLink.measure_id == measure_id)
+    )
+
+    if tenant_id:
+        query = query.where(Control.tenant_id == tenant_id)
+
+    result = await session.execute(query)
+    row = result.first()
+
+    return {
+        "measure_id": measure_id,
+        "implementing_controls": row.control_count or 0,
+        "average_effectiveness": round(row.avg_effectiveness, 1) if row.avg_effectiveness else None,
     }
-    if last_tested_at:
-        update_data["last_tested_at"] = last_tested_at
-
-    return await crud_measure.update(session, db_obj=db_measure, obj_in=update_data)
 
 
 # =============================================================================
-# MEASURE-RISK LINKAGE
+# MEASURE CATEGORIES
 # =============================================================================
 
-@router.get("/{measure_id}/risks", response_model=List[Risk])
-async def get_linked_risks(
-    measure_id: int,
+@router.get("/categories/list")
+async def list_categories(
     session: AsyncSession = Depends(get_session),
 ):
-    """Get all risks that this measure addresses."""
-    await crud_measure.get_or_404(session, measure_id)
+    """Get all unique measure categories in the catalog."""
+    from sqlalchemy import func, distinct
 
     result = await session.execute(
-        select(Risk)
-        .join(MeasureRiskLink, MeasureRiskLink.risk_id == Risk.id)
-        .where(MeasureRiskLink.measure_id == measure_id)
+        select(distinct(Measure.measure_category))
+        .where(
+            Measure.measure_category.isnot(None),
+            Measure.is_active == True
+        )
+    )
+    categories = [row[0] for row in result if row[0]]
+    return {"categories": sorted(categories)}
+
+
+@router.get("/categories/{category}", response_model=List[Measure])
+async def get_measures_by_category(
+    category: str,
+    skip: int = 0,
+    limit: int = 100,
+    session: AsyncSession = Depends(get_session),
+):
+    """Get all measures in a specific category."""
+    result = await session.execute(
+        select(Measure)
+        .where(
+            Measure.measure_category == category,
+            Measure.is_active == True
+        )
+        .offset(skip)
+        .limit(limit)
     )
     return result.scalars().all()
-
-
-@router.post("/{measure_id}/risks/{risk_id}")
-async def link_to_risk(
-    measure_id: int,
-    risk_id: int,
-    effectiveness_contribution: int = Query(50, ge=0, le=100),
-    session: AsyncSession = Depends(get_session),
-):
-    """Link this measure to a risk."""
-    await crud_measure.get_or_404(session, measure_id)
-
-    # Check if link exists
-    result = await session.execute(
-        select(MeasureRiskLink).where(
-            MeasureRiskLink.measure_id == measure_id,
-            MeasureRiskLink.risk_id == risk_id
-        )
-    )
-    if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Link already exists")
-
-    link = MeasureRiskLink(
-        measure_id=measure_id,
-        risk_id=risk_id,
-        effectiveness_contribution=effectiveness_contribution,
-    )
-    session.add(link)
-    await session.commit()
-
-    return {"message": "Measure linked to risk"}
-
-
-@router.delete("/{measure_id}/risks/{risk_id}")
-async def unlink_from_risk(
-    measure_id: int,
-    risk_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Remove link between this measure and a risk."""
-    result = await session.execute(
-        select(MeasureRiskLink).where(
-            MeasureRiskLink.measure_id == measure_id,
-            MeasureRiskLink.risk_id == risk_id
-        )
-    )
-    link = result.scalars().first()
-    if not link:
-        raise HTTPException(status_code=404, detail="Link not found")
-
-    await session.delete(link)
-    await session.commit()
-
-    return {"message": "Link removed"}
-
-
-# =============================================================================
-# MEASURE-REQUIREMENT LINKAGE
-# =============================================================================
-
-@router.get("/{measure_id}/requirements", response_model=List[Requirement])
-async def get_linked_requirements(
-    measure_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Get all requirements (controls) that this measure implements."""
-    await crud_measure.get_or_404(session, measure_id)
-
-    result = await session.execute(
-        select(Requirement)
-        .join(MeasureRequirementLink, MeasureRequirementLink.requirement_id == Requirement.id)
-        .where(MeasureRequirementLink.measure_id == measure_id)
-    )
-    return result.scalars().all()
-
-
-@router.post("/{measure_id}/requirements/{requirement_id}")
-async def link_to_requirement(
-    measure_id: int,
-    requirement_id: int,
-    implementation_status: str = Query("partial", regex="^(none|partial|full)$"),
-    session: AsyncSession = Depends(get_session),
-):
-    """
-    Link this measure to a requirement (control from a standard).
-
-    This creates the mapping for Statement of Applicability (SoA).
-    """
-    await crud_measure.get_or_404(session, measure_id)
-
-    # Check if link exists
-    result = await session.execute(
-        select(MeasureRequirementLink).where(
-            MeasureRequirementLink.measure_id == measure_id,
-            MeasureRequirementLink.requirement_id == requirement_id
-        )
-    )
-    if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Link already exists")
-
-    link = MeasureRequirementLink(
-        measure_id=measure_id,
-        requirement_id=requirement_id,
-        implementation_status=implementation_status,
-    )
-    session.add(link)
-    await session.commit()
-
-    return {"message": "Measure linked to requirement"}
-
-
-@router.delete("/{measure_id}/requirements/{requirement_id}")
-async def unlink_from_requirement(
-    measure_id: int,
-    requirement_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Remove link between this measure and a requirement."""
-    result = await session.execute(
-        select(MeasureRequirementLink).where(
-            MeasureRequirementLink.measure_id == measure_id,
-            MeasureRequirementLink.requirement_id == requirement_id
-        )
-    )
-    link = result.scalars().first()
-    if not link:
-        raise HTTPException(status_code=404, detail="Link not found")
-
-    await session.delete(link)
-    await session.commit()
-
-    return {"message": "Link removed"}
 
 
 # =============================================================================
 # MEASURE STATISTICS
 # =============================================================================
 
-@router.get("/stats/by-status")
-async def get_measures_by_status(
+@router.get("/stats/summary")
+async def get_catalog_stats(
     tenant_id: Optional[int] = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
-    """Get measure counts grouped by status."""
+    """Get summary statistics for the measure catalog."""
     from sqlalchemy import func
 
-    query = select(
-        Measure.status,
-        func.count(Measure.id).label("count")
-    ).group_by(Measure.status)
+    # Base query for active measures
+    base_query = select(func.count(Measure.id)).where(Measure.is_active == True)
 
     if tenant_id:
-        query = query.where(Measure.tenant_id == tenant_id)
+        # Count tenant-specific + global measures
+        total_result = await session.execute(
+            base_query.where(
+                (Measure.tenant_id == tenant_id) | (Measure.tenant_id.is_(None))
+            )
+        )
+    else:
+        total_result = await session.execute(base_query)
 
-    result = await session.execute(query)
-    return {row.status: row.count for row in result}
+    total = total_result.scalar() or 0
 
-
-@router.get("/stats/effectiveness")
-async def get_effectiveness_stats(
-    tenant_id: Optional[int] = Query(None),
-    session: AsyncSession = Depends(get_session),
-):
-    """Get effectiveness statistics for measures."""
-    from sqlalchemy import func
-
-    query = select(
-        func.avg(Measure.effectiveness_score).label("average"),
-        func.min(Measure.effectiveness_score).label("minimum"),
-        func.max(Measure.effectiveness_score).label("maximum"),
-        func.count(Measure.id).label("total")
-    ).where(Measure.effectiveness_score.isnot(None))
+    # Count by category
+    category_query = (
+        select(
+            Measure.measure_category,
+            func.count(Measure.id).label("count")
+        )
+        .where(Measure.is_active == True)
+        .group_by(Measure.measure_category)
+    )
 
     if tenant_id:
-        query = query.where(Measure.tenant_id == tenant_id)
+        category_query = category_query.where(
+            (Measure.tenant_id == tenant_id) | (Measure.tenant_id.is_(None))
+        )
 
-    result = await session.execute(query)
-    row = result.first()
+    category_result = await session.execute(category_query)
+    by_category = {row.measure_category or "Uncategorized": row.count for row in category_result}
 
     return {
-        "average_effectiveness": round(row.average, 1) if row.average else 0,
-        "min_effectiveness": row.minimum or 0,
-        "max_effectiveness": row.maximum or 0,
-        "measures_with_score": row.total or 0
+        "total_measures": total,
+        "by_category": by_category,
     }

@@ -1,6 +1,6 @@
 """
 Risk Management Endpoints
-Handles Risks, Measures, and their linkages.
+Handles Risks and their linkage to Controls.
 Implements the "In Control" risk management model.
 """
 from typing import List, Optional
@@ -13,8 +13,8 @@ from app.core.db import get_session
 from app.core.crud import CRUDBase
 from app.models.core_models import (
     Risk,
-    Measure,
-    MeasureRiskLink,
+    Control,
+    ControlRiskLink,
     RiskLevel,
     Status,
     AttentionQuadrant,
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 crud_risk = CRUDBase(Risk)
-crud_measure = CRUDBase(Measure)
+crud_control = CRUDBase(Control)
 
 
 # =============================================================================
@@ -288,117 +288,35 @@ async def set_risk_quadrant(
 
 
 # =============================================================================
-# MEASURE CRUD
+# RISK-CONTROL LINKAGE
 # =============================================================================
 
-@router.get("/measures/", response_model=List[Measure])
-async def list_measures(
-    skip: int = 0,
-    limit: int = 100,
-    tenant_id: Optional[int] = Query(None),
-    scope_id: Optional[int] = Query(None),
-    status: Optional[Status] = Query(None),
-    session: AsyncSession = Depends(get_session),
-):
-    """List measures with optional filters."""
-    filters = {}
-    if tenant_id:
-        filters["tenant_id"] = tenant_id
-    if scope_id:
-        filters["scope_id"] = scope_id
-    if status:
-        filters["status"] = status
-
-    return await crud_measure.get_multi(session, skip=skip, limit=limit, filters=filters)
-
-
-@router.post("/measures/", response_model=Measure)
-async def create_measure(
-    measure: Measure,
-    session: AsyncSession = Depends(get_session),
-):
-    """Create a new measure. Also indexes in knowledge base for AI RAG."""
-    created_measure = await crud_measure.create(session, obj_in=measure)
-
-    # Index in knowledge base for AI RAG
-    try:
-        content = f"Maatregel: {created_measure.title}\n\nBeschrijving: {created_measure.description or ''}\n\nImplementatie: {created_measure.implementation_details or ''}"
-        await knowledge_service.add_knowledge(
-            session=session,
-            key=f"measure_{created_measure.id}",
-            title=created_measure.title or f"Measure {created_measure.id}",
-            content=content,
-            category="measure"
-        )
-    except Exception as e:
-        logger.warning(f"Failed to index measure {created_measure.id} in knowledge base: {e}")
-
-    return created_measure
-
-
-@router.get("/measures/{measure_id}", response_model=Measure)
-async def get_measure(
-    measure_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Get a measure by ID."""
-    return await crud_measure.get_or_404(session, measure_id)
-
-
-@router.patch("/measures/{measure_id}", response_model=Measure)
-async def update_measure(
-    measure_id: int,
-    measure_update: dict,
-    session: AsyncSession = Depends(get_session),
-):
-    """Update a measure."""
-    db_measure = await crud_measure.get_or_404(session, measure_id)
-    measure_update["updated_at"] = datetime.utcnow()
-    return await crud_measure.update(session, db_obj=db_measure, obj_in=measure_update)
-
-
-@router.delete("/measures/{measure_id}")
-async def delete_measure(
-    measure_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Delete a measure."""
-    deleted = await crud_measure.delete(session, id=measure_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Measure not found")
-    return {"message": "Measure deleted"}
-
-
-# =============================================================================
-# RISK-MEASURE LINKAGE
-# =============================================================================
-
-@router.post("/{risk_id}/measures/{measure_id}")
-async def link_measure_to_risk(
+@router.post("/{risk_id}/controls/{control_id}")
+async def link_control_to_risk(
     risk_id: int,
-    measure_id: int,
-    effectiveness_contribution: int = Query(50, ge=0, le=100, description="How much this measure contributes to risk reduction"),
+    control_id: int,
+    mitigation_percent: int = Query(50, ge=0, le=100, description="How much this control contributes to risk reduction"),
     session: AsyncSession = Depends(get_session),
 ):
-    """Link a measure to a risk."""
+    """Link a control to a risk."""
     # Verify both exist
     await crud_risk.get_or_404(session, risk_id)
-    await crud_measure.get_or_404(session, measure_id)
+    await crud_control.get_or_404(session, control_id)
 
     # Check if link already exists
     result = await session.execute(
-        select(MeasureRiskLink).where(
-            MeasureRiskLink.risk_id == risk_id,
-            MeasureRiskLink.measure_id == measure_id
+        select(ControlRiskLink).where(
+            ControlRiskLink.risk_id == risk_id,
+            ControlRiskLink.control_id == control_id
         )
     )
     if result.scalars().first():
         raise HTTPException(status_code=400, detail="Link already exists")
 
-    link = MeasureRiskLink(
+    link = ControlRiskLink(
         risk_id=risk_id,
-        measure_id=measure_id,
-        effectiveness_contribution=effectiveness_contribution,
+        control_id=control_id,
+        mitigation_percent=mitigation_percent,
     )
     session.add(link)
     await session.commit()
@@ -406,20 +324,20 @@ async def link_measure_to_risk(
     # Recalculate risk control effectiveness
     await _recalculate_control_effectiveness(session, risk_id)
 
-    return {"message": "Measure linked to risk"}
+    return {"message": "Control linked to risk"}
 
 
-@router.delete("/{risk_id}/measures/{measure_id}")
-async def unlink_measure_from_risk(
+@router.delete("/{risk_id}/controls/{control_id}")
+async def unlink_control_from_risk(
     risk_id: int,
-    measure_id: int,
+    control_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Remove link between measure and risk."""
+    """Remove link between control and risk."""
     result = await session.execute(
-        select(MeasureRiskLink).where(
-            MeasureRiskLink.risk_id == risk_id,
-            MeasureRiskLink.measure_id == measure_id
+        select(ControlRiskLink).where(
+            ControlRiskLink.risk_id == risk_id,
+            ControlRiskLink.control_id == control_id
         )
     )
     link = result.scalars().first()
@@ -432,37 +350,21 @@ async def unlink_measure_from_risk(
     # Recalculate risk control effectiveness
     await _recalculate_control_effectiveness(session, risk_id)
 
-    return {"message": "Measure unlinked from risk"}
+    return {"message": "Control unlinked from risk"}
 
 
-@router.get("/{risk_id}/measures", response_model=List[Measure])
-async def get_risk_measures(
+@router.get("/{risk_id}/controls", response_model=List[Control])
+async def get_risk_controls(
     risk_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Get all measures linked to a risk."""
+    """Get all controls linked to a risk."""
     await crud_risk.get_or_404(session, risk_id)
 
     result = await session.execute(
-        select(Measure).join(
-            MeasureRiskLink, Measure.id == MeasureRiskLink.measure_id
-        ).where(MeasureRiskLink.risk_id == risk_id)
-    )
-    return result.scalars().all()
-
-
-@router.get("/measures/{measure_id}/risks", response_model=List[Risk])
-async def get_measure_risks(
-    measure_id: int,
-    session: AsyncSession = Depends(get_session),
-):
-    """Get all risks that a measure is linked to."""
-    await crud_measure.get_or_404(session, measure_id)
-
-    result = await session.execute(
-        select(Risk).join(
-            MeasureRiskLink, Risk.id == MeasureRiskLink.risk_id
-        ).where(MeasureRiskLink.measure_id == measure_id)
+        select(Control).join(
+            ControlRiskLink, Control.id == ControlRiskLink.control_id
+        ).where(ControlRiskLink.risk_id == risk_id)
     )
     return result.scalars().all()
 
@@ -473,28 +375,28 @@ async def get_measure_risks(
 
 async def _recalculate_control_effectiveness(session: AsyncSession, risk_id: int):
     """
-    Recalculate the control effectiveness for a risk based on linked measures.
+    Recalculate the control effectiveness for a risk based on linked controls.
     Updates the risk's control_effectiveness_pct and vulnerability_score.
     """
-    # Get all linked measures
+    # Get all linked controls
     result = await session.execute(
-        select(Measure, MeasureRiskLink.effectiveness_contribution)
-        .join(MeasureRiskLink, Measure.id == MeasureRiskLink.measure_id)
-        .where(MeasureRiskLink.risk_id == risk_id)
+        select(Control, ControlRiskLink.mitigation_percent)
+        .join(ControlRiskLink, Control.id == ControlRiskLink.control_id)
+        .where(ControlRiskLink.risk_id == risk_id)
     )
-    linked_measures = result.all()
+    linked_controls = result.all()
 
-    if not linked_measures:
-        # No measures linked, no control effectiveness
+    if not linked_controls:
+        # No controls linked, no control effectiveness
         effectiveness = 0
     else:
         # Calculate weighted average effectiveness
         total_weight = 0
         weighted_effectiveness = 0
 
-        for measure, contribution in linked_measures:
-            if measure.effectiveness_percentage is not None:
-                weighted_effectiveness += (measure.effectiveness_percentage * contribution)
+        for control, contribution in linked_controls:
+            if control.effectiveness_percentage is not None:
+                weighted_effectiveness += (control.effectiveness_percentage * contribution)
                 total_weight += contribution
 
         if total_weight > 0:
