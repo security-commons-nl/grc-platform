@@ -60,13 +60,35 @@ class ChatState(rx.State):
         }
         return agent_names.get(self.current_agent, "AI Assistent")
 
+    def scroll_bottom(self):
+        """Scroll chat to bottom with retry logic to ensure render is complete."""
+        return rx.call_script(
+            """
+            var e = document.getElementById('chat-messages-container');
+            if(e) {
+                e.scrollTop = e.scrollHeight;
+                setTimeout(() => e.scrollTop = e.scrollHeight, 100);
+                setTimeout(() => e.scrollTop = e.scrollHeight, 300);
+            }
+            """
+        )
+
+    def focus_input(self):
+        """Focus the chat input field."""
+        return rx.call_script(
+            "setTimeout(() => { var e = document.getElementById('chat-input'); if(e) e.focus(); }, 100)"
+        )
+
     def toggle_chat(self):
         """Toggle chat panel open/closed."""
         self.is_open = not self.is_open
+        if self.is_open:
+            return [self.focus_input(), self.scroll_bottom()]
 
     def open_chat(self):
         """Open the chat panel."""
         self.is_open = True
+        return [self.focus_input(), self.scroll_bottom()]
 
     def close_chat(self):
         """Close the chat panel."""
@@ -107,12 +129,15 @@ class ChatState(rx.State):
         # Add user message
         user_msg = ChatMessage(role="user", content=self.current_input)
         self.messages = self.messages + [user_msg]
-
+        
         # Clear input and set loading
         message = self.current_input
         self.current_input = ""
         self.is_loading = True
         self.error = ""
+        
+        # Yield to update UI and scroll
+        yield self.scroll_bottom()
 
         try:
             # Build context
@@ -151,6 +176,8 @@ class ChatState(rx.State):
 
         finally:
             self.is_loading = False
+            # Scroll to bottom again after response
+            yield self.scroll_bottom()
 
     async def detect_agent(self):
         """Auto-detect the best agent for current context."""

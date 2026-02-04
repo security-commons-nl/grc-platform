@@ -20,7 +20,7 @@ def chat_message(msg: dict) -> rx.Component:
                 rx.fragment(),
             ),
             rx.box(
-                rx.text(msg["content"], size="2"),
+                rx.markdown(msg["content"]),
                 padding="12px 16px",
                 border_radius="lg",
                 max_width="80%",
@@ -51,6 +51,7 @@ def chat_input() -> rx.Component:
     """Chat input field and send button."""
     return rx.hstack(
         rx.input(
+            id="chat-input",
             placeholder="Stel een vraag...",
             value=ChatState.current_input,
             on_change=ChatState.set_input,
@@ -61,6 +62,7 @@ def chat_input() -> rx.Component:
             ),
             flex="1",
             size="2",
+            auto_focus=True,
         ),
         rx.icon_button(
             rx.icon("send", size=18),
@@ -176,6 +178,7 @@ def chat_panel() -> rx.Component:
                 overflow_y="auto",
                 padding="12px 16px",
                 width="100%",
+                id="chat-messages-container",
             ),
 
             # Input area
