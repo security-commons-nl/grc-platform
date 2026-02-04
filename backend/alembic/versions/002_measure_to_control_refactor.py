@@ -22,7 +22,7 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '002_measure_control'
+revision: str = '002_measure_to_control_refactor'
 down_revision: Union[str, None] = '31de748cb282'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,51 +31,53 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """
     Rename tables and columns for Measure/Control separation.
-
-    IMPORTANT: Order matters to avoid FK constraint violations!
-    1. Drop foreign keys first
-    2. Rename tables
-    3. Rename columns
-    4. Recreate foreign keys
+    Uses raw SQL for better control over constraint handling.
     """
 
     # =========================================================================
-    # STEP 1: Drop Foreign Keys (to allow renaming)
+    # STEP 1: Drop Foreign Keys using raw SQL (safer with IF EXISTS pattern)
     # =========================================================================
 
-    # Drop FK from measurerisklink to measure
-    op.drop_constraint('measurerisklink_measure_id_fkey', 'measurerisklink', type_='foreignkey')
-    op.drop_constraint('measurerisklink_risk_id_fkey', 'measurerisklink', type_='foreignkey')
+    # Get connection for raw SQL
+    connection = op.get_bind()
 
-    # Drop FK from measurerequirementlink to measure
-    op.drop_constraint('measurerequirementlink_measure_id_fkey', 'measurerequirementlink', type_='foreignkey')
-    op.drop_constraint('measurerequirementlink_requirement_id_fkey', 'measurerequirementlink', type_='foreignkey')
+    # Helper to safely drop constraint
+    def safe_drop_fk(table: str, constraint: str):
+        connection.execute(sa.text(
+            f"ALTER TABLE {table} DROP CONSTRAINT IF EXISTS {constraint}"
+        ))
 
-    # Drop FK from sharedmeasure to measure
-    op.drop_constraint('sharedmeasure_measure_id_fkey', 'sharedmeasure', type_='foreignkey')
-    op.drop_constraint('sharedmeasure_provider_tenant_id_fkey', 'sharedmeasure', type_='foreignkey')
+    # Drop FKs from measurerisklink
+    safe_drop_fk('measurerisklink', 'measurerisklink_measure_id_fkey')
+    safe_drop_fk('measurerisklink', 'measurerisklink_risk_id_fkey')
 
-    # Drop FK from evidence to measure
-    op.drop_constraint('evidence_measure_id_fkey', 'evidence', type_='foreignkey')
+    # Drop FKs from measurerequirementlink
+    safe_drop_fk('measurerequirementlink', 'measurerequirementlink_measure_id_fkey')
+    safe_drop_fk('measurerequirementlink', 'measurerequirementlink_requirement_id_fkey')
 
-    # Drop FK from finding to measure
-    op.drop_constraint('finding_measure_id_fkey', 'finding', type_='foreignkey')
+    # Drop FKs from sharedmeasure
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_measure_id_fkey')
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_consumer_tenant_id_fkey')
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_provider_tenant_id_fkey')
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_relationship_id_fkey')
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_local_contact_id_fkey')
+    safe_drop_fk('sharedmeasure', 'sharedmeasure_acknowledged_by_id_fkey')
 
-    # Drop FK from gapanalysisitem to measure (existing_measure_id)
-    op.drop_constraint('gapanalysisitem_existing_measure_id_fkey', 'gapanalysisitem', type_='foreignkey')
+    # Drop FKs from evidence
+    safe_drop_fk('evidence', 'evidence_measure_id_fkey')
 
-    # Drop FK from correctiveaction to measure (if exists)
-    try:
-        op.drop_constraint('correctiveaction_measure_id_fkey', 'correctiveaction', type_='foreignkey')
-    except Exception:
-        pass  # May not exist
+    # Drop FKs from finding
+    safe_drop_fk('finding', 'finding_measure_id_fkey')
 
-    # Drop FK from applicabilitystatement to measure/sharedmeasure (if exists)
-    try:
-        op.drop_constraint('applicabilitystatement_local_measure_id_fkey', 'applicabilitystatement', type_='foreignkey')
-        op.drop_constraint('applicabilitystatement_shared_measure_id_fkey', 'applicabilitystatement', type_='foreignkey')
-    except Exception:
-        pass  # May not exist or have different names
+    # Drop FKs from gapanalysisitem
+    safe_drop_fk('gapanalysisitem', 'gapanalysisitem_existing_measure_id_fkey')
+
+    # Drop FKs from correctiveaction (if exists)
+    safe_drop_fk('correctiveaction', 'correctiveaction_measure_id_fkey')
+
+    # Drop FKs from applicabilitystatement (if exists)
+    safe_drop_fk('applicabilitystatement', 'applicabilitystatement_local_measure_id_fkey')
+    safe_drop_fk('applicabilitystatement', 'applicabilitystatement_shared_measure_id_fkey')
 
     # =========================================================================
     # STEP 2: Rename Tables
@@ -110,27 +112,33 @@ def upgrade() -> None:
     # In sharedcontrol: measure_id -> control_id
     op.alter_column('sharedcontrol', 'measure_id', new_column_name='control_id')
 
-    # In evidence: measure_id -> control_id
-    op.alter_column('evidence', 'measure_id', new_column_name='control_id')
+    # In evidence: measure_id -> control_id (if column exists)
+    try:
+        op.alter_column('evidence', 'measure_id', new_column_name='control_id')
+    except Exception:
+        pass
 
-    # In finding: measure_id -> control_id
-    op.alter_column('finding', 'measure_id', new_column_name='control_id')
+    # In finding: measure_id -> control_id (if column exists)
+    try:
+        op.alter_column('finding', 'measure_id', new_column_name='control_id')
+    except Exception:
+        pass
 
     # In gapanalysisitem: existing_measure_id -> existing_control_id
-    op.alter_column('gapanalysisitem', 'existing_measure_id', new_column_name='existing_control_id')
-
-    # In correctiveaction: measure_id -> control_id (if exists)
     try:
-        op.alter_column('correctiveaction', 'measure_id', new_column_name='control_id')
+        op.alter_column('gapanalysisitem', 'existing_measure_id', new_column_name='existing_control_id')
     except Exception:
-        pass  # Column may not exist
+        pass
 
     # In applicabilitystatement: rename columns if they exist
     try:
         op.alter_column('applicabilitystatement', 'local_measure_id', new_column_name='local_control_id')
+    except Exception:
+        pass
+    try:
         op.alter_column('applicabilitystatement', 'shared_measure_id', new_column_name='shared_control_id')
     except Exception:
-        pass  # Columns may not exist
+        pass
 
     # =========================================================================
     # STEP 4: Create New Tables
@@ -145,13 +153,21 @@ def upgrade() -> None:
         sa.Column('notes', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint('control_id', 'measure_id'),
-        sa.ForeignKeyConstraint(['control_id'], ['control.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['measure_id'], ['measure.id'], ondelete='CASCADE'),
     )
 
     # =========================================================================
     # STEP 5: Recreate Foreign Keys
     # =========================================================================
+
+    # controlmeasurelink FKs
+    op.create_foreign_key(
+        'controlmeasurelink_control_id_fkey', 'controlmeasurelink', 'control',
+        ['control_id'], ['id'], ondelete='CASCADE'
+    )
+    op.create_foreign_key(
+        'controlmeasurelink_measure_id_fkey', 'controlmeasurelink', 'measure',
+        ['measure_id'], ['id'], ondelete='CASCADE'
+    )
 
     # controlrisklink -> control
     op.create_foreign_key(
@@ -173,39 +189,62 @@ def upgrade() -> None:
         ['requirement_id'], ['id'], ondelete='CASCADE'
     )
 
-    # sharedcontrol -> control
+    # sharedcontrol FKs
     op.create_foreign_key(
         'sharedcontrol_control_id_fkey', 'sharedcontrol', 'control',
         ['control_id'], ['id'], ondelete='CASCADE'
     )
     op.create_foreign_key(
-        'sharedcontrol_provider_tenant_id_fkey', 'sharedcontrol', 'tenant',
-        ['provider_tenant_id'], ['id'], ondelete='CASCADE'
+        'sharedcontrol_consumer_tenant_id_fkey', 'sharedcontrol', 'tenant',
+        ['consumer_tenant_id'], ['id'], ondelete='CASCADE'
     )
 
-    # evidence -> control
-    op.create_foreign_key(
-        'evidence_control_id_fkey', 'evidence', 'control',
-        ['control_id'], ['id'], ondelete='SET NULL'
-    )
-
-    # finding -> control
-    op.create_foreign_key(
-        'finding_control_id_fkey', 'finding', 'control',
-        ['control_id'], ['id'], ondelete='SET NULL'
-    )
-
-    # gapanalysisitem -> control (existing_control_id)
-    op.create_foreign_key(
-        'gapanalysisitem_existing_control_id_fkey', 'gapanalysisitem', 'control',
-        ['existing_control_id'], ['id'], ondelete='SET NULL'
-    )
-
-    # correctiveaction -> control (if column exists)
+    # Recreate other sharedcontrol FKs that existed
     try:
         op.create_foreign_key(
-            'correctiveaction_control_id_fkey', 'correctiveaction', 'control',
+            'sharedcontrol_relationship_id_fkey', 'sharedcontrol', 'tenantrelationship',
+            ['relationship_id'], ['id'], ondelete='SET NULL'
+        )
+    except Exception:
+        pass
+    try:
+        op.create_foreign_key(
+            'sharedcontrol_local_contact_id_fkey', 'sharedcontrol', 'user',
+            ['local_contact_id'], ['id'], ondelete='SET NULL'
+        )
+    except Exception:
+        pass
+    try:
+        op.create_foreign_key(
+            'sharedcontrol_acknowledged_by_id_fkey', 'sharedcontrol', 'user',
+            ['acknowledged_by_id'], ['id'], ondelete='SET NULL'
+        )
+    except Exception:
+        pass
+
+    # evidence -> control
+    try:
+        op.create_foreign_key(
+            'evidence_control_id_fkey', 'evidence', 'control',
             ['control_id'], ['id'], ondelete='SET NULL'
+        )
+    except Exception:
+        pass
+
+    # finding -> control
+    try:
+        op.create_foreign_key(
+            'finding_control_id_fkey', 'finding', 'control',
+            ['control_id'], ['id'], ondelete='SET NULL'
+        )
+    except Exception:
+        pass
+
+    # gapanalysisitem -> control (existing_control_id)
+    try:
+        op.create_foreign_key(
+            'gapanalysisitem_existing_control_id_fkey', 'gapanalysisitem', 'control',
+            ['existing_control_id'], ['id'], ondelete='SET NULL'
         )
     except Exception:
         pass
@@ -217,6 +256,9 @@ def upgrade() -> None:
             'applicabilitystatement', 'control',
             ['local_control_id'], ['id'], ondelete='SET NULL'
         )
+    except Exception:
+        pass
+    try:
         op.create_foreign_key(
             'applicabilitystatement_shared_control_id_fkey',
             'applicabilitystatement', 'sharedcontrol',
@@ -225,58 +267,59 @@ def upgrade() -> None:
     except Exception:
         pass
 
-    # =========================================================================
-    # STEP 6: Update Indexes (if any named indexes need renaming)
-    # =========================================================================
-    # Most indexes will auto-update with table/column renames
-    # Add explicit index recreation here if needed
-
 
 def downgrade() -> None:
     """
     Reverse the migration - restore original table/column names.
     """
+    connection = op.get_bind()
+
+    def safe_drop_fk(table: str, constraint: str):
+        connection.execute(sa.text(
+            f"ALTER TABLE {table} DROP CONSTRAINT IF EXISTS {constraint}"
+        ))
 
     # Drop new table
     op.drop_table('controlmeasurelink')
 
     # Drop foreign keys
-    op.drop_constraint('controlrisklink_control_id_fkey', 'controlrisklink', type_='foreignkey')
-    op.drop_constraint('controlrisklink_risk_id_fkey', 'controlrisklink', type_='foreignkey')
-    op.drop_constraint('controlrequirementlink_control_id_fkey', 'controlrequirementlink', type_='foreignkey')
-    op.drop_constraint('controlrequirementlink_requirement_id_fkey', 'controlrequirementlink', type_='foreignkey')
-    op.drop_constraint('sharedcontrol_control_id_fkey', 'sharedcontrol', type_='foreignkey')
-    op.drop_constraint('sharedcontrol_provider_tenant_id_fkey', 'sharedcontrol', type_='foreignkey')
-    op.drop_constraint('evidence_control_id_fkey', 'evidence', type_='foreignkey')
-    op.drop_constraint('finding_control_id_fkey', 'finding', type_='foreignkey')
-    op.drop_constraint('gapanalysisitem_existing_control_id_fkey', 'gapanalysisitem', type_='foreignkey')
-
-    try:
-        op.drop_constraint('correctiveaction_control_id_fkey', 'correctiveaction', type_='foreignkey')
-    except Exception:
-        pass
-
-    try:
-        op.drop_constraint('applicabilitystatement_local_control_id_fkey', 'applicabilitystatement', type_='foreignkey')
-        op.drop_constraint('applicabilitystatement_shared_control_id_fkey', 'applicabilitystatement', type_='foreignkey')
-    except Exception:
-        pass
+    safe_drop_fk('controlrisklink', 'controlrisklink_control_id_fkey')
+    safe_drop_fk('controlrisklink', 'controlrisklink_risk_id_fkey')
+    safe_drop_fk('controlrequirementlink', 'controlrequirementlink_control_id_fkey')
+    safe_drop_fk('controlrequirementlink', 'controlrequirementlink_requirement_id_fkey')
+    safe_drop_fk('sharedcontrol', 'sharedcontrol_control_id_fkey')
+    safe_drop_fk('sharedcontrol', 'sharedcontrol_consumer_tenant_id_fkey')
+    safe_drop_fk('sharedcontrol', 'sharedcontrol_relationship_id_fkey')
+    safe_drop_fk('sharedcontrol', 'sharedcontrol_local_contact_id_fkey')
+    safe_drop_fk('sharedcontrol', 'sharedcontrol_acknowledged_by_id_fkey')
+    safe_drop_fk('evidence', 'evidence_control_id_fkey')
+    safe_drop_fk('finding', 'finding_control_id_fkey')
+    safe_drop_fk('gapanalysisitem', 'gapanalysisitem_existing_control_id_fkey')
+    safe_drop_fk('applicabilitystatement', 'applicabilitystatement_local_control_id_fkey')
+    safe_drop_fk('applicabilitystatement', 'applicabilitystatement_shared_control_id_fkey')
 
     # Rename columns back
     op.alter_column('controlrisklink', 'control_id', new_column_name='measure_id')
     op.alter_column('controlrequirementlink', 'control_id', new_column_name='measure_id')
     op.alter_column('sharedcontrol', 'control_id', new_column_name='measure_id')
-    op.alter_column('evidence', 'control_id', new_column_name='measure_id')
-    op.alter_column('finding', 'control_id', new_column_name='measure_id')
-    op.alter_column('gapanalysisitem', 'existing_control_id', new_column_name='existing_measure_id')
 
     try:
-        op.alter_column('correctiveaction', 'control_id', new_column_name='measure_id')
+        op.alter_column('evidence', 'control_id', new_column_name='measure_id')
     except Exception:
         pass
-
+    try:
+        op.alter_column('finding', 'control_id', new_column_name='measure_id')
+    except Exception:
+        pass
+    try:
+        op.alter_column('gapanalysisitem', 'existing_control_id', new_column_name='existing_measure_id')
+    except Exception:
+        pass
     try:
         op.alter_column('applicabilitystatement', 'local_control_id', new_column_name='local_measure_id')
+    except Exception:
+        pass
+    try:
         op.alter_column('applicabilitystatement', 'shared_control_id', new_column_name='shared_measure_id')
     except Exception:
         pass
@@ -301,11 +344,5 @@ def downgrade() -> None:
                           ['requirement_id'], ['id'])
     op.create_foreign_key('sharedmeasure_measure_id_fkey', 'sharedmeasure', 'measure',
                           ['measure_id'], ['id'])
-    op.create_foreign_key('sharedmeasure_provider_tenant_id_fkey', 'sharedmeasure', 'tenant',
-                          ['provider_tenant_id'], ['id'])
-    op.create_foreign_key('evidence_measure_id_fkey', 'evidence', 'measure',
-                          ['measure_id'], ['id'])
-    op.create_foreign_key('finding_measure_id_fkey', 'finding', 'measure',
-                          ['measure_id'], ['id'])
-    op.create_foreign_key('gapanalysisitem_existing_measure_id_fkey', 'gapanalysisitem', 'measure',
-                          ['existing_measure_id'], ['id'])
+    op.create_foreign_key('sharedmeasure_consumer_tenant_id_fkey', 'sharedmeasure', 'tenant',
+                          ['consumer_tenant_id'], ['id'])
