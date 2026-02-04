@@ -220,7 +220,7 @@ def supplier_row(supplier: dict) -> rx.Component:
             rx.vstack(
                 rx.text(supplier["name"], weight="medium", size="2"),
                 rx.cond(
-                    supplier.get("description"),
+                    supplier["description"],
                     rx.text(supplier["description"], size="1", color="gray", no_of_lines=1),
                     rx.text("Geen beschrijving", size="1", color="gray"),
                 ),
@@ -231,12 +231,12 @@ def supplier_row(supplier: dict) -> rx.Component:
         rx.table.cell(
             rx.vstack(
                 rx.cond(
-                    supplier.get("vendor_contact_name"),
+                    supplier["vendor_contact_name"],
                     rx.text(supplier["vendor_contact_name"], size="2"),
                     rx.text("-", size="2"),
                 ),
                 rx.cond(
-                    supplier.get("vendor_contact_email"),
+                    supplier["vendor_contact_email"],
                     rx.text(supplier["vendor_contact_email"], size="1", color="blue"),
                     rx.text("-", size="1", color="gray"),
                 ),
@@ -246,7 +246,7 @@ def supplier_row(supplier: dict) -> rx.Component:
         ),
         rx.table.cell(
             rx.cond(
-                supplier.get("owner"),
+                supplier["owner"],
                 rx.text(supplier["owner"], size="2"),
                 rx.text("-", size="2"),
             ),

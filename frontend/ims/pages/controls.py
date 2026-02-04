@@ -322,6 +322,26 @@ def control_form_dialog() -> rx.Component:
                     width="100%",
                 ),
 
+                rx.vstack(
+                    rx.text("Gekoppeld aan Scope/Asset", size="2", weight="medium"),
+                    rx.select.root(
+                        rx.select.trigger(placeholder="Selecteer scope of asset..."),
+                        rx.select.content(
+                            rx.foreach(
+                                ControlState.scopes,
+                                lambda scope: rx.select.item(
+                                    scope["name"],
+                                    value=scope["id"].to_string(),
+                                ),
+                            ),
+                        ),
+                        value=ControlState.form_scope_id,
+                        on_change=ControlState.set_form_scope_id,
+                    ),
+                    align_items="start",
+                    width="100%",
+                ),
+
                 spacing="3",
                 width="100%",
             ),

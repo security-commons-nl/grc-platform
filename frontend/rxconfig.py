@@ -7,6 +7,7 @@ config = rx.Config(
 
     # Use port 8002 for Reflex backend (8001 is used by FastAPI)
     backend_port=8002,
+    frontend_port=3000,
     
     # Disable telemetry and branding
     telemetry_enabled=False,

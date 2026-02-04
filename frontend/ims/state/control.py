@@ -10,6 +10,7 @@ class ControlState(rx.State):
     """Control management state."""
 
     controls: List[Dict[str, Any]] = []
+    scopes: List[Dict[str, Any]] = []  # Available scopes for linking
     selected_control: Dict[str, Any] = {}
 
     # Filters
@@ -64,6 +65,8 @@ class ControlState(rx.State):
                 params["status"] = self.filter_status
 
             self.controls = await api_client.get_controls(**params)
+            # Also load scopes for the dropdown
+            self.scopes = await api_client.get_scopes()
         except Exception as e:
             self.error = f"Kan controls niet laden: {str(e)}"
             self.controls = []
@@ -135,6 +138,9 @@ class ControlState(rx.State):
     def set_form_automation_level(self, value: str):
         self.form_automation_level = value
 
+    def set_form_scope_id(self, value: str):
+        self.form_scope_id = value
+
     # ==========================================================================
     # CRUD METHODS
     # ==========================================================================
@@ -152,6 +158,7 @@ class ControlState(rx.State):
                 "status": self.form_status,
                 "control_type": self.form_control_type,
                 "automation_level": self.form_automation_level,
+                "scope_id": int(self.form_scope_id) if self.form_scope_id else None,
                 "tenant_id": 1,
             }
 
