@@ -319,7 +319,7 @@ class IssueType(str, Enum):
 
 class AttentionQuadrant(str, Enum):
     """
-    "In Control" model - determines HOW MUCH attention a risk gets.
+    Leiden "In Control" model - determines HOW MUCH attention a risk gets.
     Based on Impact (inherent) vs Vulnerability (residual likelihood after controls).
 
     Matrix:
@@ -1396,7 +1396,7 @@ class ApplicabilityStatement(SQLModel, table=True):
 class Risk(SQLModel, table=True):
     """
     A potential negative event linked to a Scope.
-    Supports the "In Control" risk management model:
+    Supports the Leiden "In Control" risk management model:
     - Inherent risk (before controls)
     - Residual risk / Vulnerability (after controls)
     - Treatment strategy based on Impact vs Vulnerability matrix
@@ -1420,7 +1420,7 @@ class Risk(SQLModel, table=True):
     vulnerability: Optional[str] = None
 
     # ==========================================================================
-    # "IN CONTROL" MODEL - RISK ASSESSMENT
+    # LEIDEN "IN CONTROL" MODEL - RISK ASSESSMENT
     # ==========================================================================
 
     # --- Inherent Risk (before controls) ---
@@ -1433,7 +1433,7 @@ class Risk(SQLModel, table=True):
     inherent_risk_score: Optional[int] = None
 
     # --- Residual Risk / Vulnerability (after controls) ---
-    # This represents the "Kwetsbaarheid" in the In Control model
+    # This represents the "Kwetsbaarheid" in the Leiden model
     # How vulnerable are we AFTER considering existing measures?
     residual_likelihood: Optional[RiskLevel] = None
     residual_impact: Optional[RiskLevel] = None
@@ -1441,7 +1441,7 @@ class Risk(SQLModel, table=True):
     # Calculated residual risk score
     residual_risk_score: Optional[int] = None
 
-    # --- Vulnerability Score ("Kwetsbaarheid") ---
+    # --- Vulnerability Score (Leiden "Kwetsbaarheid") ---
     # Combines residual likelihood with control effectiveness
     # Higher score = more vulnerable = less effective controls
     vulnerability_score: Optional[int] = None  # 0-100, higher = more vulnerable
@@ -1450,7 +1450,7 @@ class Risk(SQLModel, table=True):
     control_effectiveness_pct: Optional[int] = None  # 0-100%
 
     # ==========================================================================
-    # ATTENTION STRATEGY (In Control Quadrant)
+    # ATTENTION STRATEGY (Leiden Quadrant)
     # ==========================================================================
 
     # Which quadrant is this risk in? (based on Impact × Vulnerability)
@@ -2201,7 +2201,7 @@ class RiskAppetite(SQLModel, table=True):
     Risk appetite definition at organizational (tenant) level.
     Defines how much risk the organization is willing to accept per domain.
 
-    This is a key input for the "In Control" model:
+    This is a key input for the Leiden "In Control" model:
     - Determines thresholds for when risks need treatment
     - Guides the treatment_strategy selection
     """
@@ -2984,7 +2984,7 @@ class AIKnowledgeBase(SQLModel, table=True):
 
     This is the "brain" of the AI - what it knows about:
     - The IMS platform itself
-    - Risk management methodologies (In Control, traditional)
+    - Risk management methodologies (Leiden, traditional)
     - Frameworks (BIO, ISO 27001, AVG)
     - Best practices
     - Terminology
@@ -3141,7 +3141,7 @@ class AIAgent(SQLModel, table=True):
 
     # Domain
     domain: str  # "isms", "pims", "bcms", "management", "system"
-    expertise_areas: str  # JSON array: ["risk_assessment", "mapgood", "in_control_model"]
+    expertise_areas: str  # JSON array: ["risk_assessment", "mapgood", "leiden_model"]
 
     # When to activate this agent
     trigger_contexts: str  # JSON: ["risk_detail", "risk_list", "risk_create"]

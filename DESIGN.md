@@ -51,8 +51,11 @@ The IMS is a **Governance, Risk, and Compliance (GRC)** platform designed to enf
 7.  **Dashboard**: AI-Generated UI views persisted for users.
 
 ### C. Verification & Improvement (The "Check" & "Act")
-8.  **Audit**: A point-in-time review event (e.g. "Q1 2026 Audit").
-    *   *Structure*: Audit -> Findings -> Evidence.
+8.  **Assessment (Traject)**: A generic compliance project (Start Date -> Deadline).
+    *   **Types**: Self-Assessment (ENSIA), Audit (BIO), Pentest, DPIA, Compliance Journey.
+    *   **Features**: Timeline Planning, "Requirement Set" selection (via Standard), Team Assignment.
+    *   *Structure*: Assessment -> Findings -> Evidence.
+    *   *AI Support*: Generates timelines, suggests Controls based on Traject Type.
 9.  **Evidence**: Proof of compliance (Documents, Screenshots).
 10. **Incident**: Real-world security failures.
     *   *Traceability*: Incident -> Root Cause -> Corrective Action.

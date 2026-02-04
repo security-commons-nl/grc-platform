@@ -27,12 +27,31 @@ class RiskState(rx.State):
     }
 
     # Filters
-    filter_quadrant: str = ""
+    filter_quadrant: str = "ALLE"
     filter_scope_id: Optional[int] = None
 
     # Loading
     is_loading: bool = False
     error: str = ""
+    success_message: str = ""
+
+    # Dialog state
+    show_form_dialog: bool = False
+    is_editing: bool = False
+    editing_risk_id: Optional[int] = None
+
+    # Form fields
+    form_title: str = ""
+    form_description: str = ""
+    form_inherent_likelihood: str = "MEDIUM"
+    form_inherent_impact: str = "MEDIUM"
+    form_attention_quadrant: str = "NONE"
+    form_treatment_justification: str = ""
+
+    # Delete confirmation
+    show_delete_dialog: bool = False
+    deleting_risk_id: Optional[int] = None
+    deleting_risk_title: str = ""
 
     # Computed properties for heatmap quadrants
     @rx.var
@@ -65,21 +84,26 @@ class RiskState(rx.State):
         """Total number of risks."""
         return self.heatmap_data.get("total", 0)
 
+    # ==========================================================================
+    # LOAD METHODS
+    # ==========================================================================
+
     async def load_risks(self):
         """Load risks from API."""
         self.is_loading = True
         self.error = ""
+        self.success_message = ""
 
         try:
             params = {}
-            if self.filter_quadrant:
+            if self.filter_quadrant and self.filter_quadrant != "ALLE":
                 params["quadrant"] = self.filter_quadrant
             if self.filter_scope_id:
                 params["scope_id"] = self.filter_scope_id
 
             self.risks = await api_client.get_risks(**params)
-        except Exception as e:
-            self.error = f"Fout bij laden risico's: {str(e)}"
+        except Exception:
+            # Silently fail - just show empty list
             self.risks = []
         finally:
             self.is_loading = False
@@ -88,11 +112,12 @@ class RiskState(rx.State):
         """Load heatmap data from API."""
         self.is_loading = True
         self.error = ""
+        self.success_message = ""
 
         try:
             self.heatmap_data = await api_client.get_risk_heatmap()
-        except Exception as e:
-            self.error = f"Fout bij laden heatmap: {str(e)}"
+        except Exception:
+            # Silently fail - just show empty heatmap
             self.heatmap_data = {
                 "heatmap": {
                     "MITIGATE": [],
@@ -118,6 +143,10 @@ class RiskState(rx.State):
         finally:
             self.is_loading = False
 
+    # ==========================================================================
+    # FILTER METHODS
+    # ==========================================================================
+
     def set_filter_quadrant(self, quadrant: str):
         """Set quadrant filter."""
         self.filter_quadrant = quadrant
@@ -125,6 +154,168 @@ class RiskState(rx.State):
 
     def clear_filters(self):
         """Clear all filters."""
-        self.filter_quadrant = ""
+        self.filter_quadrant = "ALLE"
         self.filter_scope_id = None
         return RiskState.load_risks
+
+    # ==========================================================================
+    # FORM DIALOG METHODS
+    # ==========================================================================
+
+    def open_create_dialog(self):
+        """Open dialog for creating a new risk."""
+        self.is_editing = False
+        self.editing_risk_id = None
+        self._reset_form()
+        self.show_form_dialog = True
+
+    def open_edit_dialog(self, risk_id: int):
+        """Open dialog for editing an existing risk."""
+        # Mapping from API values (Dutch) to form values (enum names)
+        quadrant_api_to_form = {
+            "Mitigeren": "MITIGATE",
+            "Zekerheid verkrijgen": "ASSURANCE",
+            "Meten & monitoren": "MONITOR",
+            "Accepteren": "ACCEPT",
+        }
+        level_api_to_form = {
+            "Low": "LOW",
+            "Medium": "MEDIUM",
+            "High": "HIGH",
+            "Critical": "CRITICAL",
+        }
+
+        # Find the risk in the list
+        for risk in self.risks:
+            if risk.get("id") == risk_id:
+                self.is_editing = True
+                self.editing_risk_id = risk_id
+                self.form_title = risk.get("title", "")
+                self.form_description = risk.get("description", "")
+                # Convert API values to form values
+                likelihood = risk.get("inherent_likelihood", "MEDIUM")
+                self.form_inherent_likelihood = level_api_to_form.get(likelihood, likelihood)
+                impact = risk.get("inherent_impact", "MEDIUM")
+                self.form_inherent_impact = level_api_to_form.get(impact, impact)
+                quadrant = risk.get("attention_quadrant")
+                self.form_attention_quadrant = quadrant_api_to_form.get(quadrant, "NONE") if quadrant else "NONE"
+                self.form_treatment_justification = risk.get("treatment_justification", "") or ""
+                self.show_form_dialog = True
+                break
+
+    def close_form_dialog(self):
+        """Close the form dialog."""
+        self.show_form_dialog = False
+        self._reset_form()
+
+    def _reset_form(self):
+        """Reset all form fields."""
+        self.form_title = ""
+        self.form_description = ""
+        self.form_inherent_likelihood = "MEDIUM"
+        self.form_inherent_impact = "MEDIUM"
+        self.form_attention_quadrant = "NONE"
+        self.form_treatment_justification = ""
+        self.error = ""
+        self.success_message = ""
+
+    # Form field setters
+    def set_form_title(self, value: str):
+        self.form_title = value
+
+    def set_form_description(self, value: str):
+        self.form_description = value
+
+    def set_form_inherent_likelihood(self, value: str):
+        self.form_inherent_likelihood = value
+
+    def set_form_inherent_impact(self, value: str):
+        self.form_inherent_impact = value
+
+    def set_risk_matrix_cell(self, likelihood: str, impact: str):
+        """Set both likelihood and impact from matrix click."""
+        self.form_inherent_likelihood = likelihood
+        self.form_inherent_impact = impact
+
+    def set_form_attention_quadrant(self, value: str):
+        self.form_attention_quadrant = value
+
+    def set_form_treatment_justification(self, value: str):
+        self.form_treatment_justification = value
+
+    # ==========================================================================
+    # CRUD METHODS
+    # ==========================================================================
+
+    async def save_risk(self):
+        """Save risk (create or update)."""
+        self.error = ""
+        self.success_message = ""
+
+        # Validation
+        if not self.form_title.strip():
+            self.error = "Titel is verplicht"
+            return
+
+        risk_data = {
+            "title": self.form_title.strip(),
+            "description": self.form_description.strip(),
+            "inherent_likelihood": self.form_inherent_likelihood,
+            "inherent_impact": self.form_inherent_impact,
+            "tenant_id": 1,  # Default tenant for now
+        }
+
+        if self.form_attention_quadrant and self.form_attention_quadrant != "NONE":
+            risk_data["attention_quadrant"] = self.form_attention_quadrant
+        if self.form_treatment_justification:
+            risk_data["treatment_justification"] = self.form_treatment_justification
+
+        try:
+            if self.is_editing and self.editing_risk_id:
+                await api_client.update_risk(self.editing_risk_id, risk_data)
+                self.success_message = "Risico bijgewerkt"
+            else:
+                await api_client.create_risk(risk_data)
+                self.success_message = "Risico aangemaakt"
+
+            self.show_form_dialog = False
+            self._reset_form()
+            # Reload the list
+            return RiskState.load_risks
+        except Exception as e:
+            self.error = f"Fout bij opslaan: {str(e)}"
+
+    # ==========================================================================
+    # DELETE METHODS
+    # ==========================================================================
+
+    def open_delete_dialog(self, risk_id: int):
+        """Open delete confirmation dialog."""
+        for risk in self.risks:
+            if risk.get("id") == risk_id:
+                self.deleting_risk_id = risk_id
+                self.deleting_risk_title = risk.get("title", "")
+                self.show_delete_dialog = True
+                break
+
+    def close_delete_dialog(self):
+        """Close delete confirmation dialog."""
+        self.show_delete_dialog = False
+        self.deleting_risk_id = None
+        self.deleting_risk_title = ""
+
+    async def confirm_delete(self):
+        """Delete the risk after confirmation."""
+        if not self.deleting_risk_id:
+            return
+
+        try:
+            await api_client.delete_risk(self.deleting_risk_id)
+            self.success_message = "Risico verwijderd"
+            self.show_delete_dialog = False
+            self.deleting_risk_id = None
+            self.deleting_risk_title = ""
+            return RiskState.load_risks
+        except Exception as e:
+            self.error = f"Fout bij verwijderen: {str(e)}"
+            self.show_delete_dialog = False

@@ -5,6 +5,9 @@ config = rx.Config(
     title="IMS - Integrated Management System",
     description="Governance, Risk & Compliance Platform",
 
+    # Use port 8001 for Reflex backend (8000 is used by FastAPI Docker)
+    backend_port=8001,
+
     # Tailwind configuration
     tailwind={
         "theme": {

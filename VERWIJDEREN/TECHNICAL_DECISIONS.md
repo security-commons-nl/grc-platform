@@ -82,7 +82,7 @@ ims/
 │   │   ├── tables.py           # Data tables
 │   │   ├── forms.py            # Form components
 │   │   ├── charts.py           # Visualisaties
-│   │   ├── heatmap.py          # Risk heatmap (In Control model)
+│   │   ├── heatmap.py          # Leiden heatmap
 │   │   ├── workflow.py         # Workflow visualisatie
 │   │   └── chat_island.py      # AI Chat Island
 │   │
@@ -327,7 +327,7 @@ def suggestion_cards(suggestions: list) -> rx.Component:
     )
 ```
 
-#### Risk Heatmap (In Control Model)
+#### Leiden Heatmap
 
 ```python
 # ims/components/heatmap.py
@@ -377,8 +377,8 @@ def quadrant_cell(
         width="100%",
     )
 
-def risk_heatmap() -> rx.Component:
-    """'In Control' model heatmap for risk management."""
+def leiden_heatmap() -> rx.Component:
+    """Leiden 'In Control' model heatmap."""
     return rx.box(
         # Y-as label
         rx.box(
@@ -1315,7 +1315,7 @@ def layout(content: rx.Component) -> rx.Component:
 - [ ] Auth state met login/logout flow
 - [ ] AI Chat Island component gebouwd met streaming
 - [ ] Suggestion cards met accept/reject/modify
-- [ ] Risk heatmap (In Control model) werkend
+- [ ] Leiden heatmap werkend
 - [ ] AI health check voor graceful degradation
 
 ### AI Governance

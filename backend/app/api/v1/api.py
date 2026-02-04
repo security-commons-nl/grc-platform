@@ -7,6 +7,10 @@ from app.api.v1.endpoints import (
     assessments,
     incidents,
     policies,
+    workflows,
+    soa,
+    reports,
+    backlog,
 )
 
 api_router = APIRouter()
@@ -58,4 +62,32 @@ api_router.include_router(
     incidents.router,
     prefix="/incidents",
     tags=["Improvement: Incidents"]
+)
+
+# Workflows
+api_router.include_router(
+    workflows.router,
+    prefix="/workflows",
+    tags=["Workflows"]
+)
+
+# Statement of Applicability (Compliance)
+api_router.include_router(
+    soa.router,
+    prefix="/soa",
+    tags=["Statement of Applicability"]
+)
+
+# Reports & Dashboard
+api_router.include_router(
+    reports.router,
+    prefix="/reports",
+    tags=["Reports & Dashboard"]
+)
+
+# Backlog
+api_router.include_router(
+    backlog.router,
+    prefix="/backlog",
+    tags=["Backlog"]
 )

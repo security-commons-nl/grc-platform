@@ -82,15 +82,6 @@ def login_page() -> rx.Component:
                     width="100%",
                 ),
 
-                rx.divider(margin_y="16px"),
-
-                rx.text(
-                    "Demo: voer een willekeurige gebruikersnaam in",
-                    size="1",
-                    color="gray",
-                    text_align="center",
-                ),
-
                 spacing="2",
                 width="100%",
                 padding="24px",

@@ -1,2 +1,2 @@
 from .layout import layout, sidebar
-from .heatmap import risk_heatmap
+from .heatmap import leiden_heatmap

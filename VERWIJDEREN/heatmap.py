@@ -1,7 +1,6 @@
 """
-Risk Heatmap Component
+Leiden Heatmap Component
 Displays risks in the four quadrants: Mitigate, Assurance, Monitor, Accept
-Based on the 'In Control' model (Impact vs Vulnerability matrix)
 """
 import reflex as rx
 from ims.state.risk import RiskState
@@ -70,9 +69,9 @@ def quadrant_cell(
     )
 
 
-def risk_heatmap() -> rx.Component:
+def leiden_heatmap() -> rx.Component:
     """
-    'In Control' model heatmap for risk management.
+    Leiden 'In Control' model heatmap.
 
     Layout:
                      IMPACT
@@ -90,7 +89,7 @@ def risk_heatmap() -> rx.Component:
         rx.hstack(
             rx.vstack(
                 rx.heading("Risico Heatmap", size="4"),
-                rx.text("'In Control' Model", size="2", color="gray"),
+                rx.text("Leiden 'In Control' Model", size="2", color="gray"),
                 align_items="start",
             ),
             rx.spacer(),

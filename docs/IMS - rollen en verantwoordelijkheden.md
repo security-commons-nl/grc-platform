@@ -50,3 +50,114 @@ In het systeem wordt autorisatie geregeld op **Scope** niveau. Iemand kan "Proce
     *   Analyseert bewijslast ("Pre-Audit").
     *   Draft beleidsteksten en incident samenvattingen.
     *   *Let op*: De AI neemt **nooit** besluiten (Risk Acceptance of Policy Approval is altijd menselijk).
+
+---
+
+## 3. Drielijnenmodel (Three Lines of Defense)
+
+Het platform ondersteunt het drielijnenmodel voor governance. Dit bepaalt welke functionaliteiten beschikbaar zijn per lijn.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  DERDELIJN - Audit & Toezicht                                               │
+│  Interne audit, externe auditors, toezichthouders                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  TWEEDELIJN - GRC Specialisten                                              │
+│  CISO, Privacy Officer, Security Officers, Compliance Officers              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  EERSTELIJN - Operatie                                                      │
+│  Proceseigenaren, lijnmanagers, teamleads, uitvoerenden                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Eerstelijn (Operatie)
+**Wie**: Proceseigenaren, lijnmanagers, medewerkers
+
+**Toegang tot:**
+| Module | Rechten |
+|--------|---------|
+| Dashboard | Eigen scope(s) bekijken |
+| Risico's | Eigen risico's beheren, kans/impact inschatten |
+| Maatregelen | Eigen maatregelen beheren, evidence uploaden |
+| Assessments | Self-assessments invullen |
+| Incidenten | Melden en eigen incidenten volgen |
+| Scopes | Eigen scope informatie bijwerken (BIA, eigenaar) |
+
+**Geen toegang tot:**
+- Framework beheer
+- Requirement mappings
+- Organisatie-breed beleid opstellen
+- Andere scopes (tenzij gedeeld)
+
+---
+
+### Tweedelijn (GRC Specialisten)
+**Wie**: CISO, Privacy Officer, Security Officers, Risk Managers, Compliance Officers
+
+**Toegang tot:**
+| Module | Rechten |
+|--------|---------|
+| **Frameworks** | Standaarden beheren (ISO 27001, BIO, AVG) |
+| **Requirements** | Eisen per framework beheren |
+| **Mappings** | Rosetta Stone - cross-framework mappings beheren |
+| **Beleid** | Organisatie-breed beleid opstellen en publiceren |
+| **Templates** | Risico- en maatregelentemplates beheren |
+| Dashboard | Organisatie-breed overzicht |
+| Risico's | Alle risico's inzien, templates toewijzen |
+| Maatregelen | Alle maatregelen inzien, effectiviteit monitoren |
+| Assessments | Assessments plannen en toewijzen |
+| Rapportages | Management rapportages genereren |
+
+**Kernverantwoordelijkheden:**
+- Normenkaders up-to-date houden
+- Mappings tussen frameworks onderhouden (evt. met AI-ondersteuning)
+- Risicoregister bewaken
+- Compliance status monitoren
+- Eerstelijn ondersteunen en adviseren
+
+---
+
+### Derdelijn (Audit & Toezicht)
+**Wie**: Interne auditors, externe auditors, toezichthouders
+
+**Toegang tot:**
+| Module | Rechten |
+|--------|---------|
+| Dashboard | Volledige read-only toegang |
+| Risico's | Inzien (geen wijzigingen) |
+| Maatregelen | Inzien incl. evidence |
+| Assessments | Audits uitvoeren, findings vastleggen |
+| Rapportages | Audit trails, compliance rapportages |
+| Traceability | Click-through: Norm → Risico → Maatregel → Bewijs |
+
+**Geen toegang tot:**
+- Wijzigen van data (read-only)
+- Framework beheer (wel inzien)
+- Beleid wijzigen (wel inzien)
+
+**Kernverantwoordelijkheden:**
+- Onafhankelijke toetsing
+- Findings rapporteren
+- Aanbevelingen doen (via Corrective Actions)
+
+---
+
+## 4. Platform Modules per Lijn
+
+| Module | Eerstelijn | Tweedelijn | Derdelijn |
+|--------|:----------:|:----------:|:---------:|
+| Dashboard | ✓ (eigen) | ✓ (alles) | ✓ (read) |
+| Risico's | ✓ (eigen) | ✓ (alles) | 👁 (read) |
+| Maatregelen | ✓ (eigen) | ✓ (alles) | 👁 (read) |
+| Scopes | ✓ (eigen) | ✓ (alles) | 👁 (read) |
+| Assessments | ✓ (invullen) | ✓ (plannen) | ✓ (auditen) |
+| Incidenten | ✓ (melden) | ✓ (beheren) | 👁 (read) |
+| Beleid | 👁 (lezen) | ✓ (beheren) | 👁 (read) |
+| **Frameworks** | ❌ | ✓ | 👁 (read) |
+| **Requirements** | ❌ | ✓ | 👁 (read) |
+| **Mappings** | ❌ | ✓ | 👁 (read) |
+| **Templates** | ❌ | ✓ | 👁 (read) |
+| Rapportages | ✓ (eigen) | ✓ (alles) | ✓ (audit) |
+| Gebruikersbeheer | ❌ | ✓ (Admin) | ❌ |
+
+**Legenda:** ✓ = Volledige toegang | 👁 = Read-only | ❌ = Geen toegang

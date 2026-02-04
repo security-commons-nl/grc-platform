@@ -5,7 +5,7 @@ import reflex as rx
 from ims.state.auth import AuthState
 from ims.state.risk import RiskState
 from ims.components.layout import layout
-from ims.components.heatmap import risk_heatmap
+from ims.components.heatmap import leiden_heatmap
 
 
 def stat_card(title: str, value: rx.Var, icon: str, color: str) -> rx.Component:
@@ -72,7 +72,7 @@ def dashboard_content() -> rx.Component:
         # Heatmap
         rx.box(
             rx.card(
-                risk_heatmap(),
+                leiden_heatmap(),
                 padding="20px",
             ),
             width="100%",

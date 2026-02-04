@@ -1,16 +1,16 @@
 """
-Auth State - handles user authentication
+Auth State - handles user authentication with persistence
 """
 import reflex as rx
-from typing import Optional, Dict, Any
+from typing import Dict, Any
+import json
 
 
 class AuthState(rx.State):
-    """Authentication state."""
+    """Authentication state with localStorage persistence."""
 
-    # User info
-    user: Dict[str, Any] = {}
-    is_authenticated: bool = False
+    # User info (persisted in localStorage)
+    _user_json: str = rx.LocalStorage(name="ims_user")
 
     # Login form
     username: str = ""
@@ -19,22 +19,38 @@ class AuthState(rx.State):
     is_logging_in: bool = False
 
     @rx.var
+    def user(self) -> Dict[str, Any]:
+        """Get user from localStorage."""
+        if self._user_json:
+            try:
+                return json.loads(self._user_json)
+            except:
+                return {}
+        return {}
+
+    @rx.var
+    def is_authenticated(self) -> bool:
+        """Check if user is logged in."""
+        return bool(self._user_json and self._user_json != "")
+
+    @rx.var
     def user_display_name(self) -> str:
         """Get user's display name."""
-        if self.user:
-            return self.user.get("full_name") or self.user.get("username", "User")
+        user = self.user
+        if user:
+            return user.get("full_name") or user.get("username", "User")
         return "Guest"
 
     @rx.var
     def user_email(self) -> str:
         """Get user's email."""
-        return self.user.get("email", "") if self.user else ""
+        user = self.user
+        return user.get("email", "") if user else ""
 
     async def login(self):
         """
         Attempt to log in.
         For now, this is a simple simulation - accepts any username.
-        TODO: Implement proper JWT auth when backend supports it.
         """
         self.is_logging_in = True
         self.login_error = ""
@@ -44,16 +60,15 @@ class AuthState(rx.State):
             self.is_logging_in = False
             return
 
-        # Simulate successful login
-        # In production, this would call the auth API
-        self.user = {
+        # Simulate successful login - store in localStorage
+        user_data = {
             "id": 1,
             "username": self.username,
             "full_name": self.username.title(),
             "email": f"{self.username}@example.com",
             "is_active": True,
         }
-        self.is_authenticated = True
+        self._user_json = json.dumps(user_data)
         self.is_logging_in = False
         self.username = ""
         self.password = ""
@@ -63,8 +78,7 @@ class AuthState(rx.State):
 
     def logout(self):
         """Log out the current user."""
-        self.user = {}
-        self.is_authenticated = False
+        self._user_json = ""
         return rx.redirect("/login")
 
     def set_username(self, value: str):

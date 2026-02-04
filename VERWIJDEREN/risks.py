@@ -1,7 +1,7 @@
 """
 Risk Management Endpoints
 Handles Risks, Measures, and their linkages.
-Implements the "In Control" risk management model.
+Implements the Leiden "In Control" risk management model.
 """
 from typing import List, Optional
 from datetime import datetime
@@ -232,7 +232,7 @@ async def revoke_risk_acceptance(
 
 
 # =============================================================================
-# ATTENTION QUADRANT (In Control Model)
+# ATTENTION QUADRANT (Leiden Model)
 # =============================================================================
 
 @router.patch("/{risk_id}/quadrant", response_model=Risk)
@@ -246,7 +246,7 @@ async def set_risk_quadrant(
     """
     Set the attention quadrant for a risk.
 
-    Quadrants ("In Control" model):
+    Quadrants (Leiden "In Control" model):
     - MITIGATE: High impact, high vulnerability → reduce/transfer/avoid
     - ASSURANCE: High impact, low vulnerability → verify controls work
     - MONITOR: Low impact, high vulnerability → watch for changes
