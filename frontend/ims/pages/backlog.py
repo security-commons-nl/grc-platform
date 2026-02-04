@@ -4,6 +4,7 @@ Backlog Page - Track improvement requests and ideas
 import reflex as rx
 from ims.components.layout import layout
 from ims.state.backlog import BacklogState
+from ims.state.auth import AuthState
 
 
 def status_badge(status: str) -> rx.Component:
@@ -104,7 +105,7 @@ def backlog_item_card(item: dict) -> rx.Component:
                     variant="soft",
                     color_scheme="red",
                     on_click=lambda: BacklogState.open_delete_dialog(item["id"]),
-                    display=rx.cond(BacklogState.is_admin, "flex", "none"),
+                    display=rx.cond(AuthState.is_admin, "flex", "none"),
                 ),
                 width="100%",
             ),
@@ -147,7 +148,7 @@ def form_dialog() -> rx.Component:
                 
                 # Admin controls
                 rx.cond(
-                    BacklogState.is_admin,
+                    AuthState.is_admin,
                     rx.vstack(
                         rx.divider(),
                         rx.text("Admin Instellingen", size="2", weight="bold", color="tomato"),
@@ -198,7 +199,7 @@ def form_dialog() -> rx.Component:
                     BacklogState.error != "",
                     rx.callout(
                         BacklogState.error,
-                        icon="alert_triangle",
+                        icon="triangle_alert",
                         color_scheme="red",
                         role="alert",
                     ),

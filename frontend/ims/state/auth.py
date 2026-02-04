@@ -47,6 +47,16 @@ class AuthState(rx.State):
         user = self.user
         return user.get("email", "") if user else ""
 
+    @rx.var
+    def is_admin(self) -> bool:
+        """Check if user is admin."""
+        user = self.user
+        if not user:
+            return False
+        # Check for ID 1 or username "admin"
+        # Note: self.user is a python dict here because we are inside the instance method
+        return (user.get("id") == 1) or (str(user.get("username", "")).lower() == "admin")
+
     async def login(self):
         """
         Attempt to log in.

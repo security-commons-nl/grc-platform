@@ -39,18 +39,6 @@ class BacklogState(rx.State):
     deleting_item_id: Optional[int] = None
     deleting_item_title: str = ""
 
-    @rx.var
-    def is_admin(self) -> bool:
-        """Check if current user is admin (simulated)."""
-        # In a real app check permissions/roles
-        # For now, simplistic check or assume user ID 1 is admin
-        user = AuthState.user(self)
-        if not user:
-            return False
-            
-        # Simulating simple admin check - user ID 1 or username "admin"
-        return user.get("id") == 1 or user.get("username", "").lower() == "admin"
-
     # ==========================================================================
     # LOAD METHODS
     # ==========================================================================
@@ -183,8 +171,10 @@ class BacklogState(rx.State):
         item_data["status"] = self.form_status
         
         # Add submitter info on create
+        # Add submitter info on create
         if not self.is_editing:
-            user = AuthState.user(self)
+            auth_state = await self.get_state(AuthState)
+            user = auth_state.user
             if user:
                 item_data["submitted_by_id"] = user.get("id")
                 item_data["submitter_name"] = user.get("full_name")
