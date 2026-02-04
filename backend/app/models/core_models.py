@@ -501,16 +501,22 @@ class BacklogStatus(str, Enum):
 class BacklogItem(SQLModel, table=True):
     """
     Backlog item for improvement requests and ideas.
+    Uses User Story format: "Als [rol], wil ik [actie], zodat [doel]"
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: Optional[int] = Field(default=None, foreign_key="tenant.id")
 
-    title: str
-    description: str
+    title: str  # Auto-generated from user story or manual
+    description: str  # Legacy field, can be empty for new items
+    
+    # User Story Format (preferred for new items)
+    user_role: Optional[str] = None      # "Als een Process Owner..."
+    user_want: Optional[str] = None      # "...wil ik rapportages exporteren..."
+    user_so_that: Optional[str] = None   # "...zodat ik aan management kan rapporteren"
     
     item_type: BacklogType = BacklogType.FUNCTIONAL
-    priority: BacklogPriority = BacklogPriority.MEDIUM
-    status: BacklogStatus = BacklogStatus.NEW
+    priority: BacklogPriority = BacklogPriority.MEDIUM  # Set by admin only
+    status: BacklogStatus = BacklogStatus.NEW  # Set by admin only
 
     # Submitter info
     submitted_by_id: Optional[int] = Field(default=None, foreign_key="user.id")

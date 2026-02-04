@@ -27,17 +27,55 @@ class BacklogState(rx.State):
     is_editing: bool = False
     editing_item_id: Optional[int] = None
 
-    # Form fields
+    # Form fields (legacy)
     form_title: str = ""
     form_description: str = ""
     form_type: str = "Functioneel"
     form_priority: str = "Middel"
     form_status: str = "Nieuw"
     
+    # User Story form fields (new)
+    form_user_role: str = "Process Owner"
+    form_user_want: str = ""
+    form_user_so_that: str = ""
+    
     # Delete confirmation
     show_delete_dialog: bool = False
     deleting_item_id: Optional[int] = None
     deleting_item_title: str = ""
+    
+    # Kanban column definitions
+    KANBAN_STATUSES: List[str] = ["Nieuw", "In Review", "Goedgekeurd", "In Uitvoering", "Gereed"]
+
+    @rx.var
+    def items_by_status(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Group items by status for Kanban view."""
+        grouped = {status: [] for status in self.KANBAN_STATUSES}
+        for item in self.items:
+            status = item.get("status", "Nieuw")
+            if status in grouped:
+                grouped[status].append(item)
+        return grouped
+    
+    @rx.var
+    def items_nieuw(self) -> List[Dict[str, Any]]:
+        return [i for i in self.items if i.get("status") == "Nieuw"]
+    
+    @rx.var
+    def items_review(self) -> List[Dict[str, Any]]:
+        return [i for i in self.items if i.get("status") == "In Review"]
+    
+    @rx.var
+    def items_approved(self) -> List[Dict[str, Any]]:
+        return [i for i in self.items if i.get("status") == "Goedgekeurd"]
+    
+    @rx.var
+    def items_in_progress(self) -> List[Dict[str, Any]]:
+        return [i for i in self.items if i.get("status") == "In Uitvoering"]
+    
+    @rx.var
+    def items_done(self) -> List[Dict[str, Any]]:
+        return [i for i in self.items if i.get("status") == "Gereed"]
 
     # ==========================================================================
     # LOAD METHODS
@@ -125,6 +163,10 @@ class BacklogState(rx.State):
         self.form_type = "Functioneel"
         self.form_priority = "Middel"
         self.form_status = "Nieuw"
+        # User Story fields
+        self.form_user_role = "Process Owner"
+        self.form_user_want = ""
+        self.form_user_so_that = ""
         self.error = ""
         self.success_message = ""
 
@@ -143,6 +185,16 @@ class BacklogState(rx.State):
         
     def set_form_status(self, value: str):
         self.form_status = value
+    
+    # User Story field setters
+    def set_form_user_role(self, value: str):
+        self.form_user_role = value
+    
+    def set_form_user_want(self, value: str):
+        self.form_user_want = value
+    
+    def set_form_user_so_that(self, value: str):
+        self.form_user_so_that = value
 
     # ==========================================================================
     # CRUD METHODS
@@ -153,27 +205,46 @@ class BacklogState(rx.State):
         self.error = ""
         self.success_message = ""
 
-        # Validation
-        if not self.form_title.strip():
-            self.error = "Titel is verplicht"
+        # Validation - need at least the "want" part of the user story
+        if not self.form_user_want.strip():
+            self.error = "Beschrijf wat je wilt ('...wil ik...')"
             return
 
+        # Auto-generate title from User Story
+        title = f"Als {self.form_user_role}, wil ik {self.form_user_want[:50]}"
+        if len(self.form_user_want) > 50:
+            title += "..."
+        
+        # Build description from user story parts
+        description = f"Als {self.form_user_role}, wil ik {self.form_user_want}"
+        if self.form_user_so_that.strip():
+            description += f", zodat ik {self.form_user_so_that}"
+
         item_data = {
-            "title": self.form_title.strip(),
-            "description": self.form_description.strip(),
+            "title": title,
+            "description": description,
             "item_type": self.form_type,
-            "tenant_id": 1, 
+            "tenant_id": 1,
+            # User Story fields
+            "user_role": self.form_user_role,
+            "user_want": self.form_user_want.strip(),
+            "user_so_that": self.form_user_so_that.strip(),
         }
         
-        # Only admin (or during create) can set priority/status?
-        # For now, let's treat update as full update, but UI will restrict fields
-        item_data["priority"] = self.form_priority
-        item_data["status"] = self.form_status
+        # Only admin can set priority/status
+        auth_state = await self.get_state(AuthState)
+        is_admin = auth_state.is_admin
+        
+        if is_admin:
+            item_data["priority"] = self.form_priority
+            item_data["status"] = self.form_status
+        else:
+            # Non-admins always submit as "Nieuw" with default priority
+            item_data["priority"] = "Middel"
+            item_data["status"] = "Nieuw"
         
         # Add submitter info on create
-        # Add submitter info on create
         if not self.is_editing:
-            auth_state = await self.get_state(AuthState)
             user = auth_state.user
             if user:
                 item_data["submitted_by_id"] = user.get("id")

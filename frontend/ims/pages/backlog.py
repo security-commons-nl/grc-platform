@@ -1,5 +1,6 @@
 """
 Backlog Page - Track improvement requests and ideas
+Features Kanban board view with User Story format submissions
 """
 import reflex as rx
 from ims.components.layout import layout
@@ -52,67 +53,191 @@ def type_badge(item_type: str) -> rx.Component:
     )
 
 
-def backlog_item_card(item: dict) -> rx.Component:
-    """Card component for a single backlog item."""
-    return rx.card(
+# =============================================================================
+# KANBAN COMPONENTS
+# =============================================================================
+
+def kanban_card(item: dict) -> rx.Component:
+    """Compact card for Kanban board."""
+    return rx.box(
         rx.vstack(
             rx.hstack(
-                rx.vstack(
-                    rx.hstack(
-                        rx.text(item["title"], weight="bold", size="4"),
-                        priority_badge(item["priority"]),
-                        width="100%",
-                        align_items="center",
-                        spacing="2",
-                    ),
-                    rx.hstack(
-                        type_badge(item["item_type"]),
-                        rx.text(f"ID: {item['id']}", size="1", color="gray"),
-                        rx.spacer(),
-                        status_badge(item["status"]),
-                        width="100%",
-                    ),
-                    width="100%",
-                    align_items="start",
-                    spacing="1",
-                ),
+                type_badge(item["item_type"]),
+                rx.spacer(),
+                priority_badge(item["priority"]),
                 width="100%",
             ),
-            rx.divider(),
-            rx.text(item["description"], size="2", color="gray"),
-            rx.divider(),
+            rx.text(
+                item["title"],
+                weight="medium",
+                size="2",
+                style={"lineHeight": "1.3"},
+            ),
+            rx.cond(
+                item.get("user_role"),
+                rx.text(
+                    f"Als {item.get('user_role', '')}...",
+                    size="1",
+                    color="gray",
+                    style={"fontStyle": "italic"},
+                ),
+            ),
             rx.hstack(
                 rx.text(
-                    rx.cond(
-                        item.get("submitter_name"),
-                        f"Ingediend door: {item['submitter_name']}",
-                        "Ingediend door: Onbekend"
-                    ),
-                    size="1", 
-                    color="gray"
+                    item.get("submitter_name", "Onbekend"),
+                    size="1",
+                    color="gray",
                 ),
                 rx.spacer(),
-                rx.button(
-                    rx.icon("pencil", size=16),
-                    "Bewerken",
+                rx.text(
+                    f"#{item['id']}",
                     size="1",
-                    variant="soft",
-                    on_click=lambda: BacklogState.open_edit_dialog(item["id"]),
-                ),
-                rx.button(
-                    rx.icon("trash-2", size=16),
-                    size="1",
-                    variant="soft",
-                    color_scheme="red",
-                    on_click=lambda: BacklogState.open_delete_dialog(item["id"]),
-                    display=rx.cond(AuthState.is_admin, "flex", "none"),
+                    color="gray",
                 ),
                 width="100%",
             ),
+            spacing="2",
             width="100%",
+            align_items="start",
+        ),
+        padding="12px",
+        background="var(--gray-1)",
+        border_radius="8px",
+        border="1px solid var(--gray-a5)",
+        width="100%",
+        cursor="pointer",
+        _hover={"background": "var(--gray-2)", "border_color": "var(--accent-8)"},
+        on_click=lambda: BacklogState.open_edit_dialog(item["id"]),
+    )
+
+
+def kanban_column(title: str, color: str, items: list) -> rx.Component:
+    """Single column in Kanban board."""
+    return rx.box(
+        rx.vstack(
+            rx.hstack(
+                rx.box(
+                    width="8px",
+                    height="8px",
+                    background=f"var(--{color}-9)",
+                    border_radius="full",
+                ),
+                rx.text(title, weight="bold", size="2"),
+                rx.badge(
+                    rx.cond(items, items.length(), 0),
+                    color_scheme=color,
+                    variant="soft",
+                    size="1",
+                ),
+                spacing="2",
+                align_items="center",
+            ),
+            rx.divider(),
+            rx.vstack(
+                rx.foreach(items, kanban_card),
+                spacing="2",
+                width="100%",
+                min_height="200px",
+            ),
             spacing="3",
+            width="100%",
+            align_items="start",
+        ),
+        padding="12px",
+        background="var(--gray-a2)",
+        border_radius="12px",
+        flex="1",
+        min_width="200px",
+    )
+
+
+def kanban_board() -> rx.Component:
+    """Full Kanban board with all status columns."""
+    return rx.hstack(
+        kanban_column("Nieuw", "blue", BacklogState.items_nieuw),
+        kanban_column("In Review", "orange", BacklogState.items_review),
+        kanban_column("Goedgekeurd", "purple", BacklogState.items_approved),
+        kanban_column("In Uitvoering", "plum", BacklogState.items_in_progress),
+        kanban_column("Gereed", "green", BacklogState.items_done),
+        spacing="4",
+        width="100%",
+        overflow_x="auto",
+        align_items="start",
+    )
+
+
+# =============================================================================
+# USER STORY FORM
+# =============================================================================
+
+def user_story_form() -> rx.Component:
+    """User Story format form for normal users."""
+    return rx.vstack(
+        rx.text("Vanuit mijn rol als...", size="2", weight="bold", color="gray"),
+        rx.select(
+            ["Process Owner", "Editor", "Viewer", "Risk Owner", "Admin", "Auditor"],
+            value=BacklogState.form_user_role,
+            on_change=BacklogState.set_form_user_role,
+            placeholder="Selecteer je rol",
+        ),
+        
+        rx.text("...wil ik...", size="2", weight="bold", color="gray"),
+        rx.text_area(
+            placeholder="Beschrijf wat je wilt kunnen doen...",
+            value=BacklogState.form_user_want,
+            on_change=BacklogState.set_form_user_want,
+            rows=2,
+        ),
+        
+        rx.text("...zodat ik...", size="2", weight="bold", color="gray"),
+        rx.text_area(
+            placeholder="Beschrijf het doel of de waarde...",
+            value=BacklogState.form_user_so_that,
+            on_change=BacklogState.set_form_user_so_that,
+            rows=2,
+        ),
+        
+        rx.text("Type", size="2", weight="bold"),
+        rx.select(
+            ["Technisch", "Functioneel", "Proces", "Tooling", "Artificial Intelligence", "Overig"],
+            value=BacklogState.form_type,
+            on_change=BacklogState.set_form_type,
+        ),
+        
+        spacing="3",
+        width="100%",
+    )
+
+
+def admin_form_extras() -> rx.Component:
+    """Additional form fields for admin users."""
+    return rx.vstack(
+        rx.divider(),
+        rx.text("Admin Instellingen", size="2", weight="bold", color="tomato"),
+        rx.hstack(
+            rx.vstack(
+                rx.text("Prioriteit", size="1"),
+                rx.select(
+                    ["Laag", "Middel", "Hoog", "Kritiek"],
+                    value=BacklogState.form_priority,
+                    on_change=BacklogState.set_form_priority,
+                ),
+                width="50%",
+            ),
+            rx.vstack(
+                rx.text("Status", size="1"),
+                rx.select(
+                    ["Nieuw", "In Review", "Goedgekeurd", "In Uitvoering", "Gereed", "Afgewezen"],
+                    value=BacklogState.form_status,
+                    on_change=BacklogState.set_form_status,
+                ),
+                width="50%",
+            ),
+            width="100%",
         ),
         width="100%",
+        spacing="2",
+        padding_top="10px",
     )
 
 
@@ -121,85 +246,29 @@ def form_dialog() -> rx.Component:
     return rx.dialog.root(
         rx.dialog.content(
             rx.dialog.title(
-                rx.cond(BacklogState.is_editing, "Item Bewerken", "Nieuw Item")
+                rx.cond(BacklogState.is_editing, "Item Bekijken", "Nieuw Verzoek")
             ),
             rx.dialog.description(
-                "Beschrijf de wens of het probleem."
+                rx.cond(
+                    BacklogState.is_editing,
+                    "Details van dit backlog item.",
+                    "Beschrijf je wens in User Story formaat."
+                )
             ),
             rx.vstack(
-                rx.text("Titel", size="2", weight="bold"),
-                rx.input(
-                    placeholder="Korte titel...",
-                    value=BacklogState.form_title,
-                    on_change=BacklogState.set_form_title,
-                ),
-                rx.text("Type", size="2", weight="bold"),
-                rx.select(
-                    ["Technisch", "Functioneel", "Proces", "Tooling", "Artificial Intelligence", "Overig"],
-                    value=BacklogState.form_type,
-                    on_change=BacklogState.set_form_type,
-                ),
-                rx.text("Omschrijving", size="2", weight="bold"),
-                rx.text_area(
-                    placeholder="Gedetailleerde omschrijving...",
-                    value=BacklogState.form_description,
-                    on_change=BacklogState.set_form_description,
-                ),
+                user_story_form(),
                 
-                # Admin controls
+                # Admin controls (alleen voor superuser)
                 rx.cond(
                     AuthState.is_admin,
-                    rx.vstack(
-                        rx.divider(),
-                        rx.text("Admin Instellingen", size="2", weight="bold", color="tomato"),
-                        rx.hstack(
-                            rx.vstack(
-                                rx.text("Prioriteit", size="1"),
-                                rx.select(
-                                    ["Laag", "Middel", "Hoog", "Kritiek"],
-                                    value=BacklogState.form_priority,
-                                    on_change=BacklogState.set_form_priority,
-                                ),
-                                width="50%",
-                            ),
-                            rx.vstack(
-                                rx.text("Status", size="1"),
-                                rx.select(
-                                    ["Nieuw", "In Review", "Goedgekeurd", "In Uitvoering", "Gereed", "Afgewezen"],
-                                    value=BacklogState.form_status,
-                                    on_change=BacklogState.set_form_status,
-                                ),
-                                width="50%",
-                            ),
-                            width="100%",
-                        ),
-                        width="100%",
-                        spacing="2",
-                        padding_top="10px",
-                    ),
-                    # Non-admins just see status/priority as read-only or hidden?
-                    # For now hidden to keep it simple, or maybe just read-only text if editing
-                    rx.cond(
-                        BacklogState.is_editing,
-                        rx.hstack(
-                           rx.text("Status:", weight="bold", size="1"),
-                           rx.text(BacklogState.form_status, size="1"),
-                           rx.spacer(),
-                           rx.text("Prioriteit:", weight="bold", size="1"),
-                           rx.text(BacklogState.form_priority, size="1"),
-                           width="100%",
-                           padding="4px",
-                           background="var(--gray-a3)",
-                           border_radius="md",
-                        ),
-                    ),
+                    admin_form_extras(),
                 ),
                 
                 rx.cond(
                     BacklogState.error != "",
                     rx.callout(
                         BacklogState.error,
-                        icon="triangle_alert",
+                        icon="triangle-alert",
                         color_scheme="red",
                         role="alert",
                     ),
@@ -250,14 +319,19 @@ def delete_dialog() -> rx.Component:
 
 
 def backlog_page() -> rx.Component:
-    """Main backlog page."""
+    """Main backlog page with Kanban board."""
     return layout(
         rx.vstack(
             rx.hstack(
-                rx.input(
-                    placeholder="Zoeken...",
-                    icon="search",
-                    width="250px",
+                rx.vstack(
+                    rx.text("Productbacklog", size="1", color="gray"),
+                    rx.text(
+                        "Bekijk de status van alle verzoeken en verbeteringen",
+                        size="2",
+                        color="gray",
+                    ),
+                    spacing="0",
+                    align_items="start",
                 ),
                 rx.spacer(),
                 rx.select(
@@ -265,48 +339,34 @@ def backlog_page() -> rx.Component:
                     value=BacklogState.filter_type,
                     on_change=BacklogState.set_filter_type,
                     placeholder="Type",
-                ),
-                rx.select(
-                    ["ALLE", "Nieuw", "In Review", "Goedgekeurd", "In Uitvoering", "Gereed", "Afgewezen"],
-                    value=BacklogState.filter_status,
-                    on_change=BacklogState.set_filter_status,
-                    placeholder="Status",
-                ),
-                rx.select(
-                    ["ALLE", "Laag", "Middel", "Hoog", "Kritiek"],
-                    value=BacklogState.filter_priority,
-                    on_change=BacklogState.set_filter_priority,
-                    placeholder="Prioriteit",
+                    size="2",
                 ),
                 rx.button(
                     rx.icon("plus", size=16),
-                    "Nieuw Item",
+                    "Nieuw Verzoek",
                     on_click=BacklogState.open_create_dialog,
                 ),
                 width="100%",
                 spacing="3",
+                align_items="center",
             ),
             
             rx.divider(),
             
             rx.cond(
                 BacklogState.is_loading,
-                rx.center(rx.spinner(), padding="20px", width="100%"),
+                rx.center(rx.spinner(), padding="40px", width="100%"),
                 rx.cond(
                     BacklogState.items,
-                    rx.grid(
-                        rx.foreach(BacklogState.items, backlog_item_card),
-                        columns="2",
-                        spacing="4",
-                        width="100%",
-                    ),
+                    kanban_board(),
                     rx.center(
                         rx.vstack(
                             rx.icon("clipboard-list", size=48, color="gray"),
                             rx.text("Geen backlog items gevonden", color="gray"),
+                            rx.text("Klik op 'Nieuw Verzoek' om er een toe te voegen.", size="1", color="gray"),
                         ),
                         width="100%",
-                        padding="40px",
+                        padding="60px",
                     ),
                 )
             ),
