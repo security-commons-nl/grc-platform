@@ -11,6 +11,11 @@ from app.api.v1.endpoints import (
     soa,
     reports,
     backlog,
+    tenants,
+    documents,
+    privacy,
+    continuity,
+    agents,
 )
 
 api_router = APIRouter()
@@ -90,4 +95,39 @@ api_router.include_router(
     backlog.router,
     prefix="/backlog",
     tags=["Backlog"]
+)
+
+# Tenant Management
+api_router.include_router(
+    tenants.router,
+    prefix="/tenants",
+    tags=["Tenant Management"]
+)
+
+# Document Management
+api_router.include_router(
+    documents.router,
+    prefix="/documents",
+    tags=["Document Management"]
+)
+
+# Privacy (PIMS/AVG)
+api_router.include_router(
+    privacy.router,
+    prefix="/privacy",
+    tags=["Privacy: PIMS/AVG"]
+)
+
+# Business Continuity (BCMS)
+api_router.include_router(
+    continuity.router,
+    prefix="/continuity",
+    tags=["Business Continuity: BCMS"]
+)
+
+# AI Agents
+api_router.include_router(
+    agents.router,
+    prefix="/agents",
+    tags=["AI Agents"]
 )

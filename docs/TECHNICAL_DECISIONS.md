@@ -53,49 +53,53 @@ httpx                      # Async API calls naar backend
 ### 1.4 Project Structuur
 
 ```
-ims/
+frontend/
 ├── ims/                        # Reflex app package
 │   ├── __init__.py
 │   ├── ims.py                  # Main app entry point
 │   │
 │   ├── state/                  # Application state
 │   │   ├── __init__.py
+│   │   ├── base.py             # Base state (loading, errors, toasts)
 │   │   ├── auth.py             # Auth state
 │   │   ├── risk.py             # Risk state
 │   │   ├── measure.py          # Measure state
 │   │   ├── assessment.py       # Assessment state
-│   │   └── chat.py             # AI Chat state
+│   │   ├── incident.py         # Incident state
+│   │   ├── policy.py           # Policy state
+│   │   ├── compliance.py       # Compliance state
+│   │   ├── scope.py            # Scope state
+│   │   ├── asset.py            # Asset state
+│   │   ├── supplier.py         # Supplier state
+│   │   └── backlog.py          # Backlog state
 │   │
-│   ├── pages/                  # Route pages
+│   ├── pages/                  # Route pages (12 pages)
 │   │   ├── __init__.py
 │   │   ├── index.py            # Dashboard
 │   │   ├── login.py            # Login page
-│   │   ├── risks.py            # Risk list
-│   │   ├── risk_detail.py      # Risk detail
-│   │   ├── measures.py         # Measures list
+│   │   ├── risks.py            # Risk management
+│   │   ├── measures.py         # Measures/controls
 │   │   ├── assessments.py      # Assessments
-│   │   └── settings.py         # Settings
+│   │   ├── incidents.py        # Incident management
+│   │   ├── policies.py         # Policy management
+│   │   ├── compliance.py       # Compliance overview
+│   │   ├── scopes.py           # Scope/hierarchy
+│   │   ├── assets.py           # Asset inventory
+│   │   ├── suppliers.py        # Supplier management
+│   │   └── backlog.py          # Backlog/planning
 │   │
 │   ├── components/             # Reusable components
 │   │   ├── __init__.py
-│   │   ├── layout.py           # Header, Sidebar, Layout
-│   │   ├── tables.py           # Data tables
-│   │   ├── forms.py            # Form components
-│   │   ├── charts.py           # Visualisaties
+│   │   ├── layout.py           # Sidebar, page layout, auth guard
 │   │   ├── heatmap.py          # Risk heatmap (In Control model)
-│   │   ├── workflow.py         # Workflow visualisatie
-│   │   └── chat_island.py      # AI Chat Island
+│   │   └── deadline.py         # Deadline visualization
 │   │
-│   ├── api/                    # Backend API client
-│   │   ├── __init__.py
-│   │   └── client.py           # httpx client voor FastAPI backend
-│   │
-│   └── styles/                 # Custom styling
-│       └── styles.py
+│   └── api/                    # Backend API client
+│       ├── __init__.py
+│       └── client.py           # httpx async client
 │
 ├── rxconfig.py                 # Reflex configuratie
-├── requirements.txt
-└── alembic/                    # Database migrations (shared met backend)
+└── requirements.txt
 ```
 
 ### 1.5 Key UI Componenten
@@ -544,35 +548,44 @@ config = rx.Config(
 ```python
 # ims/ims.py
 import reflex as rx
-from ims.pages import index, login, risks, risk_detail, measures, assessments, settings
-from ims.components.layout import layout
-from ims.state.auth import AuthState
 
-def protected_page(page_content: rx.Component) -> rx.Component:
-    """Wrap pagina met auth check en layout."""
-    return rx.cond(
-        AuthState.is_authenticated,
-        layout(page_content),
-        rx.redirect("/login"),
-    )
+# Import pages
+from ims.pages.login import login_page
+from ims.pages.index import dashboard_page
+from ims.pages.risks import risks_page
+from ims.pages.measures import measures_page
+from ims.pages.assessments import assessments_page
+from ims.pages.incidents import incidents_page
+from ims.pages.policies import policies_page
+from ims.pages.scopes import scopes_page
+from ims.pages.compliance import compliance_page
+from ims.pages.assets import assets_page
+from ims.pages.suppliers import suppliers_page
+from ims.pages.backlog import backlog_page
 
+# Create app
 app = rx.App(
     theme=rx.theme(
         accent_color="blue",
+        gray_color="slate",
         radius="medium",
+        scaling="95%",
     ),
 )
 
-# Public routes
-app.add_page(login.login_page, route="/login")
-
-# Protected routes
-app.add_page(lambda: protected_page(index.dashboard()), route="/")
-app.add_page(lambda: protected_page(risks.risk_list()), route="/risks")
-app.add_page(lambda: protected_page(risk_detail.risk_detail()), route="/risks/[id]")
-app.add_page(lambda: protected_page(measures.measure_list()), route="/measures")
-app.add_page(lambda: protected_page(assessments.assessment_list()), route="/assessments")
-app.add_page(lambda: protected_page(settings.settings_page()), route="/settings")
+# Add pages (auth guard is in layout component)
+app.add_page(login_page, route="/login", title="Login - IMS")
+app.add_page(dashboard_page, route="/", title="Dashboard - IMS")
+app.add_page(risks_page, route="/risks", title="Risico's - IMS")
+app.add_page(measures_page, route="/measures", title="Maatregelen - IMS")
+app.add_page(assessments_page, route="/assessments", title="Assessments - IMS")
+app.add_page(incidents_page, route="/incidents", title="Incidenten - IMS")
+app.add_page(policies_page, route="/policies", title="Beleid - IMS")
+app.add_page(scopes_page, route="/scopes", title="Scopes - IMS")
+app.add_page(compliance_page, route="/compliance", title="Compliance - IMS")
+app.add_page(assets_page, route="/assets", title="Assets - IMS")
+app.add_page(suppliers_page, route="/suppliers", title="Leveranciers - IMS")
+app.add_page(backlog_page, route="/backlog", title="Backlog - IMS")
 ```
 
 ---

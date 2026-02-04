@@ -130,7 +130,7 @@ def asset_form_dialog() -> rx.Component:
                             rx.select.root(
                                 rx.select.trigger(placeholder="Selecteer parent"),
                                 rx.select.content(
-                                    rx.select.item("Geen parent", value=""),
+                                    rx.select.item("Geen parent", value="none"),
                                     rx.foreach(
                                         AssetState.available_parents,
                                         lambda p: rx.select.item(

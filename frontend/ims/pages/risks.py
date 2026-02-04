@@ -69,6 +69,47 @@ def risk_matrix_cell(likelihood: str, impact: str, likelihood_idx: int, impact_i
     )
 
 
+
+def selected_risk_display() -> rx.Component:
+    """Display selected risk textually."""
+    return rx.vstack(
+        rx.text("Geselecteerd:", size="2", weight="medium", color="gray"),
+        rx.divider(),
+        
+        # Likelihood display
+        rx.box(
+            rx.text("Kans (Likelihood)", size="1", color="gray", margin_bottom="2px"),
+            rx.match(
+                RiskState.form_inherent_likelihood,
+                ("LOW", rx.badge("Laag", color_scheme="green", variant="soft", size="2")),
+                ("MEDIUM", rx.badge("Gemiddeld", color_scheme="yellow", variant="soft", size="2")),
+                ("HIGH", rx.badge("Hoog", color_scheme="orange", variant="soft", size="2")),
+                ("CRITICAL", rx.badge("Kritiek", color_scheme="red", variant="soft", size="2")),
+                rx.text(RiskState.form_inherent_likelihood)
+            ),
+            width="100%",
+        ),
+        
+        # Impact display
+        rx.box(
+            rx.text("Impact", size="1", color="gray", margin_bottom="2px"),
+            rx.match(
+                RiskState.form_inherent_impact,
+                ("LOW", rx.badge("Laag", color_scheme="green", variant="soft", size="2")),
+                ("MEDIUM", rx.badge("Gemiddeld", color_scheme="yellow", variant="soft", size="2")),
+                ("HIGH", rx.badge("Hoog", color_scheme="orange", variant="soft", size="2")),
+                ("CRITICAL", rx.badge("Kritiek", color_scheme="red", variant="soft", size="2")),
+                rx.text(RiskState.form_inherent_impact)
+            ),
+            width="100%",
+        ),
+        
+        spacing="3",
+        width="200px",  # Fixed width for the side panel
+        padding="8px",
+    )
+
+
 def risk_matrix() -> rx.Component:
     """Clickable 4x4 risk matrix for selecting likelihood and impact."""
     return rx.vstack(
@@ -76,7 +117,7 @@ def risk_matrix() -> rx.Component:
             rx.text("Risicomatrix", size="2", weight="medium"),
             rx.tooltip(
                 rx.icon("info", size=14, color="gray"),
-                content="[Tooltip tekst voor Risicomatrix]",
+                content="Klik in de matrix om de kans en impact van het risico te bepalen.",
             ),
             spacing="1",
             align="center",
@@ -147,6 +188,7 @@ def risk_matrix() -> rx.Component:
         padding="8px",
         background="var(--gray-a2)",
         border_radius="8px",
+        width="100%", # Make it take available width in its container
     )
 
 
@@ -227,8 +269,20 @@ def risk_form_dialog() -> rx.Component:
                     width="100%",
                 ),
 
-                # Risk matrix (primary method)
-                risk_matrix(),
+                # Risk Matrix and Selection Display (Side-by-side)
+                rx.hstack(
+                    rx.box(
+                        risk_matrix(),
+                        flex="1",
+                    ),
+                    rx.box(
+                        selected_risk_display(),
+                        width="auto", 
+                    ),
+                    spacing="4",
+                    width="100%",
+                    align_items="start",
+                ),
 
                 # Quadrant
                 rx.vstack(
@@ -244,7 +298,7 @@ def risk_form_dialog() -> rx.Component:
                     rx.select.root(
                         rx.select.trigger(placeholder="Selecteer behandeling"),
                         rx.select.content(
-                            rx.select.item("Geen / Niet ingedeeld", value="NONE"),
+                            rx.select.item("Geen", value="NONE"),
                             rx.select.item("Mitigeren", value="MITIGATE"),
                             rx.select.item("Zekerheid", value="ASSURANCE"),
                             rx.select.item("Monitoren", value="MONITOR"),
@@ -306,7 +360,7 @@ def risk_form_dialog() -> rx.Component:
                 margin_top="16px",
             ),
 
-            max_width="500px",
+            max_width="700px",  # Increased width more for side-by-side
         ),
         open=RiskState.show_form_dialog,
     )

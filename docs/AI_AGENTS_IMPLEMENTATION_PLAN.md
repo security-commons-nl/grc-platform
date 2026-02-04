@@ -160,7 +160,7 @@ Dit document beschrijft de implementatie van het multi-agent systeem binnen IMS:
 
 ## 2. AGENT DEFINITIES
 
-### 2.1 Domein Agents (12)
+### 2.1 Domein Agents (11)
 
 #### RISK AGENT
 ```yaml
@@ -1040,7 +1040,7 @@ tools:
   - create_suggestion
 ```
 
-### 2.3 Systeem Agents (2)
+### 2.3 Systeem Agents (3)
 
 #### WORKFLOW AGENT
 ```yaml

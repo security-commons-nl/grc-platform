@@ -9,6 +9,8 @@ engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URI, echo=True, future
 
 async def init_db():
     async with engine.begin() as conn:
+        from sqlalchemy import text
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         # await conn.run_sync(SQLModel.metadata.drop_all)
         await conn.run_sync(SQLModel.metadata.create_all)
 

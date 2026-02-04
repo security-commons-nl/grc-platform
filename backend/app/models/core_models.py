@@ -1,5 +1,7 @@
 from typing import Optional, List
 from sqlmodel import Field, SQLModel, Relationship
+from sqlalchemy import Column
+from pgvector.sqlalchemy import Vector
 from datetime import datetime
 from enum import Enum
 
@@ -1094,6 +1096,20 @@ class RequirementMapping(SQLModel, table=True):
     type: MappingType = MappingType.EQUIVALENT
     justification: Optional[str] = None
     confidence_score: Optional[float] = None  # 0.0 to 1.0 (for AI suggestions)
+    
+    # Relationships
+    source: "Requirement" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "RequirementMapping.source_id==Requirement.id",
+            "foreign_keys": "[RequirementMapping.source_id]"
+        }
+    )
+    target: "Requirement" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "RequirementMapping.target_id==Requirement.id",
+            "foreign_keys": "[RequirementMapping.target_id]"
+        }
+    )
 
 class ScopeDependency(SQLModel, table=True):
     """Many-to-Many link for Scope dependencies"""
@@ -1209,19 +1225,19 @@ class Requirement(SQLModel, table=True):
     applicability_statements: List["ApplicabilityStatement"] = Relationship(back_populates="requirement")
     questions: List["AssessmentQuestion"] = Relationship(back_populates="requirement")
 
-    mappings: List["Requirement"] = Relationship(
-        link_model=RequirementMapping,
+    # Mappings (Linked via RequirementMapping)
+    # We use explicit relationships to the mapping table to access metadata (confidence, justification)
+    outgoing_mappings: List["RequirementMapping"] = Relationship(
         sa_relationship_kwargs={
             "primaryjoin": "Requirement.id==RequirementMapping.source_id",
-            "secondaryjoin": "Requirement.id==RequirementMapping.target_id",
+            "foreign_keys": "[RequirementMapping.source_id]"
         }
     )
 
-    mapped_by: List["Requirement"] = Relationship(
-        link_model=RequirementMapping,
+    incoming_mappings: List["RequirementMapping"] = Relationship(
         sa_relationship_kwargs={
             "primaryjoin": "Requirement.id==RequirementMapping.target_id",
-            "secondaryjoin": "Requirement.id==RequirementMapping.source_id",
+            "foreign_keys": "[RequirementMapping.target_id]"
         }
     )
 
@@ -3027,6 +3043,7 @@ class AIKnowledgeBase(SQLModel, table=True):
     # Embedding for RAG
     is_embedded: bool = False
     embedded_at: Optional[datetime] = None
+    embedding: Optional[List[float]] = Field(default=None, sa_column=Column(Vector))
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

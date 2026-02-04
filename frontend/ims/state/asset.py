@@ -232,7 +232,7 @@ class AssetState(rx.State):
                 "type": "Asset",  # Always Asset
                 "description": self.form_description.strip() or None,
                 "owner": self.form_owner.strip(),
-                "parent_id": int(self.form_parent_id) if self.form_parent_id else None,
+                "parent_id": int(self.form_parent_id) if self.form_parent_id and self.form_parent_id != "none" else None,
                 "asset_type": self.form_asset_type or None,
                 "location": self.form_location.strip() or None,
                 "data_classification": self.form_data_classification or None,

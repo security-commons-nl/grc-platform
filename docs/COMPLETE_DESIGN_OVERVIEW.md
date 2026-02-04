@@ -93,7 +93,7 @@ IMS (Integrated Management System) is een **Governance, Risk & Compliance (GRC) 
 | **Database** | PostgreSQL 15+ | ACID, pgvector voor RAG |
 | **Vector Store** | pgvector | Embeddings voor kennisbank |
 | **LLM** | Ollama + Mistral | Lokaal, EU data sovereignty |
-| **Frontend** | React (TBD) | Breed ecosysteem |
+| **Frontend** | Reflex (Python) | Full-stack Python, React onder de motorkap |
 | **Auth** | JWT + Azure AD SSO | Enterprise ready |
 
 ### 2.2 Deployment
@@ -146,7 +146,7 @@ services:
 
 ## 3. Data Model
 
-### 3.1 Overzicht (70+ Entities)
+### 3.1 Overzicht (85+ Entities)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -543,7 +543,7 @@ Elke workflow state kan AI-ondersteuning hebben:
 
 ### 6.2 Agents (17 totaal)
 
-#### Domein Agents (12)
+#### Domein Agents (11)
 
 | Agent | Expertise | Trigger Contexts |
 |-------|-----------|------------------|
@@ -567,7 +567,7 @@ Elke workflow state kan AI-ondersteuning hebben:
 | **Objectives Agent** | Doelstellingen, KPIs | objective_*, kpi_* |
 | **Maturity Agent** | Volwassenheidsmodellen | maturity_* |
 
-#### Systeem Agents (2)
+#### Systeem Agents (3)
 
 | Agent | Expertise | Trigger Contexts |
 |-------|-----------|------------------|
@@ -583,6 +583,19 @@ Elke workflow state kan AI-ondersteuning hebben:
 | **Evidence Analysis** | Screenshots en documenten analyseren voor audit compliance |
 | **Incident Root Cause** | Geautomatiseerde root cause analyse bij incidenten |
 | **Policy Drafting** | Beleidsteksten schrijven op basis van organisatiecontext |
+
+#### AI Governance Principe
+
+> **"AI adviseert, mens beslist."**
+
+Geen AI-gegenereerde waarde mag in productie-status komen zonder expliciete menselijke goedkeuring (AVG Art. 22 compliance).
+
+| Fase | Beschrijving |
+|------|--------------|
+| **Suggestion** | AI maakt voorstel met confidence score en reasoning |
+| **Review** | Gebruiker bekijkt suggestie (min. 10 sec voor high-impact velden) |
+| **Decision** | Accepteren / Aanpassen / Afwijzen (met verplichte justificatie) |
+| **Audit** | Volledige trail van alle AI-interacties |
 
 ### 6.3 Gedetailleerde Documentatie
 
