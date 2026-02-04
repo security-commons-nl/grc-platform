@@ -1,0 +1,10 @@
+Generic single-database configuration for IMS.
+
+Uses async SQLModel with PostgreSQL and pgvector.
+
+Commands:
+  alembic revision --autogenerate -m "description"  # Create new migration
+  alembic upgrade head                               # Apply all migrations
+  alembic downgrade -1                               # Rollback one migration
+  alembic history                                    # Show migration history
+  alembic current                                    # Show current revision
