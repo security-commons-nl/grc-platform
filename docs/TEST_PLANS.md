@@ -223,6 +223,243 @@ curl http://localhost:8000/api/v1/soa/scope/1/gaps
 
 ---
 
+## Fase 3: AI Integration - Test Plan
+
+### 3.1 Ollama/LLM Connectivity
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-LLM-01 | Ollama server running | Smoke | `curl http://localhost:11434/api/tags` returns 200 |
+| F3-LLM-02 | Mistral model loaded | Smoke | Model "mistral" in available models |
+| F3-LLM-03 | Embedding model loaded | Smoke | Model "nomic-embed-text" available |
+| F3-LLM-04 | Basic completion | Integration | Simple prompt returns response |
+| F3-LLM-05 | Timeout handling | Integration | Long request times out gracefully |
+| F3-LLM-06 | Error handling | Integration | Ollama down returns graceful error |
+
+**Handmatige test stappen:**
+```bash
+# Check Ollama running
+curl http://localhost:11434/api/tags
+
+# Pull models if needed
+ollama pull mistral
+ollama pull nomic-embed-text
+
+# Test completion
+curl http://localhost:11434/api/generate -d '{
+  "model": "mistral",
+  "prompt": "Wat is informatiebeveiliging?",
+  "stream": false
+}'
+```
+
+---
+
+### 3.2 Knowledge Base / RAG
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-KB-01 | Add knowledge entry | Integration | `add_knowledge()` returns entry with embedding |
+| F3-KB-02 | Embedding generation | Integration | Vector has correct dimensions (nomic = 768) |
+| F3-KB-03 | Semantic search | Integration | `search_knowledge()` returns relevant results |
+| F3-KB-04 | Search ranking | Integration | Most relevant result is first |
+| F3-KB-05 | Empty query handling | Integration | Empty search returns empty array |
+| F3-KB-06 | Category filtering | Integration | Search can filter by category |
+| F3-KB-07 | Policy auto-index | Integration | Published policy appears in KB |
+| F3-KB-08 | Risk auto-index | Integration | Created risk appears in KB |
+| F3-KB-09 | Measure auto-index | Integration | Created measure appears in KB |
+| F3-KB-10 | Requirement auto-index | Integration | Created requirement appears in KB |
+
+**Test stappen:**
+```bash
+# Seed knowledge
+cd backend
+python -m app.scripts.seed_knowledge
+
+# Test search via agent
+curl -X POST http://localhost:8000/api/v1/agents/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Wat is het In Control model?", "agent_name": "risk"}'
+```
+
+---
+
+### 3.3 AI Agents - Core
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-AG-01 | List agents | Integration | GET /agents/ returns 17 agents |
+| F3-AG-02 | Agent health check | Integration | GET /agents/health returns healthy |
+| F3-AG-03 | Risk agent chat | Integration | POST /agents/chat with risk agent works |
+| F3-AG-04 | Compliance agent chat | Integration | POST /agents/chat with compliance agent works |
+| F3-AG-05 | Agent detection | Integration | GET /agents/detect returns correct agent for page |
+| F3-AG-06 | Context passing | Integration | Context (page, entity_id) passed to agent |
+| F3-AG-07 | Unknown agent fallback | Integration | Unknown agent falls back to risk |
+| F3-AG-08 | Empty message handling | Integration | Empty message returns helpful response |
+
+**Test stappen:**
+```bash
+# List agents
+curl http://localhost:8000/api/v1/agents/
+
+# Health check
+curl http://localhost:8000/api/v1/agents/health
+
+# Chat with risk agent
+curl -X POST http://localhost:8000/api/v1/agents/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hoe classificeer ik een risico met hoge impact en lage kwetsbaarheid?", "agent_name": "risk"}'
+
+# Test agent detection
+curl "http://localhost:8000/api/v1/agents/detect?page=risks"
+curl "http://localhost:8000/api/v1/agents/detect?page=policies"
+curl "http://localhost:8000/api/v1/agents/detect?entity_type=incident"
+```
+
+---
+
+### 3.4 AI Agents - Domain Specific
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-DOM-01 | Risk agent: classify_risk tool | Integration | Tool returns correct quadrant |
+| F3-DOM-02 | Risk agent: search_knowledge tool | Integration | Tool returns KB results |
+| F3-DOM-03 | Measure agent: list_measures tool | Integration | Tool returns measures |
+| F3-DOM-04 | Policy agent: get_policy tool | Integration | Tool returns policy details |
+| F3-DOM-05 | Privacy agent: AVG guidance | Functional | Agent knows AVG/GDPR basics |
+| F3-DOM-06 | BCM agent: BIA guidance | Functional | Agent knows RTO/RPO concepts |
+| F3-DOM-07 | Incident agent: breach advice | Functional | Agent advises on AP meldplicht |
+| F3-DOM-08 | Compliance agent: BIO knowledge | Functional | Agent knows BIO framework |
+
+**Test stappen:**
+```bash
+# Test Risk agent quadrant classification
+curl -X POST http://localhost:8000/api/v1/agents/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Classificeer een risico met HOGE impact en LAGE kwetsbaarheid", "agent_name": "risk"}'
+# Expected: Agent mentions "ZEKERHEID/ASSURANCE" quadrant
+
+# Test Privacy agent AVG knowledge
+curl -X POST http://localhost:8000/api/v1/agents/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Wat zijn de grondslagen voor verwerking onder de AVG?", "agent_name": "privacy"}'
+# Expected: Agent lists 6 legal bases
+
+# Test Incident agent breach advice
+curl -X POST http://localhost:8000/api/v1/agents/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "We hebben een datalek ontdekt. Wat moeten we doen?", "agent_name": "incident"}'
+# Expected: Agent mentions 72-hour AP notification
+```
+
+---
+
+### 3.5 AI Tools
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-TL-01 | get_risk tool | Integration | Returns risk details |
+| F3-TL-02 | list_risks tool | Integration | Returns risk list |
+| F3-TL-03 | search_risks tool | Integration | Searches by title/description |
+| F3-TL-04 | get_measure tool | Integration | Returns measure details |
+| F3-TL-05 | list_measures tool | Integration | Returns measure list |
+| F3-TL-06 | get_policy tool | Integration | Returns policy details |
+| F3-TL-07 | create_risk tool | Integration | Creates risk in database |
+| F3-TL-08 | update_risk tool | Integration | Updates risk in database |
+| F3-TL-09 | create_measure tool | Integration | Creates measure in database |
+| F3-TL-10 | link_measure_to_risk tool | Integration | Creates MeasureRiskLink |
+| F3-TL-11 | create_corrective_action tool | Integration | Creates CA in database |
+| F3-TL-12 | search_knowledge tool | Integration | Returns KB results |
+| F3-TL-13 | get_methodology tool | Integration | Returns methodology info |
+| F3-TL-14 | classify_risk_quadrant tool | Integration | Returns correct quadrant |
+
+**Test: Direct tool invocation (Python)**
+```python
+# backend/tests/test_ai_tools.py
+import pytest
+from app.agents.tools.read_tools import get_risk, list_risks
+from app.agents.tools.knowledge_tools import classify_risk_quadrant
+
+@pytest.mark.asyncio
+async def test_classify_risk_quadrant():
+    result = classify_risk_quadrant.invoke({"impact": "HIGH", "vulnerability": "LOW"})
+    assert "ASSURANCE" in result or "ZEKERHEID" in result
+
+@pytest.mark.asyncio
+async def test_get_methodology():
+    from app.agents.tools.knowledge_tools import get_methodology
+    result = get_methodology.invoke({"methodology_name": "in_control"})
+    assert "MITIGATE" in result
+    assert "ACCEPT" in result
+```
+
+---
+
+### 3.6 Chat Island UI
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-UI-01 | Toggle button visible | E2E | Floating button in bottom-right |
+| F3-UI-02 | Panel opens on click | E2E | Chat panel expands |
+| F3-UI-03 | Panel closes on X | E2E | Panel collapses |
+| F3-UI-04 | Agent selector works | E2E | Dropdown changes agent |
+| F3-UI-05 | Send message | E2E | Message appears in chat |
+| F3-UI-06 | Receive response | E2E | AI response appears |
+| F3-UI-07 | Loading state | E2E | Spinner shown while waiting |
+| F3-UI-08 | Clear conversation | E2E | Trash button clears messages |
+| F3-UI-09 | Error handling | E2E | Error shown on API failure |
+| F3-UI-10 | Auto-detect agent | E2E | Agent changes based on page |
+
+**Handmatige UI test stappen:**
+1. Open http://localhost:3000 (na `reflex run`)
+2. Log in
+3. Klik op chat bubble (rechtsonder)
+4. Verifieer: panel opent met agent selector
+5. Type vraag en druk Enter
+6. Verifieer: loading spinner verschijnt
+7. Verifieer: AI antwoord verschijnt
+8. Wissel agent via dropdown
+9. Klik prullenbak - chat wordt geleegd
+10. Klik X - panel sluit
+
+---
+
+### 3.7 Agent Orchestration
+
+| Test ID | Test Case | Type | Acceptatiecriteria |
+|---------|-----------|------|-------------------|
+| F3-OR-01 | All 17 agents registered | Unit | orchestrator.list_agents() returns 17 |
+| F3-OR-02 | Context detection: risks page | Unit | Returns "risk" agent |
+| F3-OR-03 | Context detection: policies page | Unit | Returns "policy" agent |
+| F3-OR-04 | Context detection: compliance page | Unit | Returns "compliance" agent |
+| F3-OR-05 | Context detection: incidents page | Unit | Returns "incident" agent |
+| F3-OR-06 | Context detection: unknown page | Unit | Returns "risk" (default) |
+| F3-OR-07 | Route request to correct agent | Integration | Message handled by specified agent |
+
+**Test: Orchestrator (Python)**
+```python
+# backend/tests/test_orchestrator.py
+from app.agents.core.orchestrator import orchestrator
+
+def test_all_agents_registered():
+    agents = orchestrator.list_agents()
+    assert len(agents) == 17
+
+def test_context_detection_risks():
+    agent = orchestrator.detect_agent_from_context(page="risks")
+    assert agent == "risk"
+
+def test_context_detection_policies():
+    agent = orchestrator.detect_agent_from_context(page="policies")
+    assert agent == "policy"
+
+def test_context_detection_unknown():
+    agent = orchestrator.detect_agent_from_context(page="unknown_page")
+    assert agent == "risk"  # default fallback
+```
+
+---
+
 ## Test Execution Checklist
 
 ### Pre-Test Setup
@@ -230,20 +467,31 @@ curl http://localhost:8000/api/v1/soa/scope/1/gaps
 - [ ] Database migrated (`alembic upgrade head`)
 - [ ] API running (`uvicorn app.main:app --reload`)
 - [ ] Test data seeded (if applicable)
+- [ ] Ollama running with models (Fase 3)
+- [ ] Frontend running (`reflex run`) (Fase 3 UI tests)
 
-### Fase 1: Foundation
-- [ ] F1-DB-01 through F1-DB-06
-- [ ] F1-API-01 through F1-API-05
-- [ ] F1-CRUD-01 through F1-CRUD-10
-- [ ] F1-MT-01 through F1-MT-05
+### Fase 1: Foundation (26 tests)
+- [ ] F1-DB-01 through F1-DB-06 (Database)
+- [ ] F1-API-01 through F1-API-05 (FastAPI)
+- [ ] F1-CRUD-01 through F1-CRUD-10 (CRUD)
+- [ ] F1-MT-01 through F1-MT-05 (Multi-tenancy)
 
-### Fase 2: Core Features
-- [ ] F2-WF-01 through F2-WF-10
-- [ ] F2-AS-01 through F2-AS-07
-- [ ] F2-SOA-01 through F2-SOA-06
-- [ ] F2-RP-01 through F2-RP-05
-- [ ] F2-IN-01 through F2-IN-06
-- [ ] F2-ME-01 through F2-ME-08
+### Fase 2: Core Features (42 tests)
+- [ ] F2-WF-01 through F2-WF-10 (Workflow)
+- [ ] F2-AS-01 through F2-AS-07 (Assessment)
+- [ ] F2-SOA-01 through F2-SOA-06 (Compliance)
+- [ ] F2-RP-01 through F2-RP-05 (Reporting)
+- [ ] F2-IN-01 through F2-IN-06 (Incidents)
+- [ ] F2-ME-01 through F2-ME-08 (Measures)
+
+### Fase 3: AI Integration (55 tests)
+- [ ] F3-LLM-01 through F3-LLM-06 (Ollama/LLM)
+- [ ] F3-KB-01 through F3-KB-10 (Knowledge Base)
+- [ ] F3-AG-01 through F3-AG-08 (Agents Core)
+- [ ] F3-DOM-01 through F3-DOM-08 (Domain Agents)
+- [ ] F3-TL-01 through F3-TL-14 (AI Tools)
+- [ ] F3-UI-01 through F3-UI-10 (Chat Island UI)
+- [ ] F3-OR-01 through F3-OR-07 (Orchestration)
 
 ### Post-Test
 - [ ] All critical tests passed
