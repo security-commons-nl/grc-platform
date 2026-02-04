@@ -174,34 +174,27 @@ def user_story_form() -> rx.Component:
     """User Story format form for normal users."""
     return rx.vstack(
         rx.text("Vanuit mijn rol als...", size="2", weight="bold", color="gray"),
-        rx.select(
-            ["Process Owner", "Editor", "Viewer", "Risk Owner", "Admin", "Auditor"],
+        rx.input(
+            placeholder="bijv. Proceseigenaar Inkoop, HR Manager, IT Beheerder...",
             value=BacklogState.form_user_role,
             on_change=BacklogState.set_form_user_role,
-            placeholder="Selecteer je rol",
+            width="100%",
         ),
         
         rx.text("...wil ik...", size="2", weight="bold", color="gray"),
-        rx.text_area(
-            placeholder="Beschrijf wat je wilt kunnen doen...",
+        rx.input(
+            placeholder="bijv. maandelijkse rapportages kunnen exporteren",
             value=BacklogState.form_user_want,
             on_change=BacklogState.set_form_user_want,
-            rows=2,
+            width="100%",
         ),
         
         rx.text("...zodat ik...", size="2", weight="bold", color="gray"),
-        rx.text_area(
-            placeholder="Beschrijf het doel of de waarde...",
+        rx.input(
+            placeholder="bijv. aan het management kan rapporteren",
             value=BacklogState.form_user_so_that,
             on_change=BacklogState.set_form_user_so_that,
-            rows=2,
-        ),
-        
-        rx.text("Type", size="2", weight="bold"),
-        rx.select(
-            ["Technisch", "Functioneel", "Proces", "Tooling", "Artificial Intelligence", "Overig"],
-            value=BacklogState.form_type,
-            on_change=BacklogState.set_form_type,
+            width="100%",
         ),
         
         spacing="3",

@@ -25,7 +25,7 @@ def control_type_badge(control_type: str) -> rx.Component:
         ("Preventive", rx.badge("Preventief", color_scheme="blue", variant="outline", size="1")),
         ("Detective", rx.badge("Detectief", color_scheme="yellow", variant="outline", size="1")),
         ("Corrective", rx.badge("Correctief", color_scheme="orange", variant="outline", size="1")),
-        rx.badge(control_type or "-", color_scheme="gray", variant="outline", size="1"),
+        rx.badge("-", color_scheme="gray", variant="outline", size="1"),
     )
 
 
@@ -52,7 +52,7 @@ def control_row(control: dict) -> rx.Component:
         rx.table.cell(control_type_badge(control["control_type"])),
         rx.table.cell(
             rx.cond(
-                control["effectiveness_percentage"] != None,
+                control["effectiveness_percentage"],
                 rx.hstack(
                     rx.text(control["effectiveness_percentage"], size="2"),
                     rx.text("%", size="2", color="gray"),
@@ -173,7 +173,7 @@ def stat_cards() -> rx.Component:
     return rx.hstack(
         rx.card(
             rx.hstack(
-                rx.icon("file-edit", size=20, color="var(--gray-9)"),
+                rx.icon("file-pen", size=20, color="var(--gray-9)"),
                 rx.vstack(
                     rx.text("Concept", size="1", color="gray"),
                     rx.text(ControlState.draft_count, size="4", weight="bold"),

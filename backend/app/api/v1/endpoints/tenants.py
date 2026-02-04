@@ -16,8 +16,6 @@ from app.models.core_models import (
     TenantRelationship,
     TenantRelationshipType,
     TenantRole,
-    SharedMeasure,
-    SharedScope,
 )
 
 router = APIRouter()
@@ -287,44 +285,3 @@ async def delete_tenant_relationship(
 
     return {"message": "Relationship deleted"}
 
-
-# =============================================================================
-# SHARED MEASURES (SSC)
-# =============================================================================
-
-@router.get("/{tenant_id}/shared-measures", response_model=List[SharedMeasure])
-async def get_shared_measures(
-    tenant_id: int,
-    as_provider: bool = Query(True, description="Get measures where tenant is provider"),
-    session: AsyncSession = Depends(get_session),
-):
-    """Get shared measures for a tenant."""
-    await crud_tenant.get_or_404(session, tenant_id)
-
-    if as_provider:
-        result = await session.execute(
-            select(SharedMeasure).where(SharedMeasure.provider_tenant_id == tenant_id)
-        )
-    else:
-        result = await session.execute(
-            select(SharedMeasure).where(SharedMeasure.consumer_tenant_id == tenant_id)
-        )
-
-    return result.scalars().all()
-
-
-@router.post("/shared-measures/", response_model=SharedMeasure)
-async def create_shared_measure(
-    shared_measure: SharedMeasure,
-    session: AsyncSession = Depends(get_session),
-):
-    """Create a shared measure between tenants."""
-    # Verify both tenants exist
-    await crud_tenant.get_or_404(session, shared_measure.provider_tenant_id)
-    await crud_tenant.get_or_404(session, shared_measure.consumer_tenant_id)
-
-    session.add(shared_measure)
-    await session.commit()
-    await session.refresh(shared_measure)
-
-    return shared_measure

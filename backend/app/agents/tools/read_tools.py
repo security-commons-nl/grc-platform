@@ -17,7 +17,6 @@ from app.models.core_models import (
     Incident,
     Requirement,
     Standard,
-    MeasureRiskLink,
 )
 
 
@@ -120,20 +119,10 @@ async def get_measure(measure_id: int) -> str:
         if not measure:
             return f"Measure with ID {measure_id} not found."
 
-        # Get linked risks
-        links_result = await session.execute(
-            select(MeasureRiskLink).where(MeasureRiskLink.measure_id == measure_id)
-        )
-        links = links_result.scalars().all()
-        risk_ids = [link.risk_id for link in links]
-
         return f"""
 Measure #{measure.id}: {measure.title}
 Description: {measure.description or 'N/A'}
-Implementation: {measure.implementation_details or 'N/A'}
 Status: {measure.status}
-Effectiveness: {measure.effectiveness_score or 'Not assessed'}%
-Linked to {len(risk_ids)} risks: {risk_ids if risk_ids else 'None'}
 """
 
 

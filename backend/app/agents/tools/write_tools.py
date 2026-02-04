@@ -12,7 +12,6 @@ from app.core.db import get_session
 from app.models.core_models import (
     Risk,
     Measure,
-    MeasureRiskLink,
     CorrectiveAction,
     RiskLevel,
     Status,
@@ -208,38 +207,9 @@ async def link_measure_to_risk(
     """
     Link a measure to a risk, indicating the measure helps mitigate the risk.
 
-    Effectiveness contribution (0-100) indicates how much the measure contributes to risk reduction.
+    NOTE: This function is currently disabled pending data model refactoring.
     """
-    async for session in get_session():
-        # Verify both exist
-        measure_result = await session.execute(select(Measure).where(Measure.id == measure_id))
-        if not measure_result.scalars().first():
-            return f"Measure with ID {measure_id} not found."
-
-        risk_result = await session.execute(select(Risk).where(Risk.id == risk_id))
-        if not risk_result.scalars().first():
-            return f"Risk with ID {risk_id} not found."
-
-        # Check if link exists
-        link_result = await session.execute(
-            select(MeasureRiskLink).where(
-                MeasureRiskLink.measure_id == measure_id,
-                MeasureRiskLink.risk_id == risk_id
-            )
-        )
-        if link_result.scalars().first():
-            return f"Link between measure #{measure_id} and risk #{risk_id} already exists."
-
-        link = MeasureRiskLink(
-            measure_id=measure_id,
-            risk_id=risk_id,
-            effectiveness_contribution=max(0, min(100, effectiveness_contribution)),
-        )
-
-        session.add(link)
-        await session.commit()
-
-        return f"Linked measure #{measure_id} to risk #{risk_id} with {effectiveness_contribution}% effectiveness contribution."
+    return "This function is temporarily disabled. Measure-Risk linking is being refactored to Control-Risk linking."
 
 
 # =============================================================================
