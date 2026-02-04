@@ -76,6 +76,10 @@ class ScopeState(rx.State):
         return len([s for s in self.scopes if s.get("type") == "Supplier"])
 
     @rx.var
+    def department_count(self) -> int:
+        return len([s for s in self.scopes if s.get("type") == "Department"])
+
+    @rx.var
     def available_parents(self) -> List[Dict[str, Any]]:
         """Get scopes that can be parents (exclude current if editing)."""
         return [

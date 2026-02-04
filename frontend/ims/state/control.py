@@ -28,7 +28,7 @@ class ControlState(rx.State):
     # Form fields
     form_title: str = ""
     form_description: str = ""
-    form_status: str = "DRAFT"
+    form_status: str = "Draft"
     form_control_type: str = "Preventive"
     form_automation_level: str = "Manual"
     form_scope_id: str = ""
@@ -43,15 +43,15 @@ class ControlState(rx.State):
 
     @rx.var
     def active_count(self) -> int:
-        return len([c for c in self.controls if c.get("status") == "ACTIVE"])
+        return len([c for c in self.controls if c.get("status") == "Active"])
 
     @rx.var
     def implemented_count(self) -> int:
-        return len([c for c in self.controls if c.get("status") == "CLOSED"])
+        return len([c for c in self.controls if c.get("status") == "Closed"])
 
     @rx.var
     def draft_count(self) -> int:
-        return len([c for c in self.controls if c.get("status") == "DRAFT"])
+        return len([c for c in self.controls if c.get("status") == "Draft"])
 
     async def load_controls(self):
         """Load controls from API."""
@@ -91,7 +91,7 @@ class ControlState(rx.State):
         """Reset form fields."""
         self.form_title = ""
         self.form_description = ""
-        self.form_status = "DRAFT"
+        self.form_status = "Draft"
         self.form_control_type = "Preventive"
         self.form_automation_level = "Manual"
         self.form_scope_id = ""
@@ -112,9 +112,10 @@ class ControlState(rx.State):
                 self.editing_control_id = control_id
                 self.form_title = control.get("title", "")
                 self.form_description = control.get("description", "") or ""
-                self.form_status = control.get("status", "DRAFT")
+                self.form_status = control.get("status", "Draft")
                 self.form_control_type = control.get("control_type", "Preventive") or "Preventive"
                 self.form_automation_level = control.get("automation_level", "Manual") or "Manual"
+                self.form_scope_id = str(control.get("scope_id", "")) if control.get("scope_id") else ""
                 self.show_form_dialog = True
                 break
 

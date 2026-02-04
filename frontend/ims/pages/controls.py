@@ -10,10 +10,10 @@ def status_badge(status: str) -> rx.Component:
     """Badge for control status."""
     return rx.match(
         status,
-        ("DRAFT", rx.badge("Concept", color_scheme="gray", variant="soft")),
-        ("ACTIVE", rx.badge("Actief", color_scheme="blue", variant="soft")),
-        ("DEPRECATED", rx.badge("Vervallen", color_scheme="orange", variant="soft")),
-        ("CLOSED", rx.badge("Afgesloten", color_scheme="green", variant="soft")),
+        ("Draft", rx.badge("Concept", color_scheme="gray", variant="soft")),
+        ("Active", rx.badge("Actief", color_scheme="blue", variant="soft")),
+        ("Deprecated", rx.badge("Vervallen", color_scheme="orange", variant="soft")),
+        ("Closed", rx.badge("Afgesloten", color_scheme="green", variant="soft")),
         rx.badge(status, color_scheme="gray", variant="outline"),
     )
 
@@ -140,9 +140,9 @@ def filter_bar() -> rx.Component:
             rx.select.trigger(placeholder="Filter op status"),
             rx.select.content(
                 rx.select.item("Alle statussen", value="ALLE"),
-                rx.select.item("Concept", value="DRAFT"),
-                rx.select.item("Actief", value="ACTIVE"),
-                rx.select.item("Afgesloten", value="CLOSED"),
+                rx.select.item("Concept", value="Draft"),
+                rx.select.item("Actief", value="Active"),
+                rx.select.item("Afgesloten", value="Closed"),
             ),
             value=ControlState.filter_status,
             on_change=ControlState.set_filter_status,
@@ -277,9 +277,9 @@ def control_form_dialog() -> rx.Component:
                         rx.select.root(
                             rx.select.trigger(placeholder="Status"),
                             rx.select.content(
-                                rx.select.item("Concept", value="DRAFT"),
-                                rx.select.item("Actief", value="ACTIVE"),
-                                rx.select.item("Afgesloten", value="CLOSED"),
+                                rx.select.item("Concept", value="Draft"),
+                                rx.select.item("Actief", value="Active"),
+                                rx.select.item("Afgesloten", value="Closed"),
                             ),
                             value=ControlState.form_status,
                             on_change=ControlState.set_form_status,

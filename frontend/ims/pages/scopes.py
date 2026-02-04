@@ -627,6 +627,19 @@ def stat_cards() -> rx.Component:
         ),
         rx.card(
             rx.hstack(
+                rx.icon("users", size=20, color="var(--cyan-9)"),
+                rx.vstack(
+                    rx.text("Afdelingen", size="1", color="gray"),
+                    rx.text(ScopeState.department_count, size="4", weight="bold"),
+                    spacing="0",
+                    align_items="start",
+                ),
+                spacing="3",
+            ),
+            padding="12px",
+        ),
+        rx.card(
+            rx.hstack(
                 rx.icon("workflow", size=20, color="var(--green-9)"),
                 rx.vstack(
                     rx.text("Processen", size="1", color="gray"),
