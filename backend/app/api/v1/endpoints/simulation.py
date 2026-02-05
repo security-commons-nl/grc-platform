@@ -1,6 +1,8 @@
 import json
 import random
 import math
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import select
@@ -40,6 +42,8 @@ def poisson_sample(lmbda: float) -> int:
 
 @router.get("/config", response_model=RiskQuantificationProfile)
 async def get_config(
+    # TODO: Replace Query param with Depends(get_current_tenant) from auth context
+    # This is a security risk - tenant_id should come from authenticated user context
     tenant_id: int = Query(..., description="Tenant ID"),
     session: AsyncSession = Depends(get_session),
 ):
@@ -89,8 +93,9 @@ async def save_config(
 
 @router.post("/run", response_model=Dict[str, Any])
 async def run_simulation(
-    tenant_id: int,
-    iterations: int = 10000,
+    # TODO: Replace with Depends(get_current_tenant) from auth context
+    tenant_id: int = Query(..., description="Tenant ID"),
+    iterations: int = Query(default=10000, ge=100, le=100000, description="Number of iterations (max 100,000)"),
     scope_id: Optional[int] = None,
     risk_ids: Optional[List[int]] = None,
     session: AsyncSession = Depends(get_session),
@@ -183,29 +188,22 @@ async def run_simulation(
             "imp_max": imp_max
         })
 
-    # 4. Run Simulation
-    annual_losses = []
+    # 4. Run Simulation (offload CPU-bound work to thread pool)
+    def run_simulation_sync(risk_params: List[Dict], iterations: int) -> List[float]:
+        """CPU-bound simulation - runs in thread pool to avoid blocking event loop."""
+        annual_losses = []
+        for _ in range(iterations):
+            annual_loss = 0.0
+            for rp in risk_params:
+                freq_rate = random.uniform(rp["freq_min"], rp["freq_max"])
+                n_events = poisson_sample(freq_rate)
+                if n_events > 0:
+                    for _ in range(n_events):
+                        annual_loss += random.uniform(rp["imp_min"], rp["imp_max"])
+            annual_losses.append(annual_loss)
+        return annual_losses
 
-    # Pre-calculate to avoid lookups in loop if possible,
-    # but params are minimal.
-
-    for _ in range(iterations):
-        annual_loss = 0.0
-        for rp in risk_params:
-            # Sample frequency rate (uncertainty in likelihood)
-            freq_rate = random.uniform(rp["freq_min"], rp["freq_max"])
-
-            # Sample number of events
-            n_events = poisson_sample(freq_rate)
-
-            if n_events > 0:
-                # Sample impact for each event
-                # Optimisation: sum of N uniforms ~ Normal for large N, but for small N just loop
-                # Often N is small (0, 1, 2)
-                for _ in range(n_events):
-                    annual_loss += random.uniform(rp["imp_min"], rp["imp_max"])
-
-        annual_losses.append(annual_loss)
+    annual_losses = await asyncio.to_thread(run_simulation_sync, risk_params, iterations)
 
     # 5. Calculate Stats
     annual_losses.sort()
