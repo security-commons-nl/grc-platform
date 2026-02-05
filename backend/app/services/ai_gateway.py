@@ -8,6 +8,7 @@ All providers are EU-based or local to ensure GDPR compliance.
 """
 
 import logging
+import os
 import httpx
 from typing import List, Optional, Dict, Any, Union
 from langchain_core.language_models import BaseChatModel
@@ -18,6 +19,7 @@ from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 
+from langfuse.langchain import CallbackHandler
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,22 @@ class AIGateway:
         
     def _initialize_providers(self):
         """Initialize all configured providers."""
+
+        # Initialize Langfuse Callback if configured
+        callbacks = []
+        if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
+            try:
+                # Ensure env vars are set for Langfuse SDK (it reads from os.environ)
+                os.environ["LANGFUSE_PUBLIC_KEY"] = settings.LANGFUSE_PUBLIC_KEY
+                os.environ["LANGFUSE_SECRET_KEY"] = settings.LANGFUSE_SECRET_KEY
+                if settings.LANGFUSE_HOST:
+                     os.environ["LANGFUSE_HOST"] = settings.LANGFUSE_HOST
+
+                langfuse_handler = CallbackHandler()
+                callbacks.append(langfuse_handler)
+                logger.info("✅ Langfuse observability initialized")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Langfuse: {e}")
         
         # 1. Mistral AI (Official API)
         if settings.MISTRAL_API_KEY:
@@ -45,6 +63,7 @@ class AIGateway:
                     endpoint=settings.MISTRAL_API_BASE,
                     temperature=0.2,
                     timeout=settings.AI_TIMEOUT,
+                    callbacks=callbacks,
                 )
                 logger.info("✅ Mistral AI provider initialized")
             except Exception as e:
@@ -59,6 +78,7 @@ class AIGateway:
                     model=settings.SCALEWAY_MODEL,
                     temperature=0.2,
                     timeout=settings.AI_TIMEOUT,
+                    callbacks=callbacks,
                 )
                 logger.info("✅ Scaleway provider initialized")
             except Exception as e:
@@ -72,6 +92,7 @@ class AIGateway:
                 model=settings.OLLAMA_MODEL,
                 temperature=0.2,
                 timeout=settings.AI_TIMEOUT, # Note: ChatOllama uses request_timeout in older versions, timeout in newer
+                callbacks=callbacks,
             )
             logger.info("✅ Local Ollama provider initialized")
         except Exception as e:

@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     # Webhook Security
     WEBHOOK_SECRET: Optional[str] = None
 
+    # Langfuse (LLM Observability)
+    LANGFUSE_PUBLIC_KEY: Optional[str] = None
+    LANGFUSE_SECRET_KEY: Optional[str] = None
+    LANGFUSE_HOST: Optional[str] = "https://cloud.langfuse.com"
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
