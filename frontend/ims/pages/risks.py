@@ -386,7 +386,7 @@ def risk_form_dialog() -> rx.Component:
                             rx.button(
                                 "Koppelen",
                                 on_click=RiskState.link_control,
-                                disabled=RiskState.selected_control_id_to_link == "",
+                                disabled=~RiskState.selected_control_id_to_link,
                             ),
                             width="100%",
                             spacing="2",

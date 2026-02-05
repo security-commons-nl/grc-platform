@@ -51,7 +51,7 @@ class RiskState(rx.State):
     # Control linkage
     linked_controls: List[Dict[str, Any]] = []
     all_controls: List[Dict[str, Any]] = []
-    selected_control_id_to_link: str = ""
+    selected_control_id_to_link: Optional[str] = None
 
     # Delete confirmation
     show_delete_dialog: bool = False
@@ -181,7 +181,7 @@ class RiskState(rx.State):
         # Reset linkage data
         self.linked_controls = []
         self.all_controls = []
-        self.selected_control_id_to_link = ""
+        self.selected_control_id_to_link = None
 
         # Mapping from API values (Dutch) to form values (enum names)
         quadrant_api_to_form = {
@@ -289,7 +289,7 @@ class RiskState(rx.State):
             )
             self.success_message = "Control gekoppeld"
             await self.load_linked_controls(self.editing_risk_id)
-            self.selected_control_id_to_link = ""
+            self.selected_control_id_to_link = None
         except Exception as e:
             self.error = f"Fout bij koppelen: {str(e)}"
 
