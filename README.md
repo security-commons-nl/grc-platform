@@ -1,63 +1,71 @@
 # IMS (Integrated Management System)
 
-> **The Model leads. The API guards. Tools execute. AI supports.**
+> **Model-gedreven GRC voor ISMS, PIMS en BCMS — met lokale AI als versneller.**
 
-The **IMS** is a next-generation Governance, Risk, and Compliance (GRC) platform designed for **ISMS**, **PIMS**, and **BCMS**. It enforces strict separation of concerns and leverages **Local AI** to reduce administrative overhead without compromising data sovereignty.
+IMS is een Governance, Risk & Compliance-platform dat **normen, risico’s, controls en bewijs** centraal beheert. Het is ontworpen voor organisaties (o.a. publieke sector) die meerdere managementsystemen willen combineren in één consistente bron van waarheid, met **strikte scheiding van data, logica en UI** en optionele **local-first AI**.
 
 ---
 
-## 🏗 Architecture
-The system is built on 4 strict layers (detailed in `DESIGN.md`):
+## ✨ Wat IMS doet
+- **Eén gedeeld kernmodel** voor assets, processen, leveranciers en controls over ISMS/PIMS/BCMS heen.
+- **Workflow- en RBAC-gedreven governance** via een API die alle validatie en autorisatie bewaakt.
+- **AI-ondersteuning** voor beleid, audit-activiteiten en bewijsanalyse met lokale modellen (Ollama) als default.
 
-1.  **Layer 1: The Model (Data)**
-    *   **Single Source of Truth** for Norms, Risks, and Controls.
-    *   **Shared Core**: Assets, Processes, and Suppliers are shared across domains.
-    *   **Tech**: Python SQLModel (PostgreSQL).
+---
 
-2.  **Layer 2: The API (logic)**
-    *   **Gatekeeper**: Enforces RBAC, Validation, and Workflow states.
-    *   **Tech**: FastAPI (Async/Await).
+## 🧱 Architectuur (4 lagen)
+1. **Model (Data)** – single source of truth voor normen, risico’s en controls.
+2. **API (Logic)** – gatekeeper voor RBAC, validatie en workflow-states.
+3. **Tools (UI)** – een dunne front-end laag voor interactie en dashboards.
+4. **AI (Intelligence)** – lokale/regionale AI voor generatieve dashboards en content.
 
-3.  **Layer 3: The Tools (UI)**
-    *   **React/Vue Frontend**: A "dumb" glass pane for interaction.
-    *   **Generative UI**: Dashboards created on-the-fly by AI.
+Zie ook: [Complete Design Overview](docs/COMPLETE_DESIGN_OVERVIEW.md) en [Architectuurprincipes](docs/ARCHITECTURE_PRINCIPLES.md).
 
-4.  **Layer 4: The AI (Intelligence)**
-    *   **Local-First**: Defaults to Ollama/Mistral. No cloud data leakage.
-    *   **Capabilities**: Policy Drafting, Audit Execution, Evidence Analysis, Generative Dashboards.
+---
+
+## 🗂 Repo-indeling
+- **`backend/`** – FastAPI + SQLModel + PostgreSQL (API, domeinlogica, migraties).
+- **`frontend/`** – Reflex UI (Python) voor dashboards en interactie.
+- **`docs/`** – ontwerp, rollen, AI-architectuur, gap analyses, testplannen.
+- **`illustrations/`** – schema’s en visuals.
 
 ---
 
 ## 🚀 Quick Start (Docker)
-
-The easiest way to run the backend (API + DB) is via Docker Compose.
-
-### Prerequisites
-*   Docker & Docker Compose
-*   (Optional) Ollama running locally for AI features
-
-### Run
+### 1) Configureer environment
 ```bash
-# 1. Start Database & API
+cp .env.example .env
+```
+Vul de waarden in je `.env` (Postgres/pgAdmin/AI).
+
+### 2) Start de stack
+```bash
 docker-compose up -d
-
-# 2. Access API Docs (Swagger)
-# Open http://localhost:8000/docs
-
-# 3. Access Database (PGAdmin)
-# Open http://localhost:5050 (User: admin@ims.local / Pass: admin)
 ```
 
+### 3) Toegang
+- **API docs (Swagger):** http://localhost:8001/docs
+- **Frontend:** http://localhost:3000
+- **pgAdmin:** http://localhost:5050
+- **Ollama API:** http://localhost:11434
+
 ---
 
-## 📚 Documentation
-*   [**System Design (DESIGN.md)**](DESIGN.md): The technical specification and data model.
-*   [**Architecture Layers**](docs/IMS%20-%20architectuurlagen.md): Conceptual breakdown of the 4 layers.
-*   [**Roles & Responsibilities**](docs/IMS%20-%20rollen%20en%20verantwoordelijkheden.md): Who does what (and how it maps to RBAC).
+## 📚 Documentatie
+- [Complete Design Overview](docs/COMPLETE_DESIGN_OVERVIEW.md)
+- [IMS Roles & Responsibilities](docs/IMS%20ROLES%20AND%20RESPONSIBILITIES.md)
+- [AI Gateway Architecture](docs/AI_GATEWAY_ARCHITECTURE.md)
+- [Audit Logging Implementation Plan](docs/AUDIT_LOGGING_IMPLEMENTATION_PLAN.md)
+- [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)
 
 ---
 
-## 🛡 Security & Compliance
-*   **EU Data Sovereignty**: AI defaults to `localhost`. No external API calls by default.
-*   **RBAC**: Granular access control per Scope (Process Owner vs Viewer).
-*   **Audit Trail**: All changes to the Model are tracked.
+## 🔐 Security & Compliance
+- **EU data-soevereiniteit:** AI draait lokaal of via regionale providers.
+- **RBAC-first:** toegang en workflow via API-afdwinging.
+- **Audit trail:** wijzigingshistorie op modelniveau.
+
+---
+
+## ✅ Status
+IMS is actief in ontwikkeling. Zie de documenten in `docs/` voor roadmap, ontwerpkeuzes en plannen.
