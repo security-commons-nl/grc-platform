@@ -19,7 +19,6 @@ from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 
-from langfuse.langchain import CallbackHandler
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -42,15 +41,19 @@ class AIGateway:
         callbacks = []
         if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
             try:
-                # Ensure env vars are set for Langfuse SDK (it reads from os.environ)
-                os.environ["LANGFUSE_PUBLIC_KEY"] = settings.LANGFUSE_PUBLIC_KEY
-                os.environ["LANGFUSE_SECRET_KEY"] = settings.LANGFUSE_SECRET_KEY
-                if settings.LANGFUSE_HOST:
-                     os.environ["LANGFUSE_HOST"] = settings.LANGFUSE_HOST
-
-                langfuse_handler = CallbackHandler()
+                # Conditional import - only load if configured
+                from langfuse.langchain import CallbackHandler
+                
+                # Pass config directly to handler, do not mutate os.environ
+                langfuse_handler = CallbackHandler(
+                    public_key=settings.LANGFUSE_PUBLIC_KEY,
+                    secret_key=settings.LANGFUSE_SECRET_KEY,
+                    host=settings.LANGFUSE_HOST,  # None means disabled, self-hosted URL required
+                )
                 callbacks.append(langfuse_handler)
                 logger.info("✅ Langfuse observability initialized")
+            except ImportError:
+                logger.warning("⚠️ Langfuse package not installed, skipping observability")
             except Exception as e:
                 logger.error(f"❌ Failed to initialize Langfuse: {e}")
         

@@ -68,9 +68,11 @@ class Settings(BaseSettings):
     WEBHOOK_SECRET: Optional[str] = None
 
     # Langfuse (LLM Observability)
+    # IMPORTANT: For EU data sovereignty, Langfuse must be self-hosted.
+    # Do NOT use the US-hosted cloud.langfuse.com - set LANGFUSE_HOST to your self-hosted instance.
     LANGFUSE_PUBLIC_KEY: Optional[str] = None
     LANGFUSE_SECRET_KEY: Optional[str] = None
-    LANGFUSE_HOST: Optional[str] = "https://cloud.langfuse.com"
+    LANGFUSE_HOST: Optional[str] = None  # Set to self-hosted instance URL in production
 
 
     def __init__(self, **kwargs):
