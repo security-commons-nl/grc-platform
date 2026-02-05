@@ -29,6 +29,20 @@ def control_type_badge(control_type: str) -> rx.Component:
     )
 
 
+def get_scope_name(control, scopes) -> str:
+    """Get scope name for a control by looking up scope_id in scopes list."""
+    scope_id = control.get("scope_id")
+    if not scope_id:
+        return "-"
+    
+    # Find matching scope in scopes list
+    for scope in scopes:
+        if scope.get("id") == scope_id:
+            return scope.get("name", "-")
+    
+    return "-"
+
+
 def control_row(control: dict) -> rx.Component:
     """Single row in controls table."""
     return rx.table.row(
@@ -46,6 +60,13 @@ def control_row(control: dict) -> rx.Component:
                 ),
                 align_items="start",
                 spacing="0",
+            ),
+        ),
+        rx.table.cell(
+            rx.text(
+                get_scope_name(control, ControlState.scopes),
+                size="2",
+                color="gray" if not control.get("scope_id") else "default",
             ),
         ),
         rx.table.cell(status_badge(control["status"])),
@@ -90,6 +111,7 @@ def controls_table() -> rx.Component:
             rx.table.row(
                 rx.table.column_header_cell("ID", width="60px"),
                 rx.table.column_header_cell("Control"),
+                rx.table.column_header_cell("Scope / Asset", width="150px"),
                 rx.table.column_header_cell("Status", width="120px"),
                 rx.table.column_header_cell("Type", width="100px"),
                 rx.table.column_header_cell("Effectiviteit", width="100px"),
@@ -106,7 +128,7 @@ def controls_table() -> rx.Component:
                             width="100%",
                             padding="40px",
                         ),
-                        col_span=6,
+                        col_span=7,
                     ),
                 ),
                 rx.cond(
@@ -123,7 +145,7 @@ def controls_table() -> rx.Component:
                                 width="100%",
                                 padding="40px",
                             ),
-                            col_span=6,
+                            col_span=7,
                         ),
                     ),
                 ),
