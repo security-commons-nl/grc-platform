@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 
 # --- Standards (Frameworks) ---
 
-@router.get("/standards/", response_model=List[Standard])
+@router.get("/", response_model=List[Standard])
 async def read_standards(skip: int = 0, limit: int = 100, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Standard).offset(skip).limit(limit))
     return result.scalars().all()
 
-@router.post("/standards/", response_model=Standard)
+@router.post("/", response_model=Standard)
 async def create_standard(standard: Standard, session: AsyncSession = Depends(get_session)):
     """Create a new standard/framework. Also indexes in knowledge base for AI RAG."""
     session.add(standard)
@@ -40,7 +40,7 @@ async def create_standard(standard: Standard, session: AsyncSession = Depends(ge
 
     return standard
 
-@router.get("/standards/{standard_id}", response_model=Standard)
+@router.get("/{standard_id}", response_model=Standard)
 async def read_standard(standard_id: int, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Standard).where(Standard.id == standard_id))
     standard = result.scalars().first()
@@ -50,7 +50,7 @@ async def read_standard(standard_id: int, session: AsyncSession = Depends(get_se
 
 # --- Requirements (Controls within Frameworks) ---
 
-@router.post("/standards/{standard_id}/requirements/", response_model=Requirement)
+@router.post("/{standard_id}/requirements/", response_model=Requirement)
 async def create_requirement(standard_id: int, requirement: Requirement, session: AsyncSession = Depends(get_session)):
     """Create a new requirement/control. Also indexes in knowledge base for AI RAG."""
     # Verify standard exists
@@ -79,7 +79,7 @@ async def create_requirement(standard_id: int, requirement: Requirement, session
 
     return requirement
 
-@router.get("/standards/{standard_id}/requirements/", response_model=List[Requirement])
+@router.get("/{standard_id}/requirements/", response_model=List[Requirement])
 async def read_requirements_for_standard(standard_id: int, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Requirement).where(Requirement.standard_id == standard_id))
     return result.scalars().all()

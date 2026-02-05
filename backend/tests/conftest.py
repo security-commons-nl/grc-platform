@@ -102,9 +102,9 @@ def sample_measure_data() -> dict:
     """Sample measure data for testing."""
     return {
         "tenant_id": 1,
-        "title": "Test Measure",
+        "name": "Test Measure",
         "description": "A test measure for unit testing",
-        "implementation_details": "Implementation steps here",
+        "implementation_guidance": "Implementation steps here",
     }
 
 
@@ -125,4 +125,38 @@ def sample_tenant_data() -> dict:
         "name": "Test Tenant",
         "slug": "test-tenant",
         "is_active": True,
+    }
+
+
+@pytest.fixture
+def sample_standard_data() -> dict:
+    """Sample standard data for testing."""
+    return {
+        "name": "Test Standard",
+        "version": "1.0",
+        "type": "BIO",
+        "description": "A test standard for unit testing",
+    }
+
+
+@pytest.fixture
+def sample_requirement_data() -> dict:
+    """Sample requirement data for testing."""
+    return {
+        "code": "REQ-001",
+        "title": "Test Requirement",
+        "description": "A test requirement for unit testing",
+        "guidance": "Test guidance",
+    }
+
+
+@pytest.fixture
+def sample_control_data() -> dict:
+    """Sample control data for testing."""
+    return {
+        "tenant_id": 1,
+        "title": "Test Control",
+        "description": "A test control for unit testing",
+        "control_type": "Preventive",
+        "automation_level": "Manual",
     }

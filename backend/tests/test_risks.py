@@ -116,7 +116,7 @@ class TestRiskAcceptance:
         # Accept the risk
         response = await client.post(
             f"/api/v1/risks/{risk_id}/accept",
-            params={"accepted_by_id": 1, "acceptance_justification": "Test justification"}
+            params={"accepted_by_id": 1, "justification": "Test justification"}
         )
         assert response.status_code == 200
 
