@@ -194,15 +194,19 @@ async def initialize_soa_from_standard(
     created_count = 0
     skipped_count = 0
 
+    # Optimize: Fetch all existing SoA entries for this scope and standard in one query
+    req_ids = [r.id for r in requirements]
+    existing_result = await session.execute(
+        select(ApplicabilityStatement.requirement_id)
+        .where(ApplicabilityStatement.tenant_id == tenant_id)
+        .where(ApplicabilityStatement.scope_id == scope_id)
+        .where(ApplicabilityStatement.requirement_id.in_(req_ids))
+    )
+    existing_req_ids = set(existing_result.scalars().all())
+
     for req in requirements:
         # Check if already exists
-        existing = await session.execute(
-            select(ApplicabilityStatement)
-            .where(ApplicabilityStatement.tenant_id == tenant_id)
-            .where(ApplicabilityStatement.scope_id == scope_id)
-            .where(ApplicabilityStatement.requirement_id == req.id)
-        )
-        if existing.scalars().first():
+        if req.id in existing_req_ids:
             skipped_count += 1
             continue
 
