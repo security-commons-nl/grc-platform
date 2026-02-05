@@ -110,6 +110,33 @@ def selected_risk_display() -> rx.Component:
     )
 
 
+def linked_control_row(control: dict) -> rx.Component:
+    """Row for a linked control in the risk dialog."""
+    return rx.hstack(
+        rx.vstack(
+            rx.text(control.get("title", "-"), weight="medium", size="2"),
+            rx.text(
+                control.get("description", "") or "Geen beschrijving",
+                size="1",
+                color="gray",
+                no_of_lines=1,
+            ),
+            spacing="0",
+            align_items="start",
+        ),
+        rx.button(
+            "Ontkoppelen",
+            size="2",
+            variant="soft",
+            color_scheme="red",
+            on_click=lambda: RiskState.unlink_control(control.get("id")),
+        ),
+        justify="between",
+        align="center",
+        width="100%",
+    )
+
+
 def risk_matrix() -> rx.Component:
     """Clickable 4x4 risk matrix for selecting likelihood and impact."""
     return rx.vstack(
@@ -333,6 +360,58 @@ def risk_form_dialog() -> rx.Component:
                     width="100%",
                 ),
 
+                rx.cond(
+                    RiskState.is_editing,
+                    rx.vstack(
+                        rx.divider(),
+                        rx.text("Gekoppelde controls", size="2", weight="medium"),
+                        rx.cond(
+                            RiskState.linked_controls.length() > 0,
+                            rx.vstack(
+                                rx.foreach(RiskState.linked_controls, linked_control_row),
+                                spacing="2",
+                                width="100%",
+                            ),
+                            rx.callout(
+                                "Nog geen controls gekoppeld.",
+                                icon="info",
+                                color="gray",
+                                size="2",
+                            ),
+                        ),
+                        rx.hstack(
+                            rx.select.root(
+                                rx.select.trigger(placeholder="Selecteer control"),
+                                rx.select.content(
+                                    rx.select.item("Kies een control", value="0"),
+                                    rx.foreach(
+                                        RiskState.linkable_controls,
+                                        lambda control: rx.select.item(
+                                            f'{control.get("title", "Control")} (#{control.get("id")})',
+                                            value=str(control.get("id")),
+                                        ),
+                                    ),
+                                ),
+                                value=RiskState.selected_control_id,
+                                on_change=RiskState.set_selected_control_id,
+                            ),
+                            rx.button(
+                                "Koppelen",
+                                size="2",
+                                on_click=RiskState.link_selected_control,
+                                disabled=RiskState.selected_control_id == "0",
+                            ),
+                            width="100%",
+                            align="center",
+                            spacing="2",
+                        ),
+                        spacing="3",
+                        width="100%",
+                        align_items="start",
+                    ),
+                    rx.box(),
+                ),
+
                 spacing="4",
                 width="100%",
             ),
@@ -482,7 +561,10 @@ def risk_row(risk: dict) -> rx.Component:
                     rx.icon("pencil", size=14),
                     variant="ghost",
                     size="1",
-                    on_click=lambda: RiskState.open_edit_dialog(risk["id"]),
+                    on_click=lambda: [
+                        RiskState.open_edit_dialog(risk["id"]),
+                        RiskState.load_controls_for_risk(risk["id"]),
+                    ],
                 ),
                 rx.icon_button(
                     rx.icon("trash-2", size=14),

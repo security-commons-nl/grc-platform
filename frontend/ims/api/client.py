@@ -92,6 +92,35 @@ class APIClient:
             response.raise_for_status()
             return response.json()
 
+    async def get_risk_controls(self, risk_id: int) -> List[Dict[str, Any]]:
+        """Get controls linked to a risk."""
+        async with self._get_client() as client:
+            response = await client.get(f"/risks/{risk_id}/controls")
+            response.raise_for_status()
+            return response.json()
+
+    async def link_control_to_risk(
+        self,
+        risk_id: int,
+        control_id: int,
+        mitigation_percent: int = 50,
+    ) -> Dict[str, Any]:
+        """Link a control to a risk."""
+        async with self._get_client() as client:
+            response = await client.post(
+                f"/risks/{risk_id}/controls/{control_id}",
+                params={"mitigation_percent": mitigation_percent},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def unlink_control_from_risk(self, risk_id: int, control_id: int) -> Dict[str, Any]:
+        """Unlink a control from a risk."""
+        async with self._get_client() as client:
+            response = await client.delete(f"/risks/{risk_id}/controls/{control_id}")
+            response.raise_for_status()
+            return response.json()
+
     # =========================================================================
     # CONTROLS (Context-specific implementations)
     # =========================================================================

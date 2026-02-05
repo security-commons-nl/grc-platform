@@ -13,6 +13,11 @@ class RiskState(rx.State):
     risks: List[Dict[str, Any]] = []
     selected_risk: Dict[str, Any] = {}
 
+    # Controls linkage
+    available_controls: List[Dict[str, Any]] = []
+    linked_controls: List[Dict[str, Any]] = []
+    selected_control_id: str = "0"
+
     # Heatmap data
     heatmap_data: Dict[str, Any] = {
         "heatmap": {
@@ -84,6 +89,12 @@ class RiskState(rx.State):
         """Total number of risks."""
         return self.heatmap_data.get("total", 0)
 
+    @rx.var
+    def linkable_controls(self) -> List[Dict[str, Any]]:
+        """Controls that are not yet linked to the current risk."""
+        linked_ids = {control.get("id") for control in self.linked_controls}
+        return [control for control in self.available_controls if control.get("id") not in linked_ids]
+
     # ==========================================================================
     # LOAD METHODS
     # ==========================================================================
@@ -143,6 +154,18 @@ class RiskState(rx.State):
         finally:
             self.is_loading = False
 
+    async def load_controls_for_risk(self, risk_id: int):
+        """Load controls and linked controls for a risk."""
+        self.error = ""
+        try:
+            self.available_controls = await api_client.get_controls()
+            self.linked_controls = await api_client.get_risk_controls(risk_id)
+            self.selected_control_id = "0"
+        except Exception as e:
+            self.error = f"Fout bij laden controls: {str(e)}"
+            self.available_controls = []
+            self.linked_controls = []
+
     # ==========================================================================
     # FILTER METHODS
     # ==========================================================================
@@ -167,6 +190,9 @@ class RiskState(rx.State):
         self.is_editing = False
         self.editing_risk_id = None
         self._reset_form()
+        self.available_controls = []
+        self.linked_controls = []
+        self.selected_control_id = "0"
         self.show_form_dialog = True
 
     def open_edit_dialog(self, risk_id: int):
@@ -200,6 +226,7 @@ class RiskState(rx.State):
                 quadrant = risk.get("attention_quadrant")
                 self.form_attention_quadrant = quadrant_api_to_form.get(quadrant, "NONE") if quadrant else "NONE"
                 self.form_treatment_justification = risk.get("treatment_justification", "") or ""
+                self.selected_control_id = "0"
                 self.show_form_dialog = True
                 break
 
@@ -207,6 +234,9 @@ class RiskState(rx.State):
         """Close the form dialog."""
         self.show_form_dialog = False
         self._reset_form()
+        self.available_controls = []
+        self.linked_controls = []
+        self.selected_control_id = "0"
 
     def _reset_form(self):
         """Reset all form fields."""
@@ -242,6 +272,9 @@ class RiskState(rx.State):
 
     def set_form_treatment_justification(self, value: str):
         self.form_treatment_justification = value
+
+    def set_selected_control_id(self, value: str):
+        self.selected_control_id = value
 
     # ==========================================================================
     # CRUD METHODS
@@ -300,6 +333,32 @@ class RiskState(rx.State):
             return RiskState.load_risks
         except Exception as e:
             self.error = f"Fout bij opslaan: {str(e)}"
+
+    async def link_selected_control(self):
+        """Link the selected control to the current risk."""
+        if not self.editing_risk_id or self.selected_control_id == "0":
+            return
+
+        try:
+            await api_client.link_control_to_risk(
+                self.editing_risk_id,
+                int(self.selected_control_id),
+            )
+            self.selected_control_id = "0"
+            await self.load_controls_for_risk(self.editing_risk_id)
+        except Exception as e:
+            self.error = f"Fout bij koppelen: {str(e)}"
+
+    async def unlink_control(self, control_id: int):
+        """Unlink a control from the current risk."""
+        if not self.editing_risk_id:
+            return
+
+        try:
+            await api_client.unlink_control_from_risk(self.editing_risk_id, control_id)
+            await self.load_controls_for_risk(self.editing_risk_id)
+        except Exception as e:
+            self.error = f"Fout bij ontkoppelen: {str(e)}"
 
     # ==========================================================================
     # DELETE METHODS
