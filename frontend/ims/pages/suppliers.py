@@ -102,7 +102,7 @@ def supplier_form_dialog() -> rx.Component:
                         rx.select.root(
                             rx.select.trigger(placeholder="Selecteer scope"),
                             rx.select.content(
-                                rx.select.item("Geen koppeling", value=""),
+                                rx.select.item("Geen koppeling", value="0"),
                                 rx.foreach(
                                     SupplierState.available_parents,
                                     lambda p: rx.select.item(

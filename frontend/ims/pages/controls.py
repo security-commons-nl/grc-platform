@@ -327,6 +327,7 @@ def control_form_dialog() -> rx.Component:
                     rx.select.root(
                         rx.select.trigger(placeholder="Selecteer scope of asset..."),
                         rx.select.content(
+                            rx.select.item("Geen koppeling", value="0"),
                             rx.foreach(
                                 ControlState.scopes,
                                 lambda scope: rx.select.item(

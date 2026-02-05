@@ -31,7 +31,7 @@ class ControlState(rx.State):
     form_status: str = "Draft"
     form_control_type: str = "Preventive"
     form_automation_level: str = "Manual"
-    form_scope_id: str = ""
+    form_scope_id: str = "0"
 
     # Delete confirmation
     show_delete_dialog: bool = False
@@ -94,7 +94,7 @@ class ControlState(rx.State):
         self.form_status = "Draft"
         self.form_control_type = "Preventive"
         self.form_automation_level = "Manual"
-        self.form_scope_id = ""
+        self.form_scope_id = "0"
         self.error = ""
 
     def open_create_dialog(self):
@@ -112,10 +112,13 @@ class ControlState(rx.State):
                 self.editing_control_id = control_id
                 self.form_title = control.get("title", "")
                 self.form_description = control.get("description", "") or ""
-                self.form_status = control.get("status", "Draft")
+                # Normalize status to Title Case (Active, Draft, Closed)
+                status = control.get("status", "Draft")
+                self.form_status = status.capitalize() if status else "Draft"
+                
                 self.form_control_type = control.get("control_type", "Preventive") or "Preventive"
                 self.form_automation_level = control.get("automation_level", "Manual") or "Manual"
-                self.form_scope_id = str(control.get("scope_id", "")) if control.get("scope_id") else ""
+                self.form_scope_id = str(control.get("scope_id", "")) if control.get("scope_id") else "0"
                 self.show_form_dialog = True
                 break
 
@@ -159,7 +162,7 @@ class ControlState(rx.State):
                 "status": self.form_status,
                 "control_type": self.form_control_type,
                 "automation_level": self.form_automation_level,
-                "scope_id": int(self.form_scope_id) if self.form_scope_id else None,
+                "scope_id": int(self.form_scope_id) if self.form_scope_id and self.form_scope_id != "0" else None,
                 "tenant_id": 1,
             }
 

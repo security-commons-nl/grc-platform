@@ -26,7 +26,7 @@ class SupplierState(rx.State):
     form_name: str = ""
     form_description: str = ""
     form_owner: str = ""
-    form_parent_id: str = ""
+    form_parent_id: str = "0"
 
     # Form fields - Supplier specific
     form_vendor_contact_name: str = ""
@@ -63,9 +63,13 @@ class SupplierState(rx.State):
     def available_parents(self) -> List[Dict[str, Any]]:
         """Get scopes that can be parents for suppliers."""
         return [
-            {"id": str(s.get("id")), "name": s.get("name"), "type": s.get("type")}
+            {
+                "id": str(s.get("id")) if s.get("id") else "0",
+                "name": s.get("name") or "Onbekend", 
+                "type": s.get("type")
+            }
             for s in self.parent_scopes
-            if s.get("type") in ["Organization", "Cluster", "Department", "Process"]
+            if s.get("type") in ["Organization", "Cluster", "Department", "Process"] and str(s.get("id"))
         ]
 
     # ==========================================================================
@@ -96,7 +100,7 @@ class SupplierState(rx.State):
         self.form_name = ""
         self.form_description = ""
         self.form_owner = ""
-        self.form_parent_id = ""
+        self.form_parent_id = "0"
         self.form_vendor_contact_name = ""
         self.form_vendor_contact_email = ""
         self.form_contract_start_date = ""
@@ -119,7 +123,7 @@ class SupplierState(rx.State):
                 self.form_name = supplier.get("name", "")
                 self.form_description = supplier.get("description", "") or ""
                 self.form_owner = supplier.get("owner", "")
-                self.form_parent_id = str(supplier.get("parent_id", "")) if supplier.get("parent_id") else ""
+                self.form_parent_id = str(supplier.get("parent_id", "")) if supplier.get("parent_id") else "0"
                 self.form_vendor_contact_name = supplier.get("vendor_contact_name", "") or ""
                 self.form_vendor_contact_email = supplier.get("vendor_contact_email", "") or ""
                 # Date handling would need proper formatting
@@ -176,7 +180,7 @@ class SupplierState(rx.State):
                 "type": "Supplier",
                 "description": self.form_description.strip() or None,
                 "owner": self.form_owner.strip(),
-                "parent_id": int(self.form_parent_id) if self.form_parent_id else None,
+                "parent_id": int(self.form_parent_id) if self.form_parent_id and self.form_parent_id != "0" else None,
                 "vendor_contact_name": self.form_vendor_contact_name.strip() or None,
                 "vendor_contact_email": self.form_vendor_contact_email.strip() or None,
                 "tenant_id": 1,
