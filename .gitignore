@@ -24,6 +24,7 @@ wheels/
 # Virtual Environment
 venv/
 .env
+SERVER_ACCESS.md
 
 # MacOS
 .DS_Store

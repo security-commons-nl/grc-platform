@@ -4,6 +4,7 @@ Auth State - handles user authentication with persistence
 import reflex as rx
 from typing import Dict, Any
 import json
+import os
 
 
 class AuthState(rx.State):
@@ -76,14 +77,21 @@ class AuthState(rx.State):
             self.is_logging_in = False
             return
 
-        # Temporary hardcoded check until backend auth is ready
-        # User requested to disable "admin without password"
-        if self.username.lower() == "admin" and self.password != "admin123":
-             self.login_error = "Ongeldig wachtwoord (Probeer 'admin123')"
-             self.is_logging_in = False
-             return
+        # Check credentials against environment variables
+        valid_user = os.environ.get("IMS_LOGIN_USER", "admin")
+        valid_pass = os.environ.get("IMS_LOGIN_PASSWORD", "")
 
-        # Simulate successful login - store in localStorage
+        if not valid_pass:
+            self.login_error = "Login niet geconfigureerd (IMS_LOGIN_PASSWORD ontbreekt)"
+            self.is_logging_in = False
+            return
+
+        if self.username.lower() != valid_user.lower() or self.password != valid_pass:
+            self.login_error = "Ongeldige gebruikersnaam of wachtwoord"
+            self.is_logging_in = False
+            return
+
+        # Store authenticated user in localStorage
         user_data = {
             "id": 1,
             "username": self.username,

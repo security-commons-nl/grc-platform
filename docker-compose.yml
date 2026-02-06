@@ -65,6 +65,8 @@ services:
     restart: always
     environment:
       API_URL: http://api:8000
+      IMS_LOGIN_USER: ${IMS_LOGIN_USER}
+      IMS_LOGIN_PASSWORD: ${IMS_LOGIN_PASSWORD}
     ports:
       - "3000:3000"
       - "8002:8002"
