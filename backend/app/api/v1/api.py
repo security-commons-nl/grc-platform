@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
+    auth,
     standards,
     scopes,
     risks,
@@ -25,6 +26,13 @@ from app.api.v1.endpoints import (
 )
 
 api_router = APIRouter()
+
+# Authentication
+api_router.include_router(
+    auth.router,
+    prefix="/auth",
+    tags=["Authentication"]
+)
 
 # Layer 1: Governance (Standards & Requirements)
 api_router.include_router(

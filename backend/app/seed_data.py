@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
 from app.core.config import settings
+from app.core.security import get_password_hash
 from app.models.core_models import (
     # Base
     Tenant, User, TenantUser, TenantRole,
@@ -61,12 +62,14 @@ async def seed_database():
         # =========================================================================
         # USERS
         # =========================================================================
+        password_hash = get_password_hash(settings.DEFAULT_ADMIN_PASSWORD)
+
         users_data = [
-            {"username": "admin", "email": "admin@demo.local", "full_name": "Systeem Beheerder", "is_admin": True},
-            {"username": "ciso", "email": "ciso@demo.local", "full_name": "Chief Information Security Officer", "is_admin": False},
-            {"username": "fg", "email": "fg@demo.local", "full_name": "Functionaris Gegevensbescherming", "is_admin": False},
-            {"username": "proceseigenaar", "email": "pe@demo.local", "full_name": "Proces Eigenaar", "is_admin": False},
-            {"username": "editor", "email": "editor@demo.local", "full_name": "Content Editor", "is_admin": False},
+            {"username": "admin", "email": "admin@demo.local", "full_name": "Systeem Beheerder", "is_superuser": True},
+            {"username": "ciso", "email": "ciso@demo.local", "full_name": "Chief Information Security Officer", "is_superuser": False},
+            {"username": "fg", "email": "fg@demo.local", "full_name": "Functionaris Gegevensbescherming", "is_superuser": False},
+            {"username": "proceseigenaar", "email": "pe@demo.local", "full_name": "Proces Eigenaar", "is_superuser": False},
+            {"username": "editor", "email": "editor@demo.local", "full_name": "Content Editor", "is_superuser": False},
         ]
 
         users = []
@@ -75,7 +78,8 @@ async def seed_database():
                 username=user_data["username"],
                 email=user_data["email"],
                 full_name=user_data["full_name"],
-                is_admin=user_data["is_admin"],
+                is_superuser=user_data["is_superuser"],
+                password_hash=password_hash,
                 is_active=True,
             )
             session.add(user)
@@ -90,7 +94,7 @@ async def seed_database():
             tenant_user = TenantUser(
                 tenant_id=tenant.id,
                 user_id=user.id,
-                role=TenantRole.ADMIN if user_data["is_admin"] else TenantRole.MEMBER,
+                role=TenantRole.ADMIN if user_data["is_superuser"] else TenantRole.MEMBER,
                 is_default=True,
             )
             session.add(tenant_user)

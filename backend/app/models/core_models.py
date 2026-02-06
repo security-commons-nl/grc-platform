@@ -2962,6 +2962,8 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True)
     full_name: Optional[str] = None
 
+    password_hash: Optional[str] = Field(default=None, exclude=True)
+
     is_active: bool = True
     is_superuser: bool = False  # Platform-wide superuser (not tenant-specific)
 
@@ -2990,6 +2992,24 @@ class User(SQLModel, table=True):
     assessments_led: List["Assessment"] = Relationship(back_populates="lead_assessor")
     notifications: List["Notification"] = Relationship(back_populates="recipient")
     comments: List["Comment"] = Relationship(back_populates="author")
+
+
+class UserRead(SQLModel):
+    """User response schema — excludes password_hash."""
+    id: Optional[int] = None
+    username: str
+    email: str
+    full_name: Optional[str] = None
+    is_active: bool = True
+    is_superuser: bool = False
+    external_id: Optional[str] = None
+    phone: Optional[str] = None
+    department: Optional[str] = None
+    job_title: Optional[str] = None
+    theme: Theme = Theme.SYSTEM
+    preferred_language: Language = Language.NL
+    created_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
 
 
 class UserScopeRole(SQLModel, table=True):

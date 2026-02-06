@@ -12,6 +12,7 @@ from app.core.db import get_session
 from app.core.crud import CRUDBase
 from app.models.core_models import (
     User,
+    UserRead,
     UserScopeRole,
     TenantUser,
     Role,
@@ -28,7 +29,7 @@ crud_user_scope_role = CRUDBase(UserScopeRole)
 # USER CRUD
 # =============================================================================
 
-@router.get("/", response_model=List[User])
+@router.get("/", response_model=List[UserRead])
 async def list_users(
     skip: int = 0,
     limit: int = 100,
@@ -40,7 +41,7 @@ async def list_users(
     return await crud_user.get_multi(session, skip=skip, limit=limit, filters=filters)
 
 
-@router.post("/", response_model=User)
+@router.post("/", response_model=UserRead)
 async def create_user(
     user: User,
     session: AsyncSession = Depends(get_session),
@@ -58,7 +59,7 @@ async def create_user(
     return await crud_user.create(session, obj_in=user)
 
 
-@router.get("/{user_id}", response_model=User)
+@router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: int,
     session: AsyncSession = Depends(get_session),
@@ -67,7 +68,7 @@ async def get_user(
     return await crud_user.get_or_404(session, user_id)
 
 
-@router.get("/by-username/{username}", response_model=User)
+@router.get("/by-username/{username}", response_model=UserRead)
 async def get_user_by_username(
     username: str,
     session: AsyncSession = Depends(get_session),
@@ -79,7 +80,7 @@ async def get_user_by_username(
     return user
 
 
-@router.get("/by-email/{email}", response_model=User)
+@router.get("/by-email/{email}", response_model=UserRead)
 async def get_user_by_email(
     email: str,
     session: AsyncSession = Depends(get_session),
@@ -91,7 +92,7 @@ async def get_user_by_email(
     return user
 
 
-@router.patch("/{user_id}", response_model=User)
+@router.patch("/{user_id}", response_model=UserRead)
 async def update_user(
     user_id: int,
     user_update: dict,

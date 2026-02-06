@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     # Webhook Security
     WEBHOOK_SECRET: Optional[str] = None
 
+    # Default admin password (used by seed_data to create demo users)
+    DEFAULT_ADMIN_PASSWORD: str = "changeme"
+
     # Langfuse (LLM Observability)
     # IMPORTANT: For EU data sovereignty, Langfuse must be self-hosted.
     # Do NOT use the US-hosted cloud.langfuse.com - set LANGFUSE_HOST to your self-hosted instance.

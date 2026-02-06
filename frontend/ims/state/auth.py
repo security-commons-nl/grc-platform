@@ -4,7 +4,8 @@ Auth State - handles user authentication with persistence
 import reflex as rx
 from typing import Dict, Any
 import json
-import os
+
+from ims.api.client import api_client
 
 
 class AuthState(rx.State):
@@ -27,7 +28,7 @@ class AuthState(rx.State):
                 return json.loads(self._user_json)
             except:
                 pass
-        
+
         return {}
 
     @rx.var
@@ -55,15 +56,10 @@ class AuthState(rx.State):
         user = self.user
         if not user:
             return False
-        # Check for ID 1 or username "admin"
-        # Note: self.user is a python dict here because we are inside the instance method
         return (user.get("id") == 1) or (str(user.get("username", "")).lower() == "admin")
 
     async def login(self):
-        """
-        Attempt to log in.
-        For now, this is a simple simulation - accepts any username.
-        """
+        """Authenticate against the backend API."""
         self.is_logging_in = True
         self.login_error = ""
 
@@ -77,28 +73,14 @@ class AuthState(rx.State):
             self.is_logging_in = False
             return
 
-        # Check credentials against environment variables
-        valid_user = os.environ.get("IMS_LOGIN_USER", "admin")
-        valid_pass = os.environ.get("IMS_LOGIN_PASSWORD", "")
-
-        if not valid_pass:
-            self.login_error = "Login niet geconfigureerd (IMS_LOGIN_PASSWORD ontbreekt)"
-            self.is_logging_in = False
-            return
-
-        if self.username.lower() != valid_user.lower() or self.password != valid_pass:
+        try:
+            user_data = await api_client.login(self.username, self.password)
+        except Exception:
             self.login_error = "Ongeldige gebruikersnaam of wachtwoord"
             self.is_logging_in = False
             return
 
         # Store authenticated user in localStorage
-        user_data = {
-            "id": 1,
-            "username": self.username,
-            "full_name": self.username.title(),
-            "email": f"{self.username}@example.com",
-            "is_active": True,
-        }
         self._user_json = json.dumps(user_data)
         self.is_logging_in = False
         self.username = ""

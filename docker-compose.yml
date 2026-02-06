@@ -49,6 +49,7 @@ services:
       MISTRAL_API_KEY: ${MISTRAL_API_KEY}
       SCALEWAY_API_KEY: ${SCALEWAY_API_KEY}
       AI_PROVIDER_PRIORITY: ${AI_PROVIDER_PRIORITY}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-changeme}
     ports:
       - "8001:8000"
     depends_on:
@@ -65,8 +66,6 @@ services:
     restart: always
     environment:
       API_URL: http://api:8000
-      IMS_LOGIN_USER: ${IMS_LOGIN_USER}
-      IMS_LOGIN_PASSWORD: ${IMS_LOGIN_PASSWORD}
     ports:
       - "3000:3000"
       - "8002:8002"

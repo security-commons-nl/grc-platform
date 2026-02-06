@@ -22,6 +22,20 @@ class APIClient:
         return httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout)
 
     # =========================================================================
+    # AUTHENTICATION
+    # =========================================================================
+
+    async def login(self, username: str, password: str) -> Dict[str, Any]:
+        """Authenticate against backend. Returns user data on success."""
+        async with self._get_client() as client:
+            response = await client.post(
+                "/auth/login",
+                json={"username": username, "password": password},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    # =========================================================================
     # RISKS
     # =========================================================================
 
