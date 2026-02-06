@@ -5,13 +5,14 @@ Provides chat interface to all IMS AI agents.
 Supports context-based agent selection and streaming responses.
 """
 from typing import Any, Dict, Optional, List
+import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.agents.core.orchestrator import orchestrator
 
 router = APIRouter()
-
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # REQUEST/RESPONSE MODELS
@@ -112,8 +113,6 @@ async def chat_with_agent(request: ChatRequest):
             agent_used=agent_name,
         )
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Agent chat error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -1,7 +1,9 @@
 from typing import Dict, Any, Optional, List
+import logging
 from app.agents.core.base_agent import BaseAgent
 from app.agents.domains import ALL_AGENTS
 
+logger = logging.getLogger(__name__)
 
 class AgentOrchestrator:
     """
@@ -60,7 +62,7 @@ class AgentOrchestrator:
             try:
                 self.agents[name] = agent_class()
             except Exception as e:
-                print(f"Warning: Failed to initialize {name} agent: {e}")
+                logger.warning(f"Failed to initialize {name} agent: {e}")
 
     def register_agent(self, agent: BaseAgent):
         """Register an initialized agent."""
