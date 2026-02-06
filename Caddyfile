@@ -1,3 +1,0 @@
-i-m-s.nl {
-    reverse_proxy frontend:3000
-}
