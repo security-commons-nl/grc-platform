@@ -20,34 +20,27 @@ class AuthState(rx.State):
 
     @rx.var
     def user(self) -> Dict[str, Any]:
-        """Get user from localStorage or return default admin."""
+        """Get user from localStorage."""
         if self._user_json:
             try:
                 return json.loads(self._user_json)
             except:
                 pass
         
-        # Default/Fallback Auth (Auto-login)
-        return {
-            "id": 1,
-            "username": "admin",
-            "full_name": "Admin User",
-            "email": "admin@ims.local",
-            "is_active": True
-        }
+        return {}
 
     @rx.var
     def is_authenticated(self) -> bool:
-        """Check if user is logged in. Always True for dev mode."""
-        return True # Login disabled / Auto-login enabled
+        """Check if user is logged in."""
+        return self._user_json != ""
 
     @rx.var
     def user_display_name(self) -> str:
         """Get user's display name."""
         user = self.user
-        if user:
-            return user.get("full_name") or user.get("username", "User")
-        return "Admin User"
+        if user and user.get("username"):
+            return user.get("full_name") or user.get("username", "Gebruiker")
+        return "Gast"
 
     @rx.var
     def user_email(self) -> str:
