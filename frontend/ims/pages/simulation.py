@@ -11,7 +11,7 @@ def config_input(label: str, value: rx.Var, on_change: Any, unit: str = "") -> r
     return rx.vstack(
         rx.text(label, size="1", color="gray"),
         rx.input(
-            value=value,
+            value=value.to_string(),
             on_change=on_change,
             type="number",
             size="2",
@@ -55,7 +55,7 @@ def configuration_tab() -> rx.Component:
             rx.vstack(
                 rx.text("Aantal iteraties", weight="bold"),
                 rx.input(
-                    value=SimulationState.iterations,
+                    value=SimulationState.iterations.to_string(),
                     on_change=SimulationState.set_iterations,
                     type="number"
                 ),
@@ -216,7 +216,7 @@ def simulation_tab() -> rx.Component:
                     stat_card("Verwacht Jaarlijks Verlies", SimulationState.mean_loss_formatted, "trending-down", "blue"),
                     stat_card("VaR (95%)", SimulationState.var95_formatted, "shield-alert", "orange"),
                     stat_card("VaR (99%)", SimulationState.var99_formatted, "shield-alert", "red"),
-                    stat_card("Iteraties", SimulationState.iterations, "repeat", "gray"),
+                    stat_card("Iteraties", SimulationState.iterations.to_string(), "repeat", "gray"),
                     columns="4",
                     spacing="4",
                     width="100%",
@@ -282,6 +282,7 @@ def simulation_tab() -> rx.Component:
     )
 
 def simulation_content() -> rx.Component:
+    # return rx.text("Debug Mode")
     return rx.tabs.root(
         rx.tabs.list(
             rx.tabs.trigger("Simulatie", value="sim"),
@@ -293,7 +294,9 @@ def simulation_content() -> rx.Component:
             padding="20px",
         ),
         rx.tabs.content(
-            configuration_tab(),
+             configuration_tab(), # Uncommented this
+            # rx.text("Configuratie tijdelijk uitgeschakeld"),
+            # configuration_tab(),
             value="config",
             padding="20px",
         ),

@@ -6,7 +6,32 @@
       "Bash(git push:*)",
       "Bash(alembic upgrade:*)",
       "Bash(python -m alembic upgrade head)",
-      "Bash(python -c \"\nimport asyncio\nfrom sqlalchemy import text\nfrom sqlalchemy.ext.asyncio import create_async_engine\nfrom app.core.config import settings\n\nasync def check_constraints\\(\\):\n    engine = create_async_engine\\(settings.SQLALCHEMY_DATABASE_URI\\)\n    async with engine.connect\\(\\) as conn:\n        # Check all tables\n        result = await conn.execute\\(text\\(''''''\n            SELECT table_name FROM information_schema.tables \n            WHERE table_schema = ''public'' AND table_type = ''BASE TABLE''\n            ORDER BY table_name\n        ''''''\\)\\)\n        tables = [row[0] for row in result.fetchall\\(\\)]\n        print\\(''Tables:'', tables\\)\n        \n        # Check if sharedmeasure exists\n        if ''sharedmeasure'' in tables:\n            print\\(''\\\\nsharedmeasure constraints:''\\)\n            result = await conn.execute\\(text\\(''''''\n                SELECT conname FROM pg_constraint \n                WHERE conrelid = ''sharedmeasure''::regclass\n            ''''''\\)\\)\n            for row in result.fetchall\\(\\):\n                print\\(f''  - {row[0]}''\\)\n        \n        if ''measuretemplate'' in tables:\n            print\\(''\\\\nmeasuretemplate exists - needs migration''\\)\n        if ''measure'' in tables:\n            print\\(''\\\\nmeasure exists - needs migration''\\)\n        if ''control'' in tables:\n            print\\(''\\\\ncontrol already exists - migration may have partially run''\\)\n            \n    await engine.dispose\\(\\)\n\nasyncio.run\\(check_constraints\\(\\)\\)\n\")"
+      "Bash(python -c \"\nimport asyncio\nfrom sqlalchemy import text\nfrom sqlalchemy.ext.asyncio import create_async_engine\nfrom app.core.config import settings\n\nasync def check_constraints\\(\\):\n    engine = create_async_engine\\(settings.SQLALCHEMY_DATABASE_URI\\)\n    async with engine.connect\\(\\) as conn:\n        # Check all tables\n        result = await conn.execute\\(text\\(''''''\n            SELECT table_name FROM information_schema.tables \n            WHERE table_schema = ''public'' AND table_type = ''BASE TABLE''\n            ORDER BY table_name\n        ''''''\\)\\)\n        tables = [row[0] for row in result.fetchall\\(\\)]\n        print\\(''Tables:'', tables\\)\n        \n        # Check if sharedmeasure exists\n        if ''sharedmeasure'' in tables:\n            print\\(''\\\\nsharedmeasure constraints:''\\)\n            result = await conn.execute\\(text\\(''''''\n                SELECT conname FROM pg_constraint \n                WHERE conrelid = ''sharedmeasure''::regclass\n            ''''''\\)\\)\n            for row in result.fetchall\\(\\):\n                print\\(f''  - {row[0]}''\\)\n        \n        if ''measuretemplate'' in tables:\n            print\\(''\\\\nmeasuretemplate exists - needs migration''\\)\n        if ''measure'' in tables:\n            print\\(''\\\\nmeasure exists - needs migration''\\)\n        if ''control'' in tables:\n            print\\(''\\\\ncontrol already exists - migration may have partially run''\\)\n            \n    await engine.dispose\\(\\)\n\nasyncio.run\\(check_constraints\\(\\)\\)\n\")",
+      "Bash(python:*)",
+      "Bash(timeout:*)",
+      "Bash(pip install:*)",
+      "Bash(ping:*)",
+      "Bash(reflex run)",
+      "Bash(curl:*)",
+      "Bash(echo:*)",
+      "Bash(1 <<'PYTHON'\nimport asyncio\nfrom sqlalchemy import text\nfrom app.core.db import engine\n\nasync def check\\(\\):\n    async with engine.connect\\(\\) as conn:\n        result = await conn.execute\\(text\\('''\n            SELECT column_name FROM information_schema.columns \n            WHERE table_name = 'applicabilitystatement'\n            ORDER BY ordinal_position\n        '''\\)\\)\n        columns = [r[0] for r in result]\n        print\\('Existing columns:', columns\\)\n\nasyncio.run\\(check\\(\\)\\)\nPYTHON)",
+      "Bash(1 <<'PYTHON'\nimport asyncio\nfrom sqlalchemy import text\nfrom app.core.db import engine\n\nasync def fix\\(\\):\n    async with engine.begin\\(\\) as conn:\n        await conn.execute\\(text\\('''\n            ALTER TABLE applicabilitystatement \n            RENAME COLUMN shared_measure_adequate TO shared_control_adequate\n        '''\\)\\)\n        print\\('Column renamed successfully!'\\)\n\nasyncio.run\\(fix\\(\\)\\)\nPYTHON)",
+      "Bash(wc:*)",
+      "Bash(git clone:*)",
+      "Bash(bash:*)",
+      "Bash(claude plugin install api-error-handling@claude-skills)",
+      "Bash(claude plugin install:*)",
+      "Bash(where:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(C:/Users/shgst/AppData/Roaming/Python/Python314/Scripts/skill-seekers-package.exe output/react/)",
+      "Bash(PYTHONIOENCODING=utf-8 C:/Users/shgst/AppData/Roaming/Python/Python314/Scripts/skill-seekers-package.exe:*)",
+      "Bash(PYTHONIOENCODING=utf-8 C:/Users/shgst/AppData/Roaming/Python/Python314/Scripts/skill-seekers-install.exe:*)",
+      "Bash(git -C /x/claudecode/IMS status --short claude-skills Skill_Seekers)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(for f in /c/Users/shgst/.claude/skills/mcp-builder/references/*.md)",
+      "Bash(done)",
+      "Bash(claude mcp add:*)"
     ]
   }
 }

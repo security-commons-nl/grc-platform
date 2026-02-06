@@ -188,8 +188,9 @@ class SimulationState(rx.State):
             self.is_running = False
 
     # Setters for form fields (Reflex needs these for input binding sometimes, or direct var access works too)
-    def set_iterations(self, val: int):
-        self.iterations = int(val)
+    def set_iterations(self, val: str):
+        if val and val.isdigit():
+            self.iterations = int(val)
 
     def set_currency(self, val: str):
         self.currency = val
@@ -198,21 +199,39 @@ class SimulationState(rx.State):
         self.category_configs_json = val
 
     # Frequency Setters
-    def set_low_freq_min(self, val: str): self.low_freq_min = float(val)
-    def set_low_freq_max(self, val: str): self.low_freq_max = float(val)
-    def set_med_freq_min(self, val: str): self.med_freq_min = float(val)
-    def set_med_freq_max(self, val: str): self.med_freq_max = float(val)
-    def set_high_freq_min(self, val: str): self.high_freq_min = float(val)
-    def set_high_freq_max(self, val: str): self.high_freq_max = float(val)
-    def set_crit_freq_min(self, val: str): self.crit_freq_min = float(val)
-    def set_crit_freq_max(self, val: str): self.crit_freq_max = float(val)
+    # Frequency Setters
+    def set_low_freq_min(self, val: str):
+        if val: self.low_freq_min = float(val)
+    def set_low_freq_max(self, val: str):
+        if val: self.low_freq_max = float(val)
+    def set_med_freq_min(self, val: str):
+        if val: self.med_freq_min = float(val)
+    def set_med_freq_max(self, val: str):
+        if val: self.med_freq_max = float(val)
+    def set_high_freq_min(self, val: str):
+        if val: self.high_freq_min = float(val)
+    def set_high_freq_max(self, val: str):
+        if val: self.high_freq_max = float(val)
+    def set_crit_freq_min(self, val: str):
+        if val: self.crit_freq_min = float(val)
+    def set_crit_freq_max(self, val: str):
+        if val: self.crit_freq_max = float(val)
 
     # Impact Setters
-    def set_low_imp_min(self, val: str): self.low_imp_min = float(val)
-    def set_low_imp_max(self, val: str): self.low_imp_max = float(val)
-    def set_med_imp_min(self, val: str): self.med_imp_min = float(val)
-    def set_med_imp_max(self, val: str): self.med_imp_max = float(val)
-    def set_high_imp_min(self, val: str): self.high_imp_min = float(val)
-    def set_high_imp_max(self, val: str): self.high_imp_max = float(val)
-    def set_crit_imp_min(self, val: str): self.crit_imp_min = float(val)
-    def set_crit_imp_max(self, val: str): self.crit_imp_max = float(val)
+    # Impact Setters
+    def set_low_imp_min(self, val: str):
+        if val: self.low_imp_min = float(val)
+    def set_low_imp_max(self, val: str):
+        if val: self.low_imp_max = float(val)
+    def set_med_imp_min(self, val: str):
+        if val: self.med_imp_min = float(val)
+    def set_med_imp_max(self, val: str):
+        if val: self.med_imp_max = float(val)
+    def set_high_imp_min(self, val: str):
+        if val: self.high_imp_min = float(val)
+    def set_high_imp_max(self, val: str):
+        if val: self.high_imp_max = float(val)
+    def set_crit_imp_min(self, val: str):
+        if val: self.crit_imp_min = float(val)
+    def set_crit_imp_max(self, val: str):
+        if val: self.crit_imp_max = float(val)

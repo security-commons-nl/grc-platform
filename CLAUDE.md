@@ -64,6 +64,48 @@ Environment variables via `.env` file or defaults in `backend/app/core/config.py
 - Database: `POSTGRES_SERVER`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 - AI: `AI_API_BASE` (defaults to `http://localhost:11434/v1` for local Ollama), `AI_MODEL_NAME`
 
+## Skills
+
+Claude Code skills are stored externally at `~/.claude/skills/` (174 skills), not in this repo. Key sources:
+
+- **claude-skills** (secondsky): `https://github.com/secondsky/claude-skills` — 169 plugins covering API, security, testing, database, frontend, and more
+- **skill-seekers** (yusufkaraaslan): `https://github.com/yusufkaraaslan/Skill_Seekers` — generates LLM skills from docs, codebases, and GitHub repos
+
+### IMS-relevant skills (installed)
+
+| Skill | Purpose |
+|-------|---------|
+| `api-error-handling` | Standardized error responses across 24 API routers |
+| `api-testing` | pytest patterns for FastAPI endpoint coverage |
+| `database-schema-design` | Schema guidance for 40+ SQLModel entities |
+| `access-control-rbac` | RBAC enforcement for UserScopeRole model |
+| `api-pagination` | Robust pagination for GRC data endpoints |
+| `logging-best-practices` | Audit logging for compliance |
+| `health-check-endpoints` | Application-level health checks (db, ollama, integrations) |
+| `api-security-hardening` | Multi-tenant API hardening (CORS, headers, rate limiting) |
+| `websocket-implementation` | Real-time updates and webhook integration |
+| `sql-query-optimization` | Query performance for pgvector + multi-tenant filtering |
+| `skill-seekers` | Generate new skills from documentation or codebases |
+| `mcp-builder` | 4-phase guide for building MCP servers (Python FastMCP / Node TypeScript) |
+| `rube-mcp-integrations` | Composio RUBE MCP — connect Claude to 500+ apps (Gmail, Slack, GitHub, etc.) |
+| `webapp-testing` | Playwright-based web app testing — screenshots, DOM inspection, server lifecycle |
+| `claude-code-showcase` | Reference patterns for skills, agents, hooks, commands, and CI/CD workflows |
+| `prowler-mcp` | Cloud security posture — 1000+ checks, 70+ compliance frameworks, remediation |
+
+### Managing skills
+
+```bash
+# Install a plugin from claude-skills marketplace
+claude plugin install <plugin-name>@claude-skills
+
+# Generate a new skill from docs
+skill-seekers scrape --url https://docs.example.com
+skill-seekers package output/example/ --target claude
+
+# Skills location
+ls ~/.claude/skills/
+```
+
 ## Design Principles
 
 - **EU Data Sovereignty**: AI defaults to localhost. Never configure external AI APIs without explicit legal clearance.
