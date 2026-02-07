@@ -159,7 +159,7 @@ def pdca_ring_widget() -> rx.Component:
                 rx.box(
                     width=rx.cond(
                         JourneyState.overall_progress_pct > 0,
-                        rx.fragment(JourneyState.overall_progress_pct, "%"),
+                        JourneyState.overall_progress_pct.to(str) + "%",
                         "0%",
                     ),
                     height="100%",

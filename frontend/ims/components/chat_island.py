@@ -58,6 +58,7 @@ def chat_input() -> rx.Component:
             on_key_down=lambda key: rx.cond(
                 key == "Enter",
                 ChatState.send_message(),
+                None,
             ),
             flex="1",
             size="2",
