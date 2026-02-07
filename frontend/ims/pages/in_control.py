@@ -6,32 +6,52 @@ from ims.state.in_control import InControlState
 from ims.components.layout import layout
 
 
+def _metric_pill(label: str, value: rx.Var, color: str) -> rx.Component:
+    """Small inline metric pill: '3 risico's'."""
+    return rx.cond(
+        value.to(int) > 0,
+        rx.badge(rx.text(rx.fragment(value, " ", label), size="1"), color_scheme=color, variant="outline", size="1"),
+        rx.fragment(),
+    )
+
+
 def scope_status_card(item: dict) -> rx.Component:
     return rx.card(
-        rx.hstack(
-            rx.vstack(
-                rx.text(item["scope_name"], weight="bold", size="3"),
-                rx.cond(item["scope_type"], rx.text(item["scope_type"], size="1", color="gray"), rx.fragment()),
-                spacing="0", align_items="start",
+        rx.vstack(
+            rx.hstack(
+                rx.vstack(
+                    rx.text(item["scope_name"], weight="bold", size="3"),
+                    rx.cond(item["scope_type"], rx.text(item["scope_type"], size="1", color="gray"), rx.fragment()),
+                    spacing="0", align_items="start",
+                ),
+                rx.spacer(),
+                rx.match(
+                    item["level"],
+                    ("In control", rx.badge(
+                        rx.hstack(rx.icon("circle-check", size=12), rx.text("In control"), spacing="1"),
+                        color_scheme="green", variant="soft",
+                    )),
+                    ("Beperkt in control", rx.badge(
+                        rx.hstack(rx.icon("alert-triangle", size=12), rx.text("Beperkt"), spacing="1"),
+                        color_scheme="orange", variant="soft",
+                    )),
+                    ("Niet in control", rx.badge(
+                        rx.hstack(rx.icon("circle-x", size=12), rx.text("Niet in control"), spacing="1"),
+                        color_scheme="red", variant="soft",
+                    )),
+                    rx.badge("Niet beoordeeld", color_scheme="gray", variant="outline"),
+                ),
+                width="100%", align="center",
             ),
-            rx.spacer(),
-            rx.match(
-                item["level"],
-                ("In control", rx.badge(
-                    rx.hstack(rx.icon("circle-check", size=12), rx.text("In control"), spacing="1"),
-                    color_scheme="green", variant="soft",
-                )),
-                ("Beperkt in control", rx.badge(
-                    rx.hstack(rx.icon("alert-triangle", size=12), rx.text("Beperkt"), spacing="1"),
-                    color_scheme="orange", variant="soft",
-                )),
-                ("Niet in control", rx.badge(
-                    rx.hstack(rx.icon("circle-x", size=12), rx.text("Niet in control"), spacing="1"),
-                    color_scheme="red", variant="soft",
-                )),
-                rx.badge("Niet beoordeeld", color_scheme="gray", variant="outline"),
+            rx.flex(
+                _metric_pill("risico's", item["open_risks_count"], "blue"),
+                _metric_pill("hoog/kritiek", item["high_risks_count"], "red"),
+                _metric_pill("bevindingen", item["open_findings_count"], "orange"),
+                _metric_pill("verlopen acties", item["overdue_actions_count"], "crimson"),
+                _metric_pill("ongeteste maatregelen", item["missing_controls_count"], "gray"),
+                gap="2", wrap="wrap",
             ),
-            width="100%", align="center",
+            spacing="2", width="100%",
         ),
         width="100%",
     )
