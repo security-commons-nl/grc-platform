@@ -19,6 +19,17 @@ from app.agents.tools.read_tools import (
     get_assessment,
     get_incident,
     get_requirement,
+    # Governance hiaten tools
+    get_decision,
+    list_decisions,
+    check_decision_required,
+    get_risk_framework,
+    calculate_in_control,
+    get_in_control_dashboard,
+    get_policy_principle,
+    list_policy_principles,
+    trace_control_origin,
+    get_act_overdue,
 )
 from app.agents.tools.write_tools import (
     create_risk,
@@ -27,6 +38,9 @@ from app.agents.tools.write_tools import (
     update_measure,
     link_measure_to_risk,
     create_corrective_action,
+    # Governance hiaten tools
+    create_decision,
+    update_risk_treatment,
 )
 from app.agents.tools.knowledge_tools import (
     search_knowledge,
@@ -48,6 +62,17 @@ ALL_READ_TOOLS = [
     get_assessment,
     get_incident,
     get_requirement,
+    # Governance hiaten
+    get_decision,
+    list_decisions,
+    check_decision_required,
+    get_risk_framework,
+    calculate_in_control,
+    get_in_control_dashboard,
+    get_policy_principle,
+    list_policy_principles,
+    trace_control_origin,
+    get_act_overdue,
 ]
 
 ALL_WRITE_TOOLS = [
@@ -57,6 +82,9 @@ ALL_WRITE_TOOLS = [
     update_measure,
     link_measure_to_risk,
     create_corrective_action,
+    # Governance hiaten
+    create_decision,
+    update_risk_treatment,
 ]
 
 ALL_KNOWLEDGE_TOOLS = [

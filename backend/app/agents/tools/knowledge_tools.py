@@ -47,6 +47,9 @@ def get_methodology(methodology_name: str) -> str:
     - bio: Baseline Informatiebeveiliging Overheid
     - iso27001: ISO 27001 Information Security
     - avg: AVG/GDPR Privacy regulation
+    - behandelstrategie: Risk treatment strategies (4 options + hard rule)
+    - besluitlog: Management decision log (DT-besluiten)
+    - in_control_assessment: In-control assessment levels and calculation
     """
     methodologies = {
         "in_control": """
@@ -158,6 +161,82 @@ The Dutch implementation of GDPR for personal data protection.
 - Rights related to automated decision-making
 
 **Breach notification:** Within 72 hours to Autoriteit Persoonsgegevens if risk to data subjects.
+""",
+        "behandelstrategie": """
+## Behandelstrategie (Risk Treatment Strategy)
+
+Every risk MUST have one of four treatment strategies:
+
+| Strategie | Beschrijving | Wanneer |
+|-----------|-------------|---------|
+| **Vermijden** | Activiteit stoppen of aanpassen zodat het risico verdwijnt | Impact en waarschijnlijkheid zijn onacceptabel |
+| **Reduceren** | Maatregelen nemen om impact of waarschijnlijkheid te verlagen | Meest voorkomend; leidt tot Controls |
+| **Overdragen** | Risico (deels) overdragen aan derde partij | Via verzekering of uitbesteding; transfer_party is verplicht |
+| **Accepteren** | Bewust het restrisico accepteren | Restrisico valt binnen de risicotolerantie |
+
+### Hard Rule: Accepteren + Hoog Risico
+Als de behandelstrategie **Accepteren** is EN de risicoscore >= 9, dan is een **formeel DT-besluit** verplicht.
+Dit besluit moet worden vastgelegd in de Besluitlog met:
+- Wie het besluit heeft genomen (DT-lid)
+- Motivatie waarom acceptatie verantwoord is
+- Eventuele voorwaarden
+- Herijkdatum (wanneer opnieuw beoordelen)
+
+Zonder dit besluit is het risico "onbehandeld" en scoort de scope "Niet in control".
+""",
+        "besluitlog": """
+## Besluitlog (Management Decision Log)
+
+Formele besluiten van het Directie Team (DT) die worden vastgelegd voor audit-trail en verantwoording.
+
+### Besluittypen
+| Type | Beschrijving |
+|------|-------------|
+| **Restrisico-acceptatie** | Bewuste acceptatie van een hoog restrisico |
+| **Prioritering** | Besluit over volgorde van risicobehandeling |
+| **Afwijking** | Goedgekeurde afwijking van beleid of norm |
+| **Scopewijziging** | Wijziging in de scope van het ISMS/PIMS/BCMS |
+| **Beleidsgoedkeuring** | Goedkeuring van nieuw of gewijzigd beleid |
+
+### Lifecycle
+- **Actief**: Geldig en van kracht
+- **Verlopen**: Herijkdatum is verstreken — moet opnieuw worden beoordeeld
+- **Ingetrokken**: Actief ingetrokken door DT
+- **Vervangen**: Vervangen door een nieuwer besluit
+
+### Hard Rule
+Een besluit van type **Restrisico-acceptatie** is verplicht wanneer:
+- Behandelstrategie = Accepteren
+- Risicoscore >= 9 (HIGH × HIGH of hoger)
+
+Het ontbreken van dit besluit is een bevinding bij audit.
+""",
+        "in_control_assessment": """
+## In-Control Assessment
+
+Periodieke beoordeling van de "in control" status per scope (organisatie, cluster, proces, asset).
+
+### Niveaus
+| Niveau | Betekenis | Criteria |
+|--------|-----------|----------|
+| **In control** | Scope is afdoende beheerst | Geen hoge risico's, geen achterstallige acties |
+| **Beperkt in control** | Scope heeft aandachtspunten | Open findings > 5 OF achterstallige acties aanwezig |
+| **Niet in control** | Scope is onvoldoende beheerst | Hoge risico's aanwezig OF > 3 achterstallige acties |
+
+### Berekeningsregels
+De in-control status wordt bepaald op basis van:
+1. **Hoge risico's** (residual score >= 9): elke hoge risico → Niet in control
+2. **Open findings**: > 5 actieve findings → Beperkt in control
+3. **Achterstallige acties**: overdue corrective actions → invloed op niveau
+4. **Ontbrekende besluiten**: Accepteren + score >= 9 zonder DT-besluit → Niet in control
+
+### Formele vaststelling
+De berekende status moet formeel worden vastgesteld door het DT:
+- Assessor berekent en motiveert
+- DT stelt vast (established_by_id + established_date)
+- Geldig tot volgende beoordelingsperiode (valid_until)
+
+De in-control status per scope is input voor de Management Review.
 """
     }
 

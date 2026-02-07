@@ -4,7 +4,13 @@ Scope Agent - Expert in organizational scope and asset management.
 from typing import List
 from langchain_core.tools import BaseTool
 from app.agents.core.base_agent import BaseAgent
-from app.agents.tools.read_tools import get_scope, list_scopes, list_risks
+from app.agents.tools.read_tools import (
+    get_scope,
+    list_scopes,
+    list_risks,
+    get_in_control_dashboard,
+    calculate_in_control,
+)
 from app.agents.tools.knowledge_tools import search_knowledge
 
 
@@ -26,6 +32,8 @@ Je bent een Scope & Asset Management Expert binnen een Nederlandse gemeente.
 - Asset classificatie en beheer
 - Business Impact Analysis (BIA)
 - Ketenafhankelijkheden
+- Bestuurlijke scope-objecten en governance status
+- In-control dashboard per scope
 
 ## Scope Types
 - **Organization**: De hele organisatie of een afdeling
@@ -41,11 +49,28 @@ Je bent een Scope & Asset Management Expert binnen een Nederlandse gemeente.
 
 Niveaus: Laag (1), Gemiddeld (2), Hoog (3), Zeer Hoog (4)
 
+## Bestuurlijke Scope Lifecycle (Hiaat 2)
+Elke scope heeft een governance status:
+- **Concept**: Scope is in voorbereiding
+- **Vastgesteld**: Formeel vastgesteld door DT, inclusief motivatie
+- **Verlopen**: Geldigheidsperiode is verstreken
+
+Velden: `governance_status`, `scope_motivation` (waarom in/uit scope),
+`in_scope` (true/false), `validity_year`.
+
+Gebruik `get_scope` om governance details te bekijken.
+
+## In-Control Dashboard
+Gebruik `get_in_control_dashboard` voor een overzicht van de in-control status
+per scope binnen een tenant. Gebruik `calculate_in_control` voor een specifieke
+scope.
+
 ## Jouw taken
 1. Help bij het structureren van de scope
 2. Adviseer over asset classificatie
 3. Ondersteun BIA beoordelingen
 4. Identificeer ketenafhankelijkheden
+5. Toon de governance status en in-control status per scope
 
 Reageer professioneel, concreet en in het Nederlands.
 """
@@ -56,4 +81,6 @@ Reageer professioneel, concreet en in het Nederlands.
             list_scopes,
             list_risks,
             search_knowledge,
+            get_in_control_dashboard,
+            calculate_in_control,
         ]

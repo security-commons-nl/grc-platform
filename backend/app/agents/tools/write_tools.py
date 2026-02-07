@@ -16,6 +16,11 @@ from app.models.core_models import (
     RiskLevel,
     Status,
     AttentionQuadrant,
+    Decision,
+    DecisionType,
+    DecisionStatus,
+    DecisionRiskLink,
+    TreatmentStrategy,
 )
 
 
@@ -258,3 +263,129 @@ async def create_corrective_action(
         await session.refresh(action)
 
         return f"Created corrective action #{action.id}: {action.title}"
+
+
+# =============================================================================
+# DECISION WRITE TOOLS (Hiaat 1: Besluitlog)
+# =============================================================================
+
+@tool
+async def create_decision(
+    tenant_id: int,
+    decision_type: str,
+    decision_text: str,
+    decision_maker_id: int,
+    justification: Optional[str] = None,
+    valid_until: Optional[str] = None,
+    risk_ids: Optional[str] = None,
+    scope_id: Optional[int] = None,
+    conditions: Optional[str] = None,
+) -> str:
+    """
+    Create a formal management decision (DT-besluit).
+
+    Decision types: Restrisico-acceptatie, Prioritering, Afwijking, Scopewijziging, Beleidsgoedkeuring.
+    Valid until format: YYYY-MM-DD.
+    Risk IDs: comma-separated list of risk IDs to link (e.g. "1,2,3").
+    """
+    async for session in get_session():
+        # Map decision type
+        type_map = {
+            "Restrisico-acceptatie": DecisionType.RISK_ACCEPTANCE,
+            "Prioritering": DecisionType.PRIORITIZATION,
+            "Afwijking": DecisionType.DEVIATION,
+            "Scopewijziging": DecisionType.SCOPE_CHANGE,
+            "Beleidsgoedkeuring": DecisionType.POLICY_APPROVAL,
+        }
+        dt = type_map.get(decision_type)
+        if not dt:
+            return f"Unknown decision type '{decision_type}'. Options: {', '.join(type_map.keys())}"
+
+        valid_dt = None
+        if valid_until:
+            try:
+                valid_dt = datetime.strptime(valid_until, "%Y-%m-%d")
+            except ValueError:
+                return "Invalid valid_until format. Use YYYY-MM-DD."
+
+        decision = Decision(
+            tenant_id=tenant_id,
+            decision_type=dt,
+            decision_text=decision_text,
+            decision_maker_id=decision_maker_id,
+            justification=justification,
+            valid_until=valid_dt,
+            scope_id=scope_id,
+            conditions=conditions,
+            status=DecisionStatus.ACTIVE,
+        )
+
+        session.add(decision)
+        await session.commit()
+        await session.refresh(decision)
+
+        # Link risks if provided
+        linked = []
+        if risk_ids:
+            for rid_str in risk_ids.split(","):
+                rid = int(rid_str.strip())
+                link = DecisionRiskLink(decision_id=decision.id, risk_id=rid)
+                session.add(link)
+                linked.append(rid)
+            await session.commit()
+
+        risk_info = f" | Linked risks: {linked}" if linked else ""
+        return f"Created decision #{decision.id}: [{dt.value}] {decision_text[:80]}{risk_info}"
+
+
+# =============================================================================
+# RISK TREATMENT TOOLS (Hiaat 4: Behandelstrategie)
+# =============================================================================
+
+@tool
+async def update_risk_treatment(
+    risk_id: int,
+    treatment_strategy: str,
+    transfer_party: Optional[str] = None,
+) -> str:
+    """
+    Set the treatment strategy for a risk.
+
+    Strategies: Vermijden, Reduceren, Overdragen, Accepteren.
+    If strategy is Overdragen, transfer_party is required (e.g. verzekeraar or leverancier).
+    Hard rule: if Accepteren AND score >= 9, a DT decision is required.
+    """
+    async for session in get_session():
+        result = await session.execute(select(Risk).where(Risk.id == risk_id))
+        risk = result.scalars().first()
+        if not risk:
+            return f"Risk with ID {risk_id} not found."
+
+        strategy_map = {
+            "Vermijden": TreatmentStrategy.AVOID,
+            "Reduceren": TreatmentStrategy.REDUCE,
+            "Overdragen": TreatmentStrategy.TRANSFER,
+            "Accepteren": TreatmentStrategy.ACCEPT,
+        }
+        strategy = strategy_map.get(treatment_strategy)
+        if not strategy:
+            return f"Unknown strategy '{treatment_strategy}'. Options: {', '.join(strategy_map.keys())}"
+
+        if strategy == TreatmentStrategy.TRANSFER and not transfer_party:
+            return "transfer_party is required when strategy is 'Overdragen'. Specify the party (e.g. verzekeraar, leverancier)."
+
+        risk.treatment_strategy = strategy
+        if transfer_party:
+            risk.transfer_party = transfer_party
+        risk.updated_at = datetime.utcnow()
+
+        session.add(risk)
+        await session.commit()
+
+        # Warning if acceptance requires decision
+        score = risk.residual_risk_score or risk.inherent_risk_score or 0
+        warning = ""
+        if strategy == TreatmentStrategy.ACCEPT and score >= 9:
+            warning = "\n⚠ HARD RULE: Score >= 9 + Accepteren requires a formal DT decision. Use create_decision to record it."
+
+        return f"Updated risk #{risk.id} treatment strategy to {strategy.value}.{warning}"
