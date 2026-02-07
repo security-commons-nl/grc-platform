@@ -19,16 +19,26 @@ class BaseState(rx.State):
     toast_message: str = ""
     toast_type: str = "info"  # info, success, error, warning
 
-    # Mobile sidebar
+    # Sidebar (hamburger drawer + optional pin)
     sidebar_open: bool = False
+    sidebar_pinned: bool = False
 
     def toggle_sidebar(self):
-        """Toggle mobile sidebar drawer."""
+        """Toggle sidebar drawer."""
         self.sidebar_open = not self.sidebar_open
 
     def close_sidebar(self):
-        """Close mobile sidebar drawer."""
+        """Close sidebar drawer."""
         self.sidebar_open = False
+
+    def pin_sidebar(self):
+        """Pin sidebar — make it permanently visible."""
+        self.sidebar_pinned = True
+        self.sidebar_open = False
+
+    def unpin_sidebar(self):
+        """Unpin sidebar — return to hamburger mode."""
+        self.sidebar_pinned = False
 
     def set_loading(self, loading: bool):
         """Set loading state."""

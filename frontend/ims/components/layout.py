@@ -1,6 +1,6 @@
 """
-Layout Components - Main layout with sidebar navigation
-Responsive: desktop sidebar + mobile drawer
+Layout Components - Hamburger navigation with optional pin-to-sidebar
+Single menu: drawer (default) or pinned sidebar (user toggle)
 """
 import reflex as rx
 from ims.state.auth import AuthState
@@ -8,8 +8,12 @@ from ims.state.base import BaseState
 from ims.components.chat_island import chat_island
 
 
+# ---------------------------------------------------------------------------
+# Navigation link helpers
+# ---------------------------------------------------------------------------
+
 def nav_link(label: str, href: str, icon: str) -> rx.Component:
-    """Navigation link in sidebar (desktop)."""
+    """Navigation link in pinned sidebar."""
     return rx.link(
         rx.hstack(
             rx.icon(icon, size=20),
@@ -26,8 +30,8 @@ def nav_link(label: str, href: str, icon: str) -> rx.Component:
     )
 
 
-def mobile_nav_link(label: str, href: str, icon: str) -> rx.Component:
-    """Navigation link in mobile drawer with larger touch targets."""
+def drawer_nav_link(label: str, href: str, icon: str) -> rx.Component:
+    """Navigation link in drawer — closes drawer on click."""
     return rx.link(
         rx.hstack(
             rx.icon(icon, size=20),
@@ -45,67 +49,208 @@ def mobile_nav_link(label: str, href: str, icon: str) -> rx.Component:
     )
 
 
-def sidebar() -> rx.Component:
-    """Sidebar navigation (desktop only)."""
+def _build_nav_links(link_fn, label_pad: str = "8px 12px 2px"):
+    """Build the full list of navigation items for a given link function."""
+    return [
+        # DOEN
+        rx.text("DOEN", size="1", weight="bold", color="gray", padding=label_pad),
+        link_fn("Dashboard", "/", "layout-dashboard"),
+        link_fn("Risico's", "/risks", "triangle-alert"),
+        link_fn("Controls", "/controls", "shield-check"),
+        link_fn("Compliance", "/compliance", "clipboard-list"),
+        link_fn("Assessments", "/assessments", "clipboard-check"),
+        link_fn("Incidenten", "/incidents", "circle-alert"),
+        link_fn("Besluiten", "/decisions", "stamp"),
+        link_fn("In-Control", "/in-control", "gauge"),
+        rx.divider(margin_y="4px"),
+        # ONTDEKKEN
+        rx.text("ONTDEKKEN", size="1", weight="bold", color="gray", padding=label_pad),
+        link_fn("Frameworks", "/frameworks", "library"),
+        link_fn("Maatregelen", "/measures", "book-open"),
+        link_fn("Uitgangspunten", "/policy-principles", "link-2"),
+        link_fn("Risicokader", "/risk-framework", "ruler"),
+        link_fn("Analyses", "/simulation", "chart-bar"),
+        rx.divider(margin_y="4px"),
+        # BEHEER
+        rx.text("BEHEER", size="1", weight="bold", color="gray", padding=label_pad),
+        link_fn("Beleid", "/policies", "file-text"),
+        link_fn("Scopes", "/scopes", "git-branch"),
+        link_fn("Assets", "/assets", "server"),
+        link_fn("Leveranciers", "/suppliers", "building-2"),
+        link_fn("Backlog", "/backlog", "list-todo"),
+        link_fn("Gebruikers", "/users", "users"),
+        rx.cond(
+            AuthState.is_admin,
+            link_fn("Beheer", "/admin", "settings"),
+        ),
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Top bar (hamburger) — shown in unpinned mode
+# ---------------------------------------------------------------------------
+
+def top_bar() -> rx.Component:
+    """Sticky top bar with hamburger menu."""
+    return rx.box(
+        rx.hstack(
+            rx.icon_button(
+                rx.icon("menu", size=22),
+                variant="ghost",
+                size="3",
+                on_click=BaseState.toggle_sidebar,
+            ),
+            rx.hstack(
+                rx.icon("shield-check", size=22, color="var(--accent-9)"),
+                rx.text("IMS", size="4", weight="bold"),
+                spacing="2",
+                align="center",
+            ),
+            rx.spacer(),
+            rx.icon_button(
+                rx.color_mode_cond(
+                    light=rx.icon("moon", size=16),
+                    dark=rx.icon("sun", size=16),
+                ),
+                variant="ghost",
+                size="2",
+                on_click=rx.toggle_color_mode,
+            ),
+            width="100%",
+            padding="8px 12px",
+            align="center",
+        ),
+        border_bottom="1px solid var(--gray-a5)",
+        background="var(--color-background)",
+        position="sticky",
+        top="0",
+        z_index="10",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Drawer (slide-out) — default unpinned navigation
+# ---------------------------------------------------------------------------
+
+def nav_drawer() -> rx.Component:
+    """Slide-out navigation drawer with pin button."""
+    return rx.drawer.root(
+        rx.drawer.overlay(),
+        rx.drawer.content(
+            rx.vstack(
+                # Header
+                rx.hstack(
+                    rx.icon("shield-check", size=28, color="var(--accent-9)"),
+                    rx.text("IMS", size="5", weight="bold"),
+                    rx.spacer(),
+                    rx.tooltip(
+                        rx.icon_button(
+                            rx.icon("pin", size=18),
+                            variant="ghost",
+                            size="2",
+                            on_click=BaseState.pin_sidebar,
+                        ),
+                        content="Menu vastzetten",
+                    ),
+                    rx.icon_button(
+                        rx.icon("x", size=20),
+                        variant="ghost",
+                        size="2",
+                        on_click=BaseState.close_sidebar,
+                    ),
+                    width="100%",
+                    padding="16px",
+                    align="center",
+                ),
+                rx.divider(),
+
+                # Navigation links
+                rx.vstack(
+                    *_build_nav_links(drawer_nav_link, label_pad="8px 16px 2px"),
+                    spacing="0",
+                    width="100%",
+                    padding="8px",
+                    overflow_y="auto",
+                    flex="1",
+                ),
+
+                rx.divider(),
+
+                # User section
+                rx.hstack(
+                    rx.avatar(
+                        fallback=AuthState.user_display_name[0],
+                        size="2",
+                    ),
+                    rx.vstack(
+                        rx.text(AuthState.user_display_name, size="2", weight="medium"),
+                        rx.text(AuthState.user_email, size="1", color="gray"),
+                        spacing="0",
+                        align_items="start",
+                    ),
+                    rx.spacer(),
+                    rx.icon_button(
+                        rx.icon("log-out", size=16),
+                        variant="ghost",
+                        size="1",
+                        on_click=AuthState.logout,
+                    ),
+                    width="100%",
+                    padding="12px",
+                ),
+
+                height="100%",
+                width="100%",
+                align_items="stretch",
+            ),
+            background="var(--color-background)",
+            width="280px",
+            height="100vh",
+        ),
+        open=BaseState.sidebar_open,
+        on_open_change=lambda open: rx.cond(~open, BaseState.close_sidebar(), rx.noop()),
+        direction="left",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pinned sidebar — permanent left sidebar when user pins navigation
+# ---------------------------------------------------------------------------
+
+def pinned_sidebar() -> rx.Component:
+    """Permanent pinned sidebar navigation."""
     return rx.box(
         rx.vstack(
-            # Logo / Title
+            # Header with unpin button
             rx.hstack(
                 rx.icon("shield-check", size=28, color="var(--accent-9)"),
                 rx.text("IMS", size="5", weight="bold"),
+                rx.spacer(),
+                rx.tooltip(
+                    rx.icon_button(
+                        rx.icon("pin-off", size=18),
+                        variant="ghost",
+                        size="2",
+                        on_click=BaseState.unpin_sidebar,
+                    ),
+                    content="Menu losmaken",
+                ),
                 padding="16px",
                 width="100%",
+                align="center",
             ),
             rx.divider(),
 
-            # Navigation — DOEN
+            # Navigation
             rx.vstack(
-                rx.text("DOEN", size="1", weight="bold", color="gray", padding="8px 12px 2px"),
-                nav_link("Dashboard", "/", "layout-dashboard"),
-                nav_link("Risico's", "/risks", "triangle-alert"),
-                nav_link("Controls", "/controls", "shield-check"),
-                nav_link("Compliance", "/compliance", "clipboard-list"),
-                nav_link("Assessments", "/assessments", "clipboard-check"),
-                nav_link("Incidenten", "/incidents", "circle-alert"),
-                nav_link("Besluiten", "/decisions", "stamp"),
-                nav_link("In-Control", "/in-control", "gauge"),
+                *_build_nav_links(nav_link),
                 spacing="1",
                 width="100%",
-                padding="8px 8px 0",
-            ),
-            rx.divider(margin_y="4px"),
-            # Navigation — ONTDEKKEN
-            rx.vstack(
-                rx.text("ONTDEKKEN", size="1", weight="bold", color="gray", padding="8px 12px 2px"),
-                nav_link("Frameworks", "/frameworks", "library"),
-                nav_link("Maatregelen", "/measures", "book-open"),
-                nav_link("Uitgangspunten", "/policy-principles", "link-2"),
-                nav_link("Risicokader", "/risk-framework", "ruler"),
-                nav_link("Analyses", "/simulation", "chart-bar"),
-                spacing="1",
-                width="100%",
-                padding="0 8px",
-            ),
-            rx.divider(margin_y="4px"),
-            # Navigation — BEHEER
-            rx.vstack(
-                rx.text("BEHEER", size="1", weight="bold", color="gray", padding="8px 12px 2px"),
-                nav_link("Beleid", "/policies", "file-text"),
-                nav_link("Scopes", "/scopes", "git-branch"),
-                nav_link("Assets", "/assets", "server"),
-                nav_link("Leveranciers", "/suppliers", "building-2"),
-                nav_link("Backlog", "/backlog", "list-todo"),
-                nav_link("Gebruikers", "/users", "users"),
-                rx.cond(
-                    AuthState.is_admin,
-                    nav_link("Beheer", "/admin", "settings"),
-                ),
-                spacing="1",
-                width="100%",
-                padding="0 8px 8px",
+                padding="8px",
+                overflow_y="auto",
+                flex="1",
             ),
 
-            rx.spacer(),
             rx.divider(),
 
             # User section
@@ -151,143 +296,9 @@ def sidebar() -> rx.Component:
     )
 
 
-def mobile_top_bar() -> rx.Component:
-    """Sticky top bar for mobile with hamburger menu."""
-    return rx.box(
-        rx.hstack(
-            rx.icon_button(
-                rx.icon("menu", size=22),
-                variant="ghost",
-                size="3",
-                on_click=BaseState.toggle_sidebar,
-            ),
-            rx.hstack(
-                rx.icon("shield-check", size=22, color="var(--accent-9)"),
-                rx.text("IMS", size="4", weight="bold"),
-                spacing="2",
-                align="center",
-            ),
-            rx.spacer(),
-            rx.icon_button(
-                rx.color_mode_cond(
-                    light=rx.icon("moon", size=16),
-                    dark=rx.icon("sun", size=16),
-                ),
-                variant="ghost",
-                size="2",
-                on_click=rx.toggle_color_mode,
-            ),
-            width="100%",
-            padding="8px 12px",
-            align="center",
-        ),
-        border_bottom="1px solid var(--gray-a5)",
-        background="var(--color-background)",
-        position="sticky",
-        top="0",
-        z_index="10",
-        class_name="block md:hidden",
-    )
-
-
-def mobile_drawer() -> rx.Component:
-    """Mobile navigation drawer."""
-    return rx.drawer.root(
-        rx.drawer.overlay(),
-        rx.drawer.content(
-            rx.vstack(
-                # Header
-                rx.hstack(
-                    rx.icon("shield-check", size=28, color="var(--accent-9)"),
-                    rx.text("IMS", size="5", weight="bold"),
-                    rx.spacer(),
-                    rx.icon_button(
-                        rx.icon("x", size=20),
-                        variant="ghost",
-                        size="2",
-                        on_click=BaseState.close_sidebar,
-                    ),
-                    width="100%",
-                    padding="16px",
-                    align="center",
-                ),
-                rx.divider(),
-
-                # Navigation links
-                rx.vstack(
-                    rx.text("DOEN", size="1", weight="bold", color="gray", padding="8px 16px 2px"),
-                    mobile_nav_link("Dashboard", "/", "layout-dashboard"),
-                    mobile_nav_link("Risico's", "/risks", "triangle-alert"),
-                    mobile_nav_link("Controls", "/controls", "shield-check"),
-                    mobile_nav_link("Compliance", "/compliance", "clipboard-list"),
-                    mobile_nav_link("Assessments", "/assessments", "clipboard-check"),
-                    mobile_nav_link("Incidenten", "/incidents", "circle-alert"),
-                    mobile_nav_link("Besluiten", "/decisions", "stamp"),
-                    mobile_nav_link("In-Control", "/in-control", "gauge"),
-                    rx.divider(),
-                    rx.text("ONTDEKKEN", size="1", weight="bold", color="gray", padding="8px 16px 2px"),
-                    mobile_nav_link("Frameworks", "/frameworks", "library"),
-                    mobile_nav_link("Maatregelen", "/measures", "book-open"),
-                    mobile_nav_link("Uitgangspunten", "/policy-principles", "link-2"),
-                    mobile_nav_link("Risicokader", "/risk-framework", "ruler"),
-                    mobile_nav_link("Analyses", "/simulation", "chart-bar"),
-                    rx.divider(),
-                    rx.text("BEHEER", size="1", weight="bold", color="gray", padding="8px 16px 2px"),
-                    mobile_nav_link("Beleid", "/policies", "file-text"),
-                    mobile_nav_link("Scopes", "/scopes", "git-branch"),
-                    mobile_nav_link("Assets", "/assets", "server"),
-                    mobile_nav_link("Leveranciers", "/suppliers", "building-2"),
-                    mobile_nav_link("Backlog", "/backlog", "list-todo"),
-                    mobile_nav_link("Gebruikers", "/users", "users"),
-                    rx.cond(
-                        AuthState.is_admin,
-                        mobile_nav_link("Beheer", "/admin", "settings"),
-                    ),
-                    spacing="0",
-                    width="100%",
-                    padding="8px",
-                    overflow_y="auto",
-                ),
-
-                rx.spacer(),
-                rx.divider(),
-
-                # User section
-                rx.hstack(
-                    rx.avatar(
-                        fallback=AuthState.user_display_name[0],
-                        size="2",
-                    ),
-                    rx.vstack(
-                        rx.text(AuthState.user_display_name, size="2", weight="medium"),
-                        rx.text(AuthState.user_email, size="1", color="gray"),
-                        spacing="0",
-                        align_items="start",
-                    ),
-                    rx.spacer(),
-                    rx.icon_button(
-                        rx.icon("log-out", size=16),
-                        variant="ghost",
-                        size="1",
-                        on_click=AuthState.logout,
-                    ),
-                    width="100%",
-                    padding="12px",
-                ),
-
-                height="100%",
-                width="100%",
-                align_items="stretch",
-            ),
-            background="var(--color-background)",
-            width="280px",
-            height="100vh",
-        ),
-        open=BaseState.sidebar_open,
-        on_open_change=lambda open: rx.cond(~open, BaseState.close_sidebar(), rx.noop()),
-        direction="left",
-    )
-
+# ---------------------------------------------------------------------------
+# Page header + main layout
+# ---------------------------------------------------------------------------
 
 def page_header(title: str, subtitle: str = "") -> rx.Component:
     """Page header with title — responsive padding and font size."""
@@ -311,36 +322,60 @@ def page_header(title: str, subtitle: str = "") -> rx.Component:
 
 
 def layout(content: rx.Component, title: str = "", subtitle: str = "") -> rx.Component:
-    """Main layout wrapper with responsive sidebar and AI chat island."""
+    """Main layout wrapper with hamburger navigation and optional pinned sidebar."""
     return rx.cond(
         AuthState.is_authenticated,
         rx.fragment(
-            mobile_drawer(),
-            rx.hstack(
-                rx.box(sidebar(), class_name="hidden md:block"),
-                rx.box(
-                    mobile_top_bar(),
-                    rx.cond(
-                        title != "",
-                        page_header(title, subtitle),
-                    ),
+            rx.cond(
+                BaseState.sidebar_pinned,
+                # Pinned mode: permanent sidebar + content
+                rx.hstack(
+                    pinned_sidebar(),
                     rx.box(
-                        content,
-                        padding=rx.breakpoints(initial="12px", md="24px"),
-                        overflow_y="auto",
+                        rx.cond(
+                            title != "",
+                            page_header(title, subtitle),
+                        ),
+                        rx.box(
+                            content,
+                            padding=rx.breakpoints(initial="12px", md="24px"),
+                            overflow_y="auto",
+                            flex="1",
+                        ),
+                        flex="1",
+                        height="100vh",
+                        overflow="hidden",
+                        display="flex",
+                        flex_direction="column",
                     ),
-                    flex="1",
-                    height="100vh",
-                    overflow="hidden",
-                    display="flex",
-                    flex_direction="column",
+                    width="100%",
+                    spacing="0",
                 ),
-                width="100%",
-                spacing="0",
+                # Unpinned mode: top bar + drawer overlay + content
+                rx.fragment(
+                    nav_drawer(),
+                    rx.box(
+                        top_bar(),
+                        rx.cond(
+                            title != "",
+                            page_header(title, subtitle),
+                        ),
+                        rx.box(
+                            content,
+                            padding=rx.breakpoints(initial="12px", md="24px"),
+                            overflow_y="auto",
+                            flex="1",
+                        ),
+                        height="100vh",
+                        overflow="hidden",
+                        display="flex",
+                        flex_direction="column",
+                    ),
+                ),
             ),
             chat_island(),
         ),
-        # Show login redirect message when not authenticated
+        # Not authenticated — redirect to login
         rx.center(
             rx.vstack(
                 rx.spinner(size="3"),
