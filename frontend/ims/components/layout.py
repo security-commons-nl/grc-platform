@@ -50,9 +50,16 @@ def drawer_nav_link(label: str, href: str, icon: str) -> rx.Component:
 
 
 def _build_nav_links(link_fn, label_pad: str = "8px 12px 2px"):
-    """Build the full list of navigation items for a given link function."""
+    """Build the full list of navigation items for a given link function.
+
+    Sections:
+    - DOEN: always visible (all authenticated users)
+    - ONTDEKKEN: always visible
+    - INRICHTEN: only visible for users who can_configure
+    - BEHEER: only visible for users who can_manage_users
+    """
     return [
-        # DOEN
+        # DOEN — always visible
         rx.text("DOEN", size="1", weight="bold", color="gray", padding=label_pad),
         link_fn("Dashboard", "/", "layout-dashboard"),
         link_fn("Risico's", "/risks", "triangle-alert"),
@@ -63,25 +70,39 @@ def _build_nav_links(link_fn, label_pad: str = "8px 12px 2px"):
         link_fn("Besluiten", "/decisions", "stamp"),
         link_fn("In-Control", "/in-control", "gauge"),
         rx.divider(margin_y="4px"),
-        # ONTDEKKEN
+        # ONTDEKKEN — always visible
         rx.text("ONTDEKKEN", size="1", weight="bold", color="gray", padding=label_pad),
         link_fn("Frameworks", "/frameworks", "library"),
         link_fn("Maatregelen", "/measures", "book-open"),
         link_fn("Uitgangspunten", "/policy-principles", "link-2"),
         link_fn("Risicokader", "/risk-framework", "ruler"),
         link_fn("Analyses", "/simulation", "chart-bar"),
+        link_fn("Rapportage", "/reports", "file-chart-column"),
         link_fn("Backlog", "/backlog", "list-todo"),
-        rx.divider(margin_y="4px"),
-        # BEHEER
-        rx.text("BEHEER", size="1", weight="bold", color="gray", padding=label_pad),
-        link_fn("Beleid", "/policies", "file-text"),
-        link_fn("Scopes", "/scopes", "git-branch"),
-        link_fn("Assets", "/assets", "server"),
-        link_fn("Leveranciers", "/suppliers", "building-2"),
-        link_fn("Gebruikers", "/users", "users"),
+        # INRICHTEN — only for configurers (Beheerder, Coordinator, Eigenaar)
         rx.cond(
-            AuthState.is_admin,
-            link_fn("Beheer", "/admin", "settings"),
+            AuthState.can_configure,
+            rx.fragment(
+                rx.divider(margin_y="4px"),
+                rx.text("INRICHTEN", size="1", weight="bold", color="gray", padding=label_pad),
+                link_fn("Beleid", "/policies", "file-text"),
+                link_fn("Scopes", "/scopes", "git-branch"),
+                link_fn("Assets", "/assets", "server"),
+                link_fn("Leveranciers", "/suppliers", "building-2"),
+            ),
+        ),
+        # BEHEER — only for user managers (Beheerder, Coordinator)
+        rx.cond(
+            AuthState.can_manage_users,
+            rx.fragment(
+                rx.divider(margin_y="4px"),
+                rx.text("BEHEER", size="1", weight="bold", color="gray", padding=label_pad),
+                link_fn("Gebruikers", "/users", "users"),
+                rx.cond(
+                    AuthState.is_admin,
+                    link_fn("Beheer", "/admin", "settings"),
+                ),
+            ),
         ),
     ]
 
@@ -143,14 +164,12 @@ def nav_drawer() -> rx.Component:
                     rx.icon("shield-check", size=28, color="var(--accent-9)"),
                     rx.text("IMS", size="5", weight="bold"),
                     rx.spacer(),
-                    rx.tooltip(
-                        rx.icon_button(
-                            rx.icon("pin", size=18),
-                            variant="ghost",
-                            size="2",
-                            on_click=BaseState.pin_sidebar,
-                        ),
-                        content="Menu vastzetten",
+                    rx.icon_button(
+                        rx.icon("pin", size=18),
+                        variant="solid",
+                        color_scheme="indigo",
+                        size="2",
+                        on_click=BaseState.pin_sidebar,
                     ),
                     rx.icon_button(
                         rx.icon("x", size=20),
@@ -208,7 +227,6 @@ def nav_drawer() -> rx.Component:
             height="100vh",
         ),
         open=BaseState.sidebar_open,
-        on_open_change=lambda open: rx.cond(~open, BaseState.close_sidebar(), rx.noop()),
         direction="left",
     )
 
@@ -226,14 +244,11 @@ def pinned_sidebar() -> rx.Component:
                 rx.icon("shield-check", size=28, color="var(--accent-9)"),
                 rx.text("IMS", size="5", weight="bold"),
                 rx.spacer(),
-                rx.tooltip(
-                    rx.icon_button(
-                        rx.icon("pin-off", size=18),
-                        variant="ghost",
-                        size="2",
-                        on_click=BaseState.unpin_sidebar,
-                    ),
-                    content="Menu losmaken",
+                rx.icon_button(
+                    rx.icon("pin-off", size=18),
+                    variant="outline",
+                    size="2",
+                    on_click=BaseState.unpin_sidebar,
                 ),
                 padding="16px",
                 width="100%",

@@ -12,7 +12,7 @@ class AuthState(rx.State):
     """Authentication state with localStorage persistence."""
 
     # User info (persisted in localStorage)
-    _user_json: str = rx.LocalStorage(name="ims_user")
+    user_json: str = rx.LocalStorage(name="ims_user")
 
     # Login form
     username: str = ""
@@ -23,9 +23,9 @@ class AuthState(rx.State):
     @rx.var
     def user(self) -> Dict[str, Any]:
         """Get user from localStorage."""
-        if self._user_json:
+        if self.user_json:
             try:
-                return json.loads(self._user_json)
+                return json.loads(self.user_json)
             except:
                 pass
 
@@ -34,7 +34,7 @@ class AuthState(rx.State):
     @rx.var
     def is_authenticated(self) -> bool:
         """Check if user is logged in."""
-        return self._user_json != ""
+        return self.user_json != ""
 
     @rx.var
     def user_display_name(self) -> str:
@@ -51,12 +51,56 @@ class AuthState(rx.State):
         return user.get("email", "") if user else ""
 
     @rx.var
+    def global_roles(self) -> list:
+        """Get user's global roles from login response."""
+        user = self.user
+        return user.get("global_roles", []) if user else []
+
+    @rx.var
+    def permissions(self) -> Dict[str, Any]:
+        """Get user's permissions from login response."""
+        user = self.user
+        return user.get("permissions", {}) if user else {}
+
+    @rx.var
     def is_admin(self) -> bool:
-        """Check if user is admin (superuser)."""
+        """Check if user is admin (superuser or Beheerder role)."""
         user = self.user
         if not user:
             return False
-        return user.get("is_superuser", False)
+        if user.get("is_superuser", False):
+            return True
+        return "Beheerder" in user.get("global_roles", [])
+
+    @rx.var
+    def can_edit(self) -> bool:
+        """Can create/edit/delete operational items (risks, controls, etc.)."""
+        user = self.user
+        if not user:
+            return False
+        return user.get("permissions", {}).get("can_edit", False)
+
+    @rx.var
+    def can_configure(self) -> bool:
+        """Can manage policies, scopes, assets, suppliers."""
+        user = self.user
+        if not user:
+            return False
+        return user.get("permissions", {}).get("can_configure", False)
+
+    @rx.var
+    def can_manage_users(self) -> bool:
+        """Can manage users and system configuration."""
+        user = self.user
+        if not user:
+            return False
+        return user.get("permissions", {}).get("can_manage_users", False)
+
+    @rx.var
+    def user_id(self) -> int:
+        """Get current user's ID."""
+        user = self.user
+        return user.get("id", 0) if user else 0
 
     async def login(self):
         """Authenticate against the backend API."""
@@ -81,7 +125,7 @@ class AuthState(rx.State):
             return
 
         # Store authenticated user in localStorage
-        self._user_json = json.dumps(user_data)
+        self.user_json = json.dumps(user_data)
         self.is_logging_in = False
         self.username = ""
         self.password = ""
@@ -91,7 +135,7 @@ class AuthState(rx.State):
 
     def logout(self):
         """Log out the current user."""
-        self._user_json = ""
+        self.user_json = ""
         return rx.redirect("/login")
 
     def set_username(self, value: str):

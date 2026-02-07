@@ -18,8 +18,13 @@ class APIClient:
         self.base_url = base_url
         self.timeout = httpx.Timeout(120.0)
 
-    def _get_client(self) -> httpx.AsyncClient:
-        return httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout)
+    def _get_client(self, user_id: Optional[int] = None) -> httpx.AsyncClient:
+        headers = {}
+        if user_id:
+            headers["X-User-ID"] = str(user_id)
+        return httpx.AsyncClient(
+            base_url=self.base_url, timeout=self.timeout, headers=headers,
+        )
 
     # =========================================================================
     # AUTHENTICATION
@@ -641,6 +646,61 @@ class APIClient:
             response.raise_for_status()
             return response.json()
 
+    async def get_risk_summary(
+        self,
+        tenant_id: Optional[int] = None,
+        scope_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Get risk summary report."""
+        async with self._get_client() as client:
+            params = {}
+            if tenant_id:
+                params["tenant_id"] = tenant_id
+            if scope_id:
+                params["scope_id"] = scope_id
+            response = await client.get("/reports/risks/summary", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_assessment_summary(
+        self,
+        tenant_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Get assessment and findings summary."""
+        async with self._get_client() as client:
+            params = {}
+            if tenant_id:
+                params["tenant_id"] = tenant_id
+            response = await client.get("/reports/assessments/summary", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_incident_summary(
+        self,
+        tenant_id: Optional[int] = None,
+        days: int = 30,
+    ) -> Dict[str, Any]:
+        """Get incident summary."""
+        async with self._get_client() as client:
+            params = {"days": days}
+            if tenant_id:
+                params["tenant_id"] = tenant_id
+            response = await client.get("/reports/incidents/summary", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_actions_summary(
+        self,
+        tenant_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Get corrective actions summary."""
+        async with self._get_client() as client:
+            params = {}
+            if tenant_id:
+                params["tenant_id"] = tenant_id
+            response = await client.get("/reports/actions/summary", params=params)
+            response.raise_for_status()
+            return response.json()
 
     # =========================================================================
     # BACKLOG
