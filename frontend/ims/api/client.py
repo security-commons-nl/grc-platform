@@ -1148,6 +1148,16 @@ class APIClient:
             response.raise_for_status()
             return response.json()
 
+    async def get_my_tasks(self, user_id: int, tenant_id: int) -> Dict[str, Any]:
+        """Get unified task list for a user (corrective actions, reviews, approvals)."""
+        async with self._get_client() as client:
+            response = await client.get(
+                "/dashboard/my-tasks",
+                params={"user_id": user_id, "tenant_id": tenant_id},
+            )
+            response.raise_for_status()
+            return response.json()
+
     async def establish_scope(self, scope_id: int, established_by_id: int, validity_year: int, motivation: Optional[str] = None) -> Dict[str, Any]:
         async with self._get_client() as client:
             params = {"established_by_id": established_by_id, "validity_year": validity_year}

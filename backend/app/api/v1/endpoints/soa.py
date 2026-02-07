@@ -11,12 +11,14 @@ from sqlalchemy import func
 
 from app.core.db import get_session
 from app.core.crud import CRUDBase
+from app.core.rbac import require_configurer
 from app.models.core_models import (
     ApplicabilityStatement,
     Requirement,
     Standard,
     Scope,
     Measure,
+    User,
     CoverageType,
     ImplementationStatus,
 )
@@ -72,6 +74,7 @@ async def list_applicability_statements(
 async def create_applicability_statement(
     soa: ApplicabilityStatement,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """Create a new applicability statement."""
     # Verify requirement exists
@@ -122,6 +125,7 @@ async def update_applicability_statement(
     soa_id: int,
     soa_update: dict,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """Update an applicability statement."""
     db_soa = await crud_soa.get_or_404(session, soa_id)
@@ -150,6 +154,7 @@ async def update_applicability_statement(
 async def delete_applicability_statement(
     soa_id: int,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """Delete an applicability statement."""
     deleted = await crud_soa.delete(session, id=soa_id)
@@ -168,6 +173,7 @@ async def initialize_soa_from_standard(
     standard_id: int,
     tenant_id: int = Query(..., description="Tenant ID"),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """
     Initialize SoA entries for all requirements in a standard for a given scope.
@@ -240,6 +246,7 @@ async def link_measure_to_requirements(
     requirement_ids: List[int],
     tenant_id: int = Query(..., description="Tenant ID"),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """
     Link a measure to multiple requirements in the SoA.
@@ -254,20 +261,22 @@ async def link_measure_to_requirements(
     updated_count = 0
     created_count = 0
 
+    # Optimize: Fetch all existing SoA entries for these requirements in one query
+    existing_result = await session.execute(
+        select(ApplicabilityStatement)
+        .where(ApplicabilityStatement.tenant_id == tenant_id)
+        .where(ApplicabilityStatement.scope_id == scope_id)
+        .where(ApplicabilityStatement.requirement_id.in_(requirement_ids))
+    )
+    existing_map = {soa.requirement_id: soa for soa in existing_result.scalars().all()}
+
     for req_id in requirement_ids:
-        # Check if SoA entry exists
-        existing_result = await session.execute(
-            select(ApplicabilityStatement)
-            .where(ApplicabilityStatement.tenant_id == tenant_id)
-            .where(ApplicabilityStatement.scope_id == scope_id)
-            .where(ApplicabilityStatement.requirement_id == req_id)
-        )
-        existing = existing_result.scalars().first()
+        existing = existing_map.get(req_id)
 
         if existing:
             # Update existing
             existing.local_measure_id = measure_id
-            if existing.shared_measure_id:
+            if getattr(existing, "shared_measure_id", None):
                 existing.coverage_type = CoverageType.COMBINED
             else:
                 existing.coverage_type = CoverageType.LOCAL
@@ -481,6 +490,7 @@ async def review_applicability_statement(
     reviewer_id: int = Query(..., description="ID of the reviewing user"),
     notes: Optional[str] = Query(None, description="Review notes"),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """Mark an applicability statement as reviewed."""
     db_soa = await crud_soa.get_or_404(session, soa_id)
@@ -503,6 +513,7 @@ async def bulk_review_soa(
     reviewer_id: int = Query(..., description="ID of the reviewing user"),
     tenant_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """Mark all applicability statements for a scope as reviewed."""
     await crud_scope.get_or_404(session, scope_id)
