@@ -78,7 +78,9 @@ class AuthState(rx.State):
         user = self.user
         if not user:
             return False
-        return user.get("permissions", {}).get("can_edit", False)
+        if user.get("permissions", {}).get("can_edit", False):
+            return True
+        return self.is_admin
 
     @rx.var
     def can_configure(self) -> bool:
@@ -86,7 +88,9 @@ class AuthState(rx.State):
         user = self.user
         if not user:
             return False
-        return user.get("permissions", {}).get("can_configure", False)
+        if user.get("permissions", {}).get("can_configure", False):
+            return True
+        return self.is_admin
 
     @rx.var
     def can_manage_users(self) -> bool:
@@ -94,7 +98,9 @@ class AuthState(rx.State):
         user = self.user
         if not user:
             return False
-        return user.get("permissions", {}).get("can_manage_users", False)
+        if user.get("permissions", {}).get("can_manage_users", False):
+            return True
+        return self.is_admin
 
     @rx.var
     def user_id(self) -> int:
