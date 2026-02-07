@@ -285,7 +285,7 @@ def filter_bar() -> rx.Component:
             on_change=UserState.set_filter_active,
             size="2",
             default_value="ACTIEF",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.button(
             rx.icon("x", size=14),
@@ -293,15 +293,15 @@ def filter_bar() -> rx.Component:
             variant="ghost",
             size="2",
             on_click=UserState.clear_filters,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.button(
             rx.icon("user-plus", size=14),
             "Nieuwe Gebruiker",
             size="2",
             on_click=UserState.open_create_dialog,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         wrap="wrap",
         gap="2",
@@ -829,7 +829,7 @@ def users_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -848,7 +848,7 @@ def users_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
 
         # Dialogs

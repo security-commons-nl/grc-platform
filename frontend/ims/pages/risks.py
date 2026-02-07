@@ -4,7 +4,9 @@ Risks List Page with CRUD functionality
 import reflex as rx
 from ims.state.risk import RiskState
 from ims.state.auth import AuthState
+from ims.state.journey import JourneyState
 from ims.components.layout import layout
+from ims.components.guidance import next_step_hint
 
 
 # Risk matrix colors based on score (likelihood_idx + impact_idx)
@@ -729,7 +731,7 @@ def filter_bar() -> rx.Component:
             on_change=RiskState.set_filter_quadrant,
             size="2",
             default_value="ALLE",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.button(
             rx.icon("x", size=14),
@@ -737,9 +739,9 @@ def filter_bar() -> rx.Component:
             variant="ghost",
             size="2",
             on_click=RiskState.clear_filters,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.cond(
             AuthState.can_edit,
             rx.button(
@@ -747,7 +749,7 @@ def filter_bar() -> rx.Component:
                 "Nieuw Risico",
                 size="2",
                 on_click=RiskState.open_create_dialog,
-                class_name="w-full md:w-auto",
+                width=rx.breakpoints(initial="100%", md="auto"),
             ),
         ),
         wrap="wrap",
@@ -792,7 +794,7 @@ def risks_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -811,7 +813,7 @@ def risks_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
 
         # Dialogs

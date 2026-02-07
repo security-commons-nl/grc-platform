@@ -189,13 +189,13 @@ def decisions_content() -> rx.Component:
         ),
         # Action bar
         rx.flex(
-            rx.spacer(class_name="hidden md:block"),
+            rx.spacer(display=rx.breakpoints(initial="none", md="block")),
             rx.cond(
                 AuthState.can_edit,
                 rx.button(
                     rx.icon("plus", size=14), "Nieuw Besluit", size="2",
                     on_click=DecisionState.open_create_dialog,
-                    class_name="w-full md:w-auto",
+                    width=rx.breakpoints(initial="100%", md="auto"),
                 ),
             ),
             wrap="wrap", gap="2", width="100%",
@@ -236,7 +236,7 @@ def decisions_content() -> rx.Component:
                 ),
                 padding="0",
             ),
-            width="100%", margin_top="16px", class_name="hidden md:block",
+            width="100%", margin_top="16px", display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -252,7 +252,7 @@ def decisions_content() -> rx.Component:
                 ),
                 spacing="2", width="100%",
             ),
-            width="100%", margin_top="16px", class_name="block md:hidden",
+            width="100%", margin_top="16px", display=rx.breakpoints(initial="block", md="none"),
         ),
         decision_form_dialog(),
         delete_confirm_dialog(),

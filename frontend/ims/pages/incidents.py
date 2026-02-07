@@ -205,7 +205,7 @@ def filter_bar() -> rx.Component:
             on_change=IncidentState.set_filter_status,
             size="2",
             default_value="ALLE",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.select.root(
             rx.select.trigger(placeholder="Datalek"),
@@ -218,7 +218,7 @@ def filter_bar() -> rx.Component:
             on_change=IncidentState.set_filter_data_breach,
             size="2",
             default_value="ALLE",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.button(
             rx.icon("x", size=14),
@@ -226,9 +226,9 @@ def filter_bar() -> rx.Component:
             variant="ghost",
             size="2",
             on_click=IncidentState.clear_filters,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.cond(
             AuthState.can_edit,
             rx.button(
@@ -237,7 +237,7 @@ def filter_bar() -> rx.Component:
                 size="2",
                 color_scheme="red",
                 on_click=IncidentState.open_create_dialog,
-                class_name="w-full md:w-auto",
+                width=rx.breakpoints(initial="100%", md="auto"),
             ),
         ),
         wrap="wrap",
@@ -504,7 +504,7 @@ def incidents_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -523,7 +523,7 @@ def incidents_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
         
         # Dialogs

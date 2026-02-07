@@ -146,11 +146,11 @@ def risk_framework_content() -> rx.Component:
             rx.callout(RiskFrameworkState.error, icon="circle-alert", color="red", margin_bottom="16px"),
         ),
         rx.flex(
-            rx.spacer(class_name="hidden md:block"),
+            rx.spacer(display=rx.breakpoints(initial="none", md="block")),
             rx.button(
                 rx.icon("plus", size=14), "Nieuw Risicokader", size="2",
                 on_click=RiskFrameworkState.open_create_dialog,
-                class_name="w-full md:w-auto",
+                width=rx.breakpoints(initial="100%", md="auto"),
             ),
             wrap="wrap", gap="2", width="100%",
         ),

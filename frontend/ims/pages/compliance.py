@@ -143,7 +143,7 @@ def filter_bar() -> rx.Component:
                 size="2",
             ),
             align_items="start",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.vstack(
             rx.text("Status", size="2", weight="medium"),
@@ -161,16 +161,16 @@ def filter_bar() -> rx.Component:
                 size="2",
             ),
             align_items="start",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.button(
             rx.icon("plus", size=14),
             "Initialiseer SoA",
             variant="soft",
             size="2",
             on_click=ComplianceState.open_init_dialog,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         wrap="wrap",
         gap="4",
@@ -611,7 +611,7 @@ def compliance_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -630,7 +630,7 @@ def compliance_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
 
         # Gaps section

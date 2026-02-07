@@ -388,16 +388,16 @@ def filter_bar() -> rx.Component:
     return rx.flex(
         rx.input(
             placeholder="Zoek leverancier...",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
             style={"min_width": "200px"},
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.button(
             rx.icon("plus", size=14),
             "Nieuwe Leverancier",
             size="2",
             on_click=SupplierState.open_create_dialog,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         wrap="wrap",
         gap="2",
@@ -450,7 +450,7 @@ def suppliers_content() -> rx.Component:
             rx.card(suppliers_table(), padding="0"),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -469,7 +469,7 @@ def suppliers_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
 
         # Dialogs

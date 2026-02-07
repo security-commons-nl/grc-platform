@@ -553,7 +553,7 @@ def filter_bar() -> rx.Component:
             value=AssetState.filter_asset_type,
             on_change=AssetState.set_filter_asset_type,
             size="2",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.select.root(
             rx.select.trigger(placeholder="Classificatie"),
@@ -567,7 +567,7 @@ def filter_bar() -> rx.Component:
             value=AssetState.filter_classification,
             on_change=AssetState.set_filter_classification,
             size="2",
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         rx.button(
             rx.icon("x", size=14),
@@ -575,15 +575,15 @@ def filter_bar() -> rx.Component:
             variant="ghost",
             size="2",
             on_click=AssetState.clear_filters,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
-        rx.spacer(class_name="hidden md:block"),
+        rx.spacer(display=rx.breakpoints(initial="none", md="block")),
         rx.button(
             rx.icon("plus", size=14),
             "Nieuw Asset",
             size="2",
             on_click=AssetState.open_create_dialog,
-            class_name="w-full md:w-auto",
+            width=rx.breakpoints(initial="100%", md="auto"),
         ),
         wrap="wrap",
         gap="2",
@@ -637,7 +637,7 @@ def assets_content() -> rx.Component:
             rx.card(assets_table(), padding="0"),
             width="100%",
             margin_top="16px",
-            class_name="hidden md:block",
+            display=rx.breakpoints(initial="none", md="block"),
         ),
         # Mobile cards
         rx.box(
@@ -656,7 +656,7 @@ def assets_content() -> rx.Component:
             ),
             width="100%",
             margin_top="16px",
-            class_name="block md:hidden",
+            display=rx.breakpoints(initial="block", md="none"),
         ),
 
         # Dialogs
