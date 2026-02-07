@@ -27,6 +27,7 @@ from app.api.v1.endpoints import (
     risk_framework,
     in_control,
     policy_principles,
+    system,
 )
 
 api_router = APIRouter()
@@ -226,4 +227,11 @@ api_router.include_router(
     policy_principles.router,
     prefix="/policy-principles",
     tags=["Policy Principles"]
+)
+
+# System Administration
+api_router.include_router(
+    system.router,
+    prefix="/system",
+    tags=["System Administration"]
 )

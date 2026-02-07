@@ -25,6 +25,7 @@ from ims.pages.decisions import decisions_page
 from ims.pages.risk_framework import risk_framework_page
 from ims.pages.in_control import in_control_page
 from ims.pages.policy_principles import policy_principles_page
+from ims.pages.admin import admin_page
 
 # Import state (to ensure it's registered)
 from ims.state.auth import AuthState
@@ -47,6 +48,7 @@ from ims.state.risk_framework import RiskFrameworkState
 from ims.state.in_control import InControlState
 from ims.state.policy_principle import PolicyPrincipleState
 from ims.state.dashboard import DashboardState
+from ims.state.admin import AdminState
 
 
 # Create app
@@ -85,3 +87,4 @@ app.add_page(decisions_page, route="/decisions", title="Besluiten - IMS")
 app.add_page(risk_framework_page, route="/risk-framework", title="Risicokader - IMS")
 app.add_page(in_control_page, route="/in-control", title="In-Control - IMS")
 app.add_page(policy_principles_page, route="/policy-principles", title="Beleidsuitgangspunten - IMS")
+app.add_page(admin_page, route="/admin", title="Beheer - IMS")

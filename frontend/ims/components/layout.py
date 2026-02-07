@@ -96,6 +96,10 @@ def sidebar() -> rx.Component:
                 nav_link("Leveranciers", "/suppliers", "building-2"),
                 nav_link("Backlog", "/backlog", "list-todo"),
                 nav_link("Gebruikers", "/users", "users"),
+                rx.cond(
+                    AuthState.is_admin,
+                    nav_link("Beheer", "/admin", "settings"),
+                ),
                 spacing="1",
                 width="100%",
                 padding="0 8px 8px",
@@ -235,6 +239,10 @@ def mobile_drawer() -> rx.Component:
                     mobile_nav_link("Leveranciers", "/suppliers", "building-2"),
                     mobile_nav_link("Backlog", "/backlog", "list-todo"),
                     mobile_nav_link("Gebruikers", "/users", "users"),
+                    rx.cond(
+                        AuthState.is_admin,
+                        mobile_nav_link("Beheer", "/admin", "settings"),
+                    ),
                     spacing="0",
                     width="100%",
                     padding="8px",
