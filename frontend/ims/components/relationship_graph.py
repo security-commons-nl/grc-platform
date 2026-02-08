@@ -52,7 +52,7 @@ def _render_node(node: dict) -> rx.Component:
         rx.tooltip(
             rx.center(
                 rx.icon(
-                    node["icon"],
+                    node["icon"].to(str),
                     size=18,
                     color="white",
                 ),

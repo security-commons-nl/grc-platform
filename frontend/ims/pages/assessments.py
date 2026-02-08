@@ -359,7 +359,7 @@ def wizard_dialog() -> rx.Component:
                     value=AssessmentState.form_description,
                     on_change=AssessmentState.set_form_description,
                     width="100%",
-                    rows=3,
+                    rows="3",
                 ),
                 # Lead assessor
                 rx.text("Lead Assessor", size="2", weight="medium"),

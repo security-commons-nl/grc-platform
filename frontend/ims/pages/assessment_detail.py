@@ -444,7 +444,7 @@ def finding_dialog() -> rx.Component:
                     value=AssessmentState.finding_description,
                     on_change=AssessmentState.set_finding_description,
                     width="100%",
-                    rows=3,
+                    rows="3",
                 ),
                 rx.text("Ernst", size="2", weight="medium"),
                 rx.select.root(
@@ -561,7 +561,7 @@ def evidence_dialog() -> rx.Component:
                     value=AssessmentState.evidence_description,
                     on_change=AssessmentState.set_evidence_description,
                     width="100%",
-                    rows=2,
+                    rows="2",
                 ),
                 rx.text("Type", size="2", weight="medium"),
                 rx.select.root(
