@@ -71,6 +71,9 @@ class AgentOrchestrator:
         "reports": "report",
         "controls": "compliance",
         "users": "admin",
+        "organization": "onboarding",
+        "onboarding": "onboarding",
+        "profiel": "onboarding",
     }
 
     def __init__(self):

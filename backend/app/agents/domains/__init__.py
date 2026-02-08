@@ -20,6 +20,7 @@ from app.agents.domains.report_agent import ReportAgent
 from app.agents.domains.objectives_agent import ObjectivesAgent
 from app.agents.domains.maturity_agent import MaturityAgent
 from app.agents.domains.admin_agent import AdminAgent
+from app.agents.domains.onboarding_agent import OnboardingAgent
 
 # All available agents
 ALL_AGENTS = {
@@ -40,6 +41,7 @@ ALL_AGENTS = {
     "objectives": ObjectivesAgent,
     "maturity": MaturityAgent,
     "admin": AdminAgent,
+    "onboarding": OnboardingAgent,
 }
 
 __all__ = [
@@ -60,5 +62,6 @@ __all__ = [
     "ObjectivesAgent",
     "MaturityAgent",
     "AdminAgent",
+    "OnboardingAgent",
     "ALL_AGENTS",
 ]

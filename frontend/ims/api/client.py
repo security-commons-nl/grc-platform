@@ -1346,6 +1346,38 @@ class APIClient:
             return response.json()
 
     # =========================================================================
+    # ORGANIZATION PROFILE
+    # =========================================================================
+
+    async def get_organization_profile(self) -> Dict[str, Any]:
+        """Get organization profile for current tenant."""
+        async with self._get_client() as client:
+            response = await client.get("/organization-profile/")
+            response.raise_for_status()
+            return response.json()
+
+    async def upsert_organization_profile(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create or fully update organization profile."""
+        async with self._get_client() as client:
+            response = await client.put("/organization-profile/", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def patch_organization_profile(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Partial update organization profile (per wizard step)."""
+        async with self._get_client() as client:
+            response = await client.patch("/organization-profile/", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_profile_completion(self) -> Dict[str, Any]:
+        """Get profile completion percentage."""
+        async with self._get_client() as client:
+            response = await client.get("/organization-profile/completion")
+            response.raise_for_status()
+            return response.json()
+
+    # =========================================================================
     # HIAAT 2: SCOPE GOVERNANCE
     # =========================================================================
 

@@ -33,6 +33,8 @@ from app.models.core_models import (
     UserScopeRole, Role,
     # Workflow
     WorkflowDefinition, WorkflowState, WorkflowTransition,
+    # Organization Profile
+    OrganizationProfile,
 )
 
 
@@ -717,6 +719,60 @@ async def seed_database():
             session.add(transition)
         await session.commit()
         print(f"Created workflow with {len(states)} states and {len(transitions)} transitions")
+
+        # =====================================================================
+        # ORGANIZATION PROFILE (demo)
+        # =====================================================================
+        org_profile = OrganizationProfile(
+            tenant_id=tenant.id,
+            # Blok 1: Identiteit
+            org_type="Gemeente",
+            sector="Overheid",
+            employee_count="201-500",
+            location_count=3,
+            geographic_scope="Regionaal",
+            core_services="Burgerzaken, Vergunningen, Belastingen, Sociaal domein",
+            # Blok 2: Governance
+            existing_certifications=json.dumps(["DigiD TPM"]),
+            applicable_frameworks=json.dumps(["BIO", "AVG"]),
+            has_security_officer=True,
+            has_dpo=True,
+            governance_maturity="Basis",
+            risk_appetite_availability="Laag",
+            risk_appetite_integrity="Laag",
+            risk_appetite_confidentiality="Midden",
+            # Blok 3: IT-Landschap
+            cloud_strategy="Hybrid",
+            cloud_providers=json.dumps(["Azure", "On-premises datacenter"]),
+            workstation_count="201-500",
+            has_remote_work=True,
+            has_byod=False,
+            critical_systems="Zaaksysteem, BRP, BAG, Financieel systeem, E-mail",
+            outsourced_it=True,
+            primary_it_supplier="SSC-ICT",
+            # Blok 4: Privacy
+            processes_personal_data=True,
+            data_subject_types=json.dumps(["Burgers", "Medewerkers", "Leveranciers"]),
+            has_special_categories=True,
+            international_transfers=False,
+            processing_count_estimate="51-100",
+            # Blok 5: Continuiteit
+            has_bcp=False,
+            has_incident_response_plan=True,
+            max_tolerable_downtime="Dag",
+            critical_process_count=5,
+            key_dependencies="SSC-ICT, KPN, Microsoft Azure, Zaaksysteem-leverancier",
+            # Blok 6: Mensen
+            has_awareness_program=True,
+            has_background_checks=True,
+            training_frequency="Jaarlijks",
+            # Meta
+            wizard_completed=True,
+            wizard_current_step=5,
+        )
+        session.add(org_profile)
+        await session.commit()
+        print("Created organization profile for demo tenant")
 
         print("\n" + "="*60)
         print("SEED DATA COMPLETE")

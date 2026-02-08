@@ -6,6 +6,7 @@ from ims.state.auth import AuthState
 from ims.state.risk import RiskState
 from ims.state.dashboard import DashboardState
 from ims.state.journey import JourneyState
+from ims.state.organization_profile import OrganizationProfileState
 from ims.components.layout import layout
 from ims.components.heatmap import risk_heatmap
 from ims.components.guidance import pdca_ring_widget
@@ -59,6 +60,34 @@ def dashboard_content() -> rx.Component:
             ),
             width="100%",
             padding_bottom="24px",
+        ),
+
+        # Organization profile onboarding nudge
+        rx.cond(
+            ~OrganizationProfileState.wizard_completed,
+            rx.callout(
+                rx.hstack(
+                    rx.vstack(
+                        rx.text("Welkom! Vul je organisatieprofiel in voor betere aanbevelingen van de AI-assistent.", size="2"),
+                        spacing="1",
+                        align_items="start",
+                    ),
+                    rx.spacer(),
+                    rx.link(
+                        rx.button(
+                            "Start profiel wizard",
+                            rx.icon("arrow-right", size=14),
+                            size="2",
+                        ),
+                        href="/organization",
+                    ),
+                    width="100%",
+                    align="center",
+                ),
+                icon="landmark",
+                color_scheme="blue",
+                width="100%",
+            ),
         ),
 
         # PDCA Journey progress widget
