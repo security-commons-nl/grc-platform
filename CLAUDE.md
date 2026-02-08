@@ -27,14 +27,14 @@ uvicorn app.main:app --reload
 
 ## Workflow
 
-After every code change: **always commit, push to origin, and deploy to VPS** unless told otherwise.
+After every code change: **commit and push to origin only**. Do NOT push to `server` unless explicitly asked.
 
 ```bash
-git add <files> && git commit -m "..." && git push origin main && git push server main
+git add <files> && git commit -m "..." && git push origin main
 ```
 
-- `origin` = GitHub
-- `server` = VPS (Hetzner) — auto-deploys via post-receive hook (docker-compose rebuild)
+- `origin` = GitHub (standaard push)
+- `server` = VPS (Hetzner) — **alleen pushen als de gebruiker het expliciet vraagt** (`git push server main`)
 - Local dev: `cd frontend && python -m reflex run` on http://localhost:3000
 
 ## Architecture

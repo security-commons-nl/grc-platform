@@ -89,6 +89,7 @@ def _build_nav_links(link_fn):
                 link_fn("Uitgangspunten", "/policy-principles", "link-2"),
                 link_fn("Risicokader", "/risk-framework", "ruler"),
                 link_fn("Analyses", "/simulation", "chart-bar"),
+                link_fn("Relaties", "/relaties", "network"),
                 link_fn("Rapportage", "/reports", "file-chart-column"),
                 link_fn("Backlog", "/backlog", "list-todo"),
             ),

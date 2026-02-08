@@ -12,3 +12,4 @@ from ims.state.asset import AssetState
 from ims.state.supplier import SupplierState
 from ims.state.chat import ChatState
 from ims.state.journey import JourneyState
+from ims.state.relationship import RelationshipState

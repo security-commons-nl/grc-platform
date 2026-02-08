@@ -28,6 +28,7 @@ from app.api.v1.endpoints import (
     in_control,
     policy_principles,
     system,
+    graph,
 )
 
 api_router = APIRouter()
@@ -234,4 +235,11 @@ api_router.include_router(
     system.router,
     prefix="/system",
     tags=["System Administration"]
+)
+
+# Relationship Graph
+api_router.include_router(
+    graph.router,
+    prefix="/graph",
+    tags=["Relationship Graph"]
 )

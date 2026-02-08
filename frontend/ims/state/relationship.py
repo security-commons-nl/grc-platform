@@ -1,0 +1,282 @@
+"""
+Relationship Graph State
+Manages graph data, layout positions, filtering, and selection.
+"""
+import math
+import reflex as rx
+from typing import List, Dict, Any, Optional
+from ims.api.client import api_client
+
+
+# Layout constants
+GRAPH_W = 800
+GRAPH_H = 600
+CENTER_X = GRAPH_W / 2
+CENTER_Y = GRAPH_H / 2
+
+# Colors per entity type
+TYPE_COLORS = {
+    "risk": "#f97316",
+    "control": "#3b82f6",
+    "scope": "#6b7280",
+    "measure": "#7c3aed",
+    "decision": "#d97706",
+    "assessment": "#06b6d4",
+}
+
+TYPE_ICONS = {
+    "risk": "triangle-alert",
+    "control": "shield-check",
+    "scope": "git-branch",
+    "measure": "book-open",
+    "decision": "gavel",
+    "assessment": "clipboard-check",
+}
+
+
+def _circular_layout(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Arrange nodes in concentric circles grouped by type."""
+    if not nodes:
+        return nodes
+
+    # Group by type
+    groups: Dict[str, List[int]] = {}
+    for i, node in enumerate(nodes):
+        t = node.get("type", "other")
+        groups.setdefault(t, []).append(i)
+
+    # Assign positions — each type on its own ring
+    type_list = list(groups.keys())
+    num_rings = len(type_list)
+
+    for ring_idx, entity_type in enumerate(type_list):
+        indices = groups[entity_type]
+        count = len(indices)
+        # Radius grows with ring index
+        radius = 100 + ring_idx * 90
+        if radius > min(CENTER_X, CENTER_Y) - 40:
+            radius = min(CENTER_X, CENTER_Y) - 40
+
+        for j, node_idx in enumerate(indices):
+            angle = (2 * math.pi * j / max(count, 1)) - math.pi / 2
+            x = CENTER_X + radius * math.cos(angle)
+            y = CENTER_Y + radius * math.sin(angle)
+            nodes[node_idx]["x"] = round(x)
+            nodes[node_idx]["y"] = round(y)
+
+    return nodes
+
+
+class RelationshipState(rx.State):
+    """State for the interactive relationship graph page."""
+
+    # Graph data
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+    gaps: List[Dict[str, Any]] = []
+
+    # Selection
+    selected_node: Dict[str, Any] = {}
+    selected_node_edges: List[Dict[str, Any]] = []
+
+    # Filters
+    active_preset: str = "all"
+    filter_types: List[str] = ["risk", "control", "scope", "measure", "decision", "assessment"]
+    prompt_text: str = ""
+
+    # Loading
+    is_loading: bool = False
+    error: str = ""
+
+    @rx.var
+    def total_nodes(self) -> int:
+        return len(self.nodes)
+
+    @rx.var
+    def total_edges(self) -> int:
+        return len(self.edges)
+
+    @rx.var
+    def total_gaps(self) -> int:
+        return len(self.gaps)
+
+    @rx.var
+    def gap_risks_without_controls(self) -> int:
+        return len([g for g in self.gaps if g.get("type") == "risk_without_control"])
+
+    @rx.var
+    def gap_orphan_controls(self) -> int:
+        return len([g for g in self.gaps if g.get("type") == "orphan_control"])
+
+    @rx.var
+    def gap_scopes_without_risks(self) -> int:
+        return len([g for g in self.gaps if g.get("type") == "scope_without_risks"])
+
+    @rx.var
+    def has_selection(self) -> bool:
+        return bool(self.selected_node)
+
+    @rx.var
+    def selected_node_label(self) -> str:
+        return self.selected_node.get("label", "")
+
+    @rx.var
+    def selected_node_type(self) -> str:
+        return self.selected_node.get("type", "")
+
+    @rx.var
+    def selected_node_entity_id(self) -> int:
+        return self.selected_node.get("entity_id", 0)
+
+    @rx.var
+    def selected_node_link(self) -> str:
+        t = self.selected_node.get("type", "")
+        eid = self.selected_node.get("entity_id", 0)
+        routes = {
+            "risk": "/risks",
+            "control": "/controls",
+            "scope": "/scopes",
+            "measure": "/measures",
+            "decision": "/decisions",
+            "assessment": "/assessments",
+        }
+        return routes.get(t, "/")
+
+    @rx.var
+    def computed_nodes(self) -> List[Dict[str, Any]]:
+        """Nodes enriched with color and icon for rendering."""
+        result = []
+        for node in self.nodes:
+            t = node.get("type", "other")
+            result.append({
+                **node,
+                "color": TYPE_COLORS.get(t, "#6b7280"),
+                "icon": TYPE_ICONS.get(t, "circle"),
+            })
+        return result
+
+    @rx.var
+    def computed_edges(self) -> List[Dict[str, Any]]:
+        """Edges enriched with source/target coordinates for SVG rendering."""
+        # Build a position lookup from nodes
+        pos = {}
+        for node in self.nodes:
+            pos[node.get("id", "")] = (node.get("x", 0), node.get("y", 0))
+
+        result = []
+        for edge in self.edges:
+            src = edge.get("source", "")
+            tgt = edge.get("target", "")
+            if src in pos and tgt in pos:
+                sx, sy = pos[src]
+                tx, ty = pos[tgt]
+                result.append({
+                    **edge,
+                    "source_x": sx,
+                    "source_y": sy,
+                    "target_x": tx,
+                    "target_y": ty,
+                })
+        return result
+
+    # --- Actions ---
+
+    async def load_graph(self):
+        """Load graph data from API."""
+        self.is_loading = True
+        self.error = ""
+        try:
+            entity_types = ",".join(self.filter_types)
+            data = await api_client.get_graph_relationships(
+                entity_types=entity_types,
+            )
+            raw_nodes = data.get("nodes", [])
+            self.edges = data.get("edges", [])
+            all_gaps = data.get("gaps", [])
+
+            # Apply preset filter on gaps
+            if self.active_preset == "uncovered_risks":
+                gap_entity_ids = {
+                    f"risk-{g['entity_id']}"
+                    for g in all_gaps
+                    if g.get("type") == "risk_without_control"
+                }
+                raw_nodes = [n for n in raw_nodes if n["id"] in gap_entity_ids or n["type"] != "risk"]
+                # Also keep controls connected to those risks (none in this case, but keep for context)
+            elif self.active_preset == "orphan_controls":
+                gap_entity_ids = {
+                    f"control-{g['entity_id']}"
+                    for g in all_gaps
+                    if g.get("type") == "orphan_control"
+                }
+                raw_nodes = [n for n in raw_nodes if n["id"] in gap_entity_ids or n["type"] != "control"]
+            elif self.active_preset == "scope_coverage":
+                gap_entity_ids = {
+                    f"scope-{g['entity_id']}"
+                    for g in all_gaps
+                    if g.get("type") == "scope_without_risks"
+                }
+                raw_nodes = [n for n in raw_nodes if n["id"] in gap_entity_ids or n["type"] != "scope"]
+
+            # Calculate layout positions
+            self.nodes = _circular_layout(raw_nodes)
+            self.gaps = all_gaps
+        except Exception as e:
+            self.error = str(e)
+            self.nodes = []
+            self.edges = []
+            self.gaps = []
+        finally:
+            self.is_loading = False
+
+    def select_node(self, node_id: str):
+        """Select a node and compute connected edges."""
+        for node in self.nodes:
+            if node.get("id") == node_id:
+                self.selected_node = node
+                # Find connected edges
+                self.selected_node_edges = [
+                    e for e in self.edges
+                    if e.get("source") == node_id or e.get("target") == node_id
+                ]
+                return
+        self.selected_node = {}
+        self.selected_node_edges = []
+
+    def clear_selection(self):
+        self.selected_node = {}
+        self.selected_node_edges = []
+
+    def set_preset(self, preset: str):
+        self.active_preset = preset
+        self.clear_selection()
+        return RelationshipState.load_graph
+
+    def toggle_filter_type(self, entity_type: str):
+        if entity_type in self.filter_types:
+            self.filter_types = [t for t in self.filter_types if t != entity_type]
+        else:
+            self.filter_types = self.filter_types + [entity_type]
+        self.clear_selection()
+        return RelationshipState.load_graph
+
+    def set_prompt_text(self, value: str):
+        self.prompt_text = value
+
+    async def apply_prompt(self):
+        """Send prompt to AI agent for filter interpretation."""
+        if not self.prompt_text.strip():
+            return
+        self.is_loading = True
+        try:
+            result = await api_client.chat_with_agent(
+                message=self.prompt_text,
+                agent_name="scope_agent",
+                context={"page": "relationships", "action": "filter_graph"},
+            )
+            # For now just reload with current filters — AI response shown as info
+            self.is_loading = False
+            return RelationshipState.load_graph
+        except Exception:
+            self.is_loading = False
+            return RelationshipState.load_graph
