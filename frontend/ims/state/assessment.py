@@ -264,7 +264,7 @@ class AssessmentState(rx.State):
     # WIZARD: CREATE / EDIT
     # ==========================================================================
 
-    def open_create_dialog(self):
+    async def open_create_dialog(self):
         """Open wizard for new assessment."""
         self.is_editing = False
         self.editing_assessment_id = 0
@@ -279,9 +279,9 @@ class AssessmentState(rx.State):
         self.show_form_dialog = True
         self.error = ""
         self.success_message = ""
-        return AssessmentState.load_dropdowns
+        await self.load_dropdowns()
 
-    def open_edit_dialog(self, assessment: Dict[str, Any]):
+    async def open_edit_dialog(self, assessment: Dict[str, Any]):
         """Open wizard to edit existing assessment."""
         self.is_editing = True
         self.editing_assessment_id = assessment.get("id", 0)
@@ -296,7 +296,7 @@ class AssessmentState(rx.State):
         self.show_form_dialog = True
         self.error = ""
         self.success_message = ""
-        return AssessmentState.load_dropdowns
+        await self.load_dropdowns()
 
     def close_form_dialog(self):
         self.show_form_dialog = False
@@ -355,7 +355,7 @@ class AssessmentState(rx.State):
 
             self.show_form_dialog = False
             self.error = ""
-            return AssessmentState.load_assessments
+            await self.load_assessments()
         except Exception as e:
             self.error = f"Fout bij opslaan: {str(e)}"
 
@@ -380,7 +380,7 @@ class AssessmentState(rx.State):
             await api_client.delete_assessment(self.deleting_assessment_id)
             self.success_message = "Assessment verwijderd"
             self.show_delete_dialog = False
-            return AssessmentState.load_assessments
+            await self.load_assessments()
         except Exception as e:
             self.error = f"Fout bij verwijderen: {str(e)}"
 
