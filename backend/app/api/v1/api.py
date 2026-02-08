@@ -29,6 +29,7 @@ from app.api.v1.endpoints import (
     policy_principles,
     system,
     graph,
+    organization_profile,
 )
 
 api_router = APIRouter()
@@ -242,4 +243,11 @@ api_router.include_router(
     graph.router,
     prefix="/graph",
     tags=["Relationship Graph"]
+)
+
+# Organization Profile (Onboarding)
+api_router.include_router(
+    organization_profile.router,
+    prefix="/organization-profile",
+    tags=["Organization Profile"]
 )
