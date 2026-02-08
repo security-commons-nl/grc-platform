@@ -279,6 +279,7 @@ class AssessmentState(rx.State):
         self.show_form_dialog = True
         self.error = ""
         self.success_message = ""
+        yield
         await self.load_dropdowns()
 
     async def open_edit_dialog(self, assessment: Dict[str, Any]):
@@ -296,6 +297,7 @@ class AssessmentState(rx.State):
         self.show_form_dialog = True
         self.error = ""
         self.success_message = ""
+        yield
         await self.load_dropdowns()
 
     def close_form_dialog(self):

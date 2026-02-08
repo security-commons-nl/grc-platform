@@ -570,6 +570,80 @@ class InControlLevel(str, Enum):
 
 
 # =============================================================================
+# ORGANIZATION PROFILE ENUMS
+# =============================================================================
+
+class OrgType(str, Enum):
+    GEMEENTE = "Gemeente"
+    PROVINCIE = "Provincie"
+    WATERSCHAP = "Waterschap"
+    ZBO = "ZBO"
+    SSC = "Shared Service Center"
+    MINISTERIE = "Ministerie"
+    ZORGINSTELLING = "Zorginstelling"
+    ONDERWIJSINSTELLING = "Onderwijsinstelling"
+    BEDRIJF = "Bedrijf"
+    OVERIG = "Overig"
+
+class Sector(str, Enum):
+    OVERHEID = "Overheid"
+    ZORG = "Zorg"
+    ONDERWIJS = "Onderwijs"
+    FINANCIEEL = "Financieel"
+    IT_DIENSTVERLENING = "IT-dienstverlening"
+    TRANSPORT = "Transport"
+    ENERGIE = "Energie"
+    OVERIG = "Overig"
+
+class EmployeeRange(str, Enum):
+    SMALL = "1-50"
+    MEDIUM = "51-200"
+    LARGE = "201-500"
+    ENTERPRISE = "500+"
+
+class GeographicScope(str, Enum):
+    LOCAL = "Lokaal"
+    REGIONAL = "Regionaal"
+    NATIONAL = "Nationaal"
+    INTERNATIONAL = "Internationaal"
+
+class CloudStrategy(str, Enum):
+    ON_PREMISES = "On-premises"
+    HYBRID = "Hybrid"
+    CLOUD_FIRST = "Cloud-first"
+    FULL_CLOUD = "Full-cloud"
+
+class GovernanceMaturity(str, Enum):
+    STARTING = "Startend"
+    BASIC = "Basis"
+    DEFINED = "Gedefinieerd"
+    MANAGED = "Beheerst"
+    OPTIMIZED = "Geoptimaliseerd"
+
+class ProfileRiskAppetite(str, Enum):
+    LOW = "Laag"
+    MEDIUM = "Midden"
+    HIGH = "Hoog"
+
+class TrainingFrequency(str, Enum):
+    NONE = "Geen"
+    YEARLY = "Jaarlijks"
+    BIANNUAL = "Halfjaarlijks"
+    CONTINUOUS = "Doorlopend"
+
+class MaxDowntime(str, Enum):
+    HOURS = "Uren"
+    DAY = "Dag"
+    WEEK = "Week"
+
+class ProcessingCountRange(str, Enum):
+    SMALL = "1-10"
+    MEDIUM = "11-50"
+    LARGE = "51-100"
+    VERY_LARGE = "100+"
+
+
+# =============================================================================
 # HIAAT 6: BELEID-TRACE
 # =============================================================================
 # (No new enums needed — uses existing PolicyState)
@@ -3362,6 +3436,69 @@ class OrganizationContext(SQLModel, table=True):
 
     category: Optional[str] = None  # "Strategy", "Risk Appetite", "Culture"
 
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
+
+
+class OrganizationProfile(SQLModel, table=True):
+    """
+    Structured organization profile for onboarding and AI context.
+    One record per tenant. All fields nullable (wizard can be filled step-by-step).
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    tenant_id: int = Field(foreign_key="tenant.id", unique=True, index=True)
+
+    # --- Blok 1: Identiteit ---
+    org_type: Optional[str] = None  # OrgType enum value
+    sector: Optional[str] = None  # Sector enum value
+    employee_count: Optional[str] = None  # EmployeeRange enum value
+    location_count: Optional[int] = None
+    geographic_scope: Optional[str] = None  # GeographicScope enum value
+    parent_organization: Optional[str] = None
+    core_services: Optional[str] = None  # Free text, AI parses
+
+    # --- Blok 2: Governance ---
+    existing_certifications: Optional[str] = None  # JSON list
+    applicable_frameworks: Optional[str] = None  # JSON list
+    has_security_officer: Optional[bool] = None
+    has_dpo: Optional[bool] = None
+    governance_maturity: Optional[str] = None  # GovernanceMaturity enum value
+    risk_appetite_availability: Optional[str] = None  # ProfileRiskAppetite enum value
+    risk_appetite_integrity: Optional[str] = None  # ProfileRiskAppetite enum value
+    risk_appetite_confidentiality: Optional[str] = None  # ProfileRiskAppetite enum value
+
+    # --- Blok 3: IT-Landschap ---
+    cloud_strategy: Optional[str] = None  # CloudStrategy enum value
+    cloud_providers: Optional[str] = None  # JSON list
+    workstation_count: Optional[str] = None  # EmployeeRange enum value
+    has_remote_work: Optional[bool] = None
+    has_byod: Optional[bool] = None
+    critical_systems: Optional[str] = None  # Free text
+    outsourced_it: Optional[bool] = None
+    primary_it_supplier: Optional[str] = None
+
+    # --- Blok 4: Privacy ---
+    processes_personal_data: Optional[bool] = None
+    data_subject_types: Optional[str] = None  # JSON list
+    has_special_categories: Optional[bool] = None
+    international_transfers: Optional[bool] = None
+    processing_count_estimate: Optional[str] = None  # ProcessingCountRange enum value
+
+    # --- Blok 5: Continuiteit ---
+    has_bcp: Optional[bool] = None
+    has_incident_response_plan: Optional[bool] = None
+    max_tolerable_downtime: Optional[str] = None  # MaxDowntime enum value
+    critical_process_count: Optional[int] = None
+    key_dependencies: Optional[str] = None  # Free text
+
+    # --- Blok 6: Mensen ---
+    has_awareness_program: Optional[bool] = None
+    has_background_checks: Optional[bool] = None
+    training_frequency: Optional[str] = None  # TrainingFrequency enum value
+
+    # --- Meta ---
+    wizard_completed: bool = False
+    wizard_current_step: int = 0
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     updated_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
 

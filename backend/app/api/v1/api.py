@@ -29,6 +29,7 @@ from app.api.v1.endpoints import (
     policy_principles,
     system,
     graph,
+    organization_profile,
 )
 
 api_router = APIRouter()

@@ -423,7 +423,7 @@ def wizard_dialog() -> rx.Component:
             max_width="500px",
         ),
         open=AssessmentState.show_form_dialog,
-        on_open_change=lambda open: AssessmentState.set_show_form_dialog(open),
+        on_open_change=AssessmentState.set_show_form_dialog,
     )
 
 
@@ -452,7 +452,7 @@ def delete_dialog() -> rx.Component:
             ),
         ),
         open=AssessmentState.show_delete_dialog,
-        on_open_change=lambda open: AssessmentState.set_show_delete_dialog(open),
+        on_open_change=AssessmentState.set_show_delete_dialog,
     )
 
 
