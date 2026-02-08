@@ -109,7 +109,6 @@ def assessment_row(assessment: dict) -> rx.Component:
             ),
         ),
         _hover={"background": "var(--gray-a3)", "cursor": "pointer"},
-        on_click=AssessmentState.go_to_detail(assessment),
     )
 
 
@@ -424,11 +423,7 @@ def wizard_dialog() -> rx.Component:
             max_width="500px",
         ),
         open=AssessmentState.show_form_dialog,
-        on_open_change=lambda open: rx.cond(
-            open,
-            AssessmentState.open_create_dialog,
-            AssessmentState.close_form_dialog,
-        ),
+        on_open_change=AssessmentState.set_show_form_dialog,
     )
 
 
@@ -457,6 +452,7 @@ def delete_dialog() -> rx.Component:
             ),
         ),
         open=AssessmentState.show_delete_dialog,
+        on_open_change=AssessmentState.set_show_delete_dialog,
     )
 
 
