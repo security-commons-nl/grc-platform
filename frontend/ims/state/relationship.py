@@ -283,6 +283,11 @@ class RelationshipState(rx.State):
     def set_prompt_text(self, value: str):
         self.prompt_text = value
 
+    async def handle_prompt_key(self, key: str):
+        """Handle keydown in prompt input — trigger search on Enter."""
+        if key == "Enter":
+            return RelationshipState.apply_prompt
+
     async def apply_prompt(self):
         """Smart keyword filter — matches prompt text to presets or node labels.
 

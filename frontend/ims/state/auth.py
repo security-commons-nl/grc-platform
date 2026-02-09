@@ -2,7 +2,7 @@
 Auth State - handles user authentication with persistence
 """
 import reflex as rx
-from typing import Dict, Any
+from typing import Dict, Any, List
 import json
 
 from ims.api.client import api_client
@@ -13,6 +13,9 @@ class AuthState(rx.State):
 
     # User info (persisted in localStorage)
     user_json: str = rx.LocalStorage(name="ims_user")
+
+    # Active tenant (persisted — no _ prefix!)
+    active_tenant_id: int = rx.LocalStorage(name="ims_tenant_id")
 
     # Login form
     username: str = ""
@@ -52,9 +55,17 @@ class AuthState(rx.State):
 
     @rx.var
     def tenant_name(self) -> str:
-        """Get tenant/organization name."""
+        """Get active tenant name."""
         user = self.user
-        return user.get("tenant_name", "") if user else ""
+        if not user:
+            return ""
+        tenants = user.get("tenants", [])
+        tid = self.tenant_id
+        for t in tenants:
+            if t.get("id") == tid:
+                return t.get("name", "")
+        # Fallback to stored tenant_name
+        return user.get("tenant_name", "")
 
     @rx.var
     def global_roles(self) -> list:
@@ -135,6 +146,31 @@ class AuthState(rx.State):
         user = self.user
         return user.get("id", 0) if user else 0
 
+    @rx.var
+    def tenant_id(self) -> int:
+        """Get the active tenant_id (from localStorage or default from login)."""
+        # If active_tenant_id was explicitly set (and non-zero), use it
+        if self.active_tenant_id and self.active_tenant_id > 0:
+            return self.active_tenant_id
+        # Fall back to default_tenant_id from login response
+        user = self.user
+        if user:
+            return user.get("default_tenant_id", 0) or 0
+        return 0
+
+    @rx.var
+    def tenants(self) -> List[Dict[str, Any]]:
+        """Get list of tenant memberships from login response."""
+        user = self.user
+        if not user:
+            return []
+        return user.get("tenants", [])
+
+    @rx.var
+    def has_multiple_tenants(self) -> bool:
+        """Check if user belongs to more than one tenant."""
+        return len(self.tenants) > 1
+
     async def login(self):
         """Authenticate against the backend API."""
         self.is_logging_in = True
@@ -159,6 +195,11 @@ class AuthState(rx.State):
 
         # Store authenticated user in localStorage
         self.user_json = json.dumps(user_data)
+
+        # Set active tenant to default
+        default_tid = user_data.get("default_tenant_id", 0)
+        self.active_tenant_id = default_tid or 0
+
         self.is_logging_in = False
         self.username = ""
         self.password = ""
@@ -169,7 +210,13 @@ class AuthState(rx.State):
     def logout(self):
         """Log out the current user."""
         self.user_json = ""
+        self.active_tenant_id = 0
         return rx.redirect("/login")
+
+    def switch_tenant(self, tenant_id: str):
+        """Switch to a different tenant. Triggers page reload for data refresh."""
+        self.active_tenant_id = int(tenant_id)
+        return rx.redirect(rx.State.router.page.raw_path)
 
     def set_username(self, value: str):
         """Set username from input."""
