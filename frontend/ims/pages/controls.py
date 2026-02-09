@@ -411,74 +411,71 @@ def control_form_dialog() -> rx.Component:
                     width="100%",
                 ),
 
-                # Linked Risks Section (only in edit mode)
-                rx.cond(
-                    ControlState.is_editing,
-                    rx.vstack(
-                        rx.divider(),
-                        rx.text("Gekoppelde Risico's", size="2", weight="medium"),
-                        rx.text(
-                            "Tip: gebruik de Risk Scopes pagina voor scope-specifieke koppelingen.",
-                            size="1", color="gray", font_style="italic",
-                        ),
-
-                        # List of linked risks
-                        rx.cond(
-                            ControlState.linked_risks.length() > 0,
-                            rx.vstack(
-                                rx.foreach(
-                                    ControlState.linked_risks,
-                                    lambda risk: rx.hstack(
-                                        rx.icon("triangle-alert", size=16, color="orange"),
-                                        rx.text(risk["title"], size="2", flex="1"),
-                                        rx.icon_button(
-                                            rx.icon("x", size=14),
-                                            variant="ghost",
-                                            size="1",
-                                            color_scheme="red",
-                                            on_click=lambda: ControlState.unlink_risk(risk["id"]),
-                                        ),
-                                        width="100%",
-                                        align_items="center",
-                                        padding="4px 8px",
-                                        background="var(--gray-a2)",
-                                        border_radius="4px",
-                                    ),
-                                ),
-                                spacing="2",
-                                width="100%",
-                            ),
-                            rx.text("Nog geen risico's gekoppeld.", size="1", color="gray", font_style="italic"),
-                        ),
-
-                        # Add new link
-                        rx.hstack(
-                            rx.select.root(
-                                rx.select.trigger(placeholder="Selecteer risico om te koppelen..."),
-                                rx.select.content(
-                                    rx.foreach(
-                                        ControlState.available_risks,
-                                        lambda r: rx.select.item(r["title"], value=r["id"].to_string()),
-                                    ),
-                                ),
-                                value=ControlState.selected_risk_id_to_link,
-                                on_change=ControlState.set_selected_risk_id_to_link,
-                                width="100%",
-                            ),
-                            rx.button(
-                                "Koppelen",
-                                on_click=ControlState.link_risk,
-                                disabled=ControlState.selected_risk_id_to_link == "",
-                            ),
-                            width="100%",
-                            spacing="2",
-                            margin_top="8px",
-                        ),
-
-                        spacing="3",
-                        width="100%",
-                        align_items="start",
+                # Linked Risks Section
+                rx.vstack(
+                    rx.divider(),
+                    rx.text("Gekoppelde Risico's", size="2", weight="medium"),
+                    rx.text(
+                        "Tip: gebruik de Risk Scopes pagina voor scope-specifieke koppelingen.",
+                        size="1", color="gray", font_style="italic",
                     ),
+
+                    # List of linked risks
+                    rx.cond(
+                        ControlState.linked_risks.length() > 0,
+                        rx.vstack(
+                            rx.foreach(
+                                ControlState.linked_risks,
+                                lambda risk: rx.hstack(
+                                    rx.icon("triangle-alert", size=16, color="orange"),
+                                    rx.text(risk["title"], size="2", flex="1"),
+                                    rx.icon_button(
+                                        rx.icon("x", size=14),
+                                        variant="ghost",
+                                        size="1",
+                                        color_scheme="red",
+                                        on_click=lambda: ControlState.unlink_risk(risk["id"]),
+                                    ),
+                                    width="100%",
+                                    align_items="center",
+                                    padding="4px 8px",
+                                    background="var(--gray-a2)",
+                                    border_radius="4px",
+                                ),
+                            ),
+                            spacing="2",
+                            width="100%",
+                        ),
+                        rx.text("Nog geen risico's gekoppeld.", size="1", color="gray", font_style="italic"),
+                    ),
+
+                    # Add new link
+                    rx.hstack(
+                        rx.select.root(
+                            rx.select.trigger(placeholder="Selecteer risico om te koppelen..."),
+                            rx.select.content(
+                                rx.foreach(
+                                    ControlState.available_risks,
+                                    lambda r: rx.select.item(r["title"], value=r["id"].to_string()),
+                                ),
+                            ),
+                            value=ControlState.selected_risk_id_to_link,
+                            on_change=ControlState.set_selected_risk_id_to_link,
+                            width="100%",
+                        ),
+                        rx.button(
+                            "Koppelen",
+                            on_click=ControlState.link_risk,
+                            disabled=ControlState.selected_risk_id_to_link == "",
+                        ),
+                        width="100%",
+                        spacing="2",
+                        margin_top="8px",
+                    ),
+
+                    spacing="3",
+                    width="100%",
+                    align_items="start",
                 ),
 
                 spacing="3",

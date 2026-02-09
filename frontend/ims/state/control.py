@@ -122,14 +122,16 @@ class ControlState(rx.State):
         self.form_scope_id = "0"
         self.error = ""
 
-    def open_create_dialog(self):
+    async def open_create_dialog(self):
         """Open dialog for creating a new control."""
         self.is_editing = False
         self.editing_control_id = None
         self.linked_risks = []
         self.all_risks = []
+        self.selected_risk_id_to_link = ""
         self._reset_form()
         self.show_form_dialog = True
+        await self.load_all_risks()
 
     async def open_edit_dialog(self, control_id: int):
         """Open dialog for editing an existing control."""
@@ -200,32 +202,44 @@ class ControlState(rx.State):
             self.all_risks = []
 
     async def link_risk(self):
-        """Link selected risk to current control."""
-        if not self.editing_control_id or not self.selected_risk_id_to_link:
+        """Link selected risk to current control (or stage it for create mode)."""
+        if not self.selected_risk_id_to_link:
             return
 
-        try:
-            await api_client.link_control_risk(
-                self.editing_control_id,
-                int(self.selected_risk_id_to_link)
-            )
-            self.success_message = "Risico gekoppeld"
-            await self.load_linked_risks(self.editing_control_id)
+        if self.is_editing and self.editing_control_id:
+            # Edit mode: link via API immediately
+            try:
+                await api_client.link_control_risk(
+                    self.editing_control_id,
+                    int(self.selected_risk_id_to_link)
+                )
+                self.success_message = "Risico gekoppeld"
+                await self.load_linked_risks(self.editing_control_id)
+                self.selected_risk_id_to_link = ""
+            except Exception as e:
+                self.error = f"Fout bij koppelen: {str(e)}"
+        else:
+            # Create mode: stage locally
+            rid = self.selected_risk_id_to_link
+            for r in self.all_risks:
+                if str(r.get("id")) == rid:
+                    self.linked_risks.append(r)
+                    break
             self.selected_risk_id_to_link = ""
-        except Exception as e:
-            self.error = f"Fout bij koppelen: {str(e)}"
 
     async def unlink_risk(self, risk_id: int):
-        """Unlink risk from current control."""
-        if not self.editing_control_id:
-            return
-
-        try:
-            await api_client.unlink_control_risk(self.editing_control_id, risk_id)
-            self.success_message = "Risico ontkoppeld"
-            await self.load_linked_risks(self.editing_control_id)
-        except Exception as e:
-            self.error = f"Fout bij ontkoppelen: {str(e)}"
+        """Unlink risk from current control (or unstage it in create mode)."""
+        if self.is_editing and self.editing_control_id:
+            # Edit mode: unlink via API
+            try:
+                await api_client.unlink_control_risk(self.editing_control_id, risk_id)
+                self.success_message = "Risico ontkoppeld"
+                await self.load_linked_risks(self.editing_control_id)
+            except Exception as e:
+                self.error = f"Fout bij ontkoppelen: {str(e)}"
+        else:
+            # Create mode: remove from local staging list
+            self.linked_risks = [r for r in self.linked_risks if r.get("id") != risk_id]
 
     async def load_linked_risk_scopes(self, control_id: int):
         """Load scope-contextualized risks linked to this control."""
@@ -265,11 +279,20 @@ class ControlState(rx.State):
                 await api_client.update_control(self.editing_control_id, data)
                 self.success_message = "Control bijgewerkt"
             else:
-                await api_client.create_control(data)
+                new_control = await api_client.create_control(data)
+                # Link any staged risks to the newly created control
+                new_id = new_control.get("id") if isinstance(new_control, dict) else None
+                if new_id and self.linked_risks:
+                    for risk in self.linked_risks:
+                        try:
+                            await api_client.link_control_risk(new_id, risk["id"])
+                        except Exception:
+                            pass  # best-effort linking
                 self.success_message = "Control aangemaakt"
 
             self.show_form_dialog = False
             self._reset_form()
+            self.linked_risks = []
             await self.load_controls()
 
         except Exception as e:
