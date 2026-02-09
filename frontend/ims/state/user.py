@@ -1,6 +1,7 @@
 """
 User State - handles user management data
 """
+import json
 import reflex as rx
 from typing import List, Dict, Any, Optional
 from ims.api.client import api_client
@@ -315,6 +316,16 @@ class UserState(rx.State):
             self.show_form_dialog = False
             self._reset_form()
             await self.load_users()
+
+            # If the logged-in user edited their own profile, refresh sidebar
+            auth = await self.get_state(AuthState)
+            if self.is_editing and self.editing_user_id == auth.user_id:
+                user_data = json.loads(auth.user_json)
+                user_data["full_name"] = data.get("full_name")
+                user_data["email"] = data.get("email")
+                user_data["department"] = data.get("department")
+                user_data["job_title"] = data.get("job_title")
+                auth.user_json = json.dumps(user_data)
 
         except Exception as e:
             self.error = f"Fout bij opslaan: {str(e)}"
