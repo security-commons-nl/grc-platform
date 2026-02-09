@@ -151,9 +151,9 @@ def _sidebar_inner() -> rx.Component:
     return rx.vstack(
         # Header
         rx.hstack(
-            rx.icon("shield-check", size=28, color="var(--accent-9)"),
+            rx.icon("shield-check", size=28, color="var(--accent-9)", flex_shrink="0"),
             rx.vstack(
-                rx.text("IMS", size="5", weight="bold", line_height="1"),
+                rx.text("IMS", size="5", weight="bold", line_height="1.2"),
                 # Tenant switcher (multi-tenant) or static name (single tenant)
                 rx.cond(
                     AuthState.has_multiple_tenants,
@@ -192,6 +192,7 @@ def _sidebar_inner() -> rx.Component:
             ),
             width="100%",
             padding="16px",
+            spacing="3",
             align="center",
         ),
         rx.divider(),
