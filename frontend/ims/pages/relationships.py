@@ -5,6 +5,7 @@ Shows how risks, controls, scopes, measures, decisions, and assessments relate.
 import reflex as rx
 from ims.state.relationship import RelationshipState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 from ims.components.relationship_graph import (
     relationship_graph,
     gap_panel,
@@ -174,10 +175,17 @@ def relationships_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def relationships_page() -> rx.Component:
     """Relaties page with layout wrapper."""
     return layout(
-        relationships_content(),
+        rx.cond(AuthState.can_discover, relationships_content(), _no_access()),
         title="Relaties",
         subtitle="Interactief relatieweb van risico's, controls en scopes",
     )

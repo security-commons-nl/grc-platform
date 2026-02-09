@@ -109,6 +109,27 @@ class AuthState(rx.State):
         return self.is_admin
 
     @rx.var
+    def can_write_findings(self) -> bool:
+        """Can create audit findings (Toezichthouder, Coordinator, Beheerder)."""
+        user = self.user
+        if not user:
+            return False
+        if user.get("permissions", {}).get("can_write_findings", False):
+            return True
+        return self.is_admin
+
+    @rx.var
+    def can_discover(self) -> bool:
+        """Can access ONTDEKKEN section and MS Hub (Eigenaar+, Toezichthouder)."""
+        user = self.user
+        if not user:
+            return False
+        perms = user.get("permissions", {})
+        if perms.get("can_configure", False) or perms.get("can_write_findings", False):
+            return True
+        return self.is_admin
+
+    @rx.var
     def user_id(self) -> int:
         """Get current user's ID."""
         user = self.user

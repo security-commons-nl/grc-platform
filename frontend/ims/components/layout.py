@@ -61,7 +61,11 @@ def _build_nav_links(link_fn):
     Sections are collapsible. MS Hub is always visible at the top.
     """
     return [
-        link_fn("MS Hub", "/ms-hub", "layout-grid"),
+        # MS Hub — strategic overview, not for Medewerker
+        rx.cond(
+            AuthState.can_discover,
+            link_fn("MS Hub", "/ms-hub", "layout-grid"),
+        ),
         link_fn("Dashboard", "/", "layout-dashboard"),
         rx.divider(margin_y="4px"),
         # DOEN
@@ -74,24 +78,33 @@ def _build_nav_links(link_fn):
                 link_fn("Compliance", "/compliance", "clipboard-list"),
                 link_fn("Assessments", "/assessments", "clipboard-check"),
                 link_fn("Incidenten", "/incidents", "circle-alert"),
-                link_fn("Besluiten", "/decisions", "stamp"),
+                # Besluiten — only for Eigenaar+ (formal risk decisions)
+                rx.cond(
+                    AuthState.can_configure,
+                    link_fn("Besluiten", "/decisions", "stamp"),
+                ),
                 link_fn("In-Control", "/in-control", "gauge"),
             ),
         ),
-        rx.divider(margin_y="4px"),
-        # ONTDEKKEN
-        _section_header("ONTDEKKEN", BaseState.menu_ontdekken_open, BaseState.toggle_menu_ontdekken),
+        # ONTDEKKEN — only for Eigenaar+, Toezichthouder
         rx.cond(
-            BaseState.menu_ontdekken_open,
+            AuthState.can_discover,
             rx.fragment(
-                link_fn("Frameworks", "/frameworks", "library"),
-                link_fn("Maatregelen", "/measures", "book-open"),
-                link_fn("Uitgangspunten", "/policy-principles", "link-2"),
-                link_fn("Risicokader", "/risk-framework", "ruler"),
-                link_fn("Analyses", "/simulation", "chart-bar"),
-                link_fn("Relaties", "/relaties", "network"),
-                link_fn("Rapportage", "/reports", "file-chart-column"),
-                link_fn("Backlog", "/backlog", "list-todo"),
+                rx.divider(margin_y="4px"),
+                _section_header("ONTDEKKEN", BaseState.menu_ontdekken_open, BaseState.toggle_menu_ontdekken),
+                rx.cond(
+                    BaseState.menu_ontdekken_open,
+                    rx.fragment(
+                        link_fn("Frameworks", "/frameworks", "library"),
+                        link_fn("Maatregelen", "/measures", "book-open"),
+                        link_fn("Uitgangspunten", "/policy-principles", "link-2"),
+                        link_fn("Risicokader", "/risk-framework", "ruler"),
+                        link_fn("Analyses", "/simulation", "chart-bar"),
+                        link_fn("Relaties", "/relaties", "network"),
+                        link_fn("Rapportage", "/reports", "file-chart-column"),
+                        link_fn("Backlog", "/backlog", "list-todo"),
+                    ),
+                ),
             ),
         ),
         # INRICHTEN — only for configurers

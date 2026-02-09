@@ -4,6 +4,7 @@ Risicokader (Risk Framework) Page — Hiaat 3
 import reflex as rx
 from ims.state.risk_framework import RiskFrameworkState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 
 
 def framework_card(fw: dict) -> rx.Component:
@@ -180,9 +181,16 @@ def risk_framework_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def risk_framework_page() -> rx.Component:
     return layout(
-        risk_framework_content(),
+        rx.cond(AuthState.can_discover, risk_framework_content(), _no_access()),
         title="Risicokader",
         subtitle="Impact- en kansdefinities, risicotolerantie en beslisregels",
     )

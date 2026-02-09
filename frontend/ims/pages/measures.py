@@ -4,6 +4,7 @@ Measures Page - Control measures management
 import reflex as rx
 from ims.state.measure import MeasureState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 
 
 def control_type_badge(control_type: str) -> rx.Component:
@@ -393,10 +394,17 @@ def measures_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def measures_page() -> rx.Component:
     """Measures page with layout."""
     return layout(
-        measures_content(),
+        rx.cond(AuthState.can_discover, measures_content(), _no_access()),
         title="Maatregelen",
         subtitle="Beheersmaatregelen en controles",
     )

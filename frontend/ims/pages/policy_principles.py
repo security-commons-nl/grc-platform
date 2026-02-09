@@ -5,6 +5,7 @@ Traceability: Policy → Principle → Risk → Control
 import reflex as rx
 from ims.state.policy_principle import PolicyPrincipleState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 
 
 def principle_card(principle: dict) -> rx.Component:
@@ -184,9 +185,16 @@ def policy_principles_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def policy_principles_page() -> rx.Component:
     return layout(
-        policy_principles_content(),
+        rx.cond(AuthState.can_discover, policy_principles_content(), _no_access()),
         title="Beleidsuitgangspunten",
         subtitle="Traceerbaarheid: Beleid \u2192 Uitgangspunt \u2192 Risico \u2192 Control",
     )

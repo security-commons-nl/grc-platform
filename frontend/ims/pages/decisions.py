@@ -273,9 +273,16 @@ def decisions_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def decisions_page() -> rx.Component:
     return layout(
-        decisions_content(),
+        rx.cond(AuthState.can_configure, decisions_content(), _no_access()),
         title="Besluitlog",
         subtitle="Formele DT-besluiten en risicoacceptaties",
     )

@@ -4,6 +4,7 @@ Simulation Page - Monte Carlo Simulation for Risk Analysis
 import reflex as rx
 from ims.state.simulation import SimulationState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 from typing import Any
 
 def config_input(label: str, value: rx.Var, on_change: Any, unit: str = "") -> rx.Component:
@@ -305,9 +306,16 @@ def simulation_content() -> rx.Component:
         on_mount=SimulationState.load_config,
     )
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def simulation_page() -> rx.Component:
     return layout(
-        simulation_content(),
+        rx.cond(AuthState.can_discover, simulation_content(), _no_access()),
         title="Kwantitatieve Analyse",
         subtitle="Monte Carlo simulatie en risicokwantificering",
     )

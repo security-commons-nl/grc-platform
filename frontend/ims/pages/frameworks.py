@@ -4,6 +4,7 @@ Frameworks Page - Knowledge Base Frameworks and Mappings
 import reflex as rx
 from ims.state.framework import FrameworkState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 
 
 def framework_row(item: dict) -> rx.Component:
@@ -128,10 +129,17 @@ def frameworks_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def frameworks_page() -> rx.Component:
     """Frameworks page with layout."""
     return layout(
-        frameworks_content(),
+        rx.cond(AuthState.can_discover, frameworks_content(), _no_access()),
         title="Frameworks & Mappings",
         subtitle="Kennisbank frameworks en tweedelijns mappings",
     )

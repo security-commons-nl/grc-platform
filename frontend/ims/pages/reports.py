@@ -4,6 +4,7 @@ Rapportage Hub — overview of all GRC report data
 import reflex as rx
 from ims.state.report import ReportState
 from ims.components.layout import layout
+from ims.state.auth import AuthState
 
 
 def kpi_card(label: str, value: rx.Var, icon: str, color: str, subtitle: rx.Var | str = "") -> rx.Component:
@@ -299,10 +300,17 @@ def reports_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    return rx.center(
+        rx.callout("Je hebt onvoldoende rechten om deze pagina te bekijken.", icon="shield-alert", color_scheme="red"),
+        padding="48px",
+    )
+
+
 def reports_page() -> rx.Component:
     """Reports page."""
     return layout(
-        reports_content(),
+        rx.cond(AuthState.can_discover, reports_content(), _no_access()),
         title="Rapportage",
         subtitle="Overzicht van alle GRC-rapportagedata",
     )

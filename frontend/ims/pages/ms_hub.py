@@ -9,6 +9,7 @@ from ims.state.base import BaseState
 from ims.state.journey import JourneyState
 from ims.components.layout import layout
 from ims.components.guidance import journey_stepper
+from ims.state.auth import AuthState
 
 
 # ---------------------------------------------------------------------------
@@ -396,10 +397,22 @@ def ms_hub_content() -> rx.Component:
     )
 
 
+def _no_access() -> rx.Component:
+    """Access denied callout for restricted pages."""
+    return rx.center(
+        rx.callout(
+            "Je hebt onvoldoende rechten om deze pagina te bekijken.",
+            icon="shield-alert",
+            color_scheme="red",
+        ),
+        padding="48px",
+    )
+
+
 def ms_hub_page() -> rx.Component:
     """MS Hub page."""
     return layout(
-        ms_hub_content(),
+        rx.cond(AuthState.can_discover, ms_hub_content(), _no_access()),
         title="MS Hub",
         subtitle="PDCA-overzicht van je managementsysteem",
     )
