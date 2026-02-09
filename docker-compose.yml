@@ -71,8 +71,6 @@ services:
     restart: always
     environment:
       API_URL: http://api:8000
-      # Override for local dev; VPS .env sets https://i-m-s.nl
-      REFLEX_API_URL: ${REFLEX_API_URL:-http://localhost:8002}
     ports:
       - "127.0.0.1:3000:3000"
       - "127.0.0.1:8002:8002"

@@ -8,7 +8,8 @@ config = rx.Config(
 
     # Production: browser connects WebSocket to this URL
     # Without this, the frontend tries localhost:8002 which fails for remote users
-    api_url=os.getenv("REFLEX_API_URL", "https://i-m-s.nl"),
+    # Local dev: set REFLEX_API_URL=http://localhost:8002 in shell
+    api_url=os.getenv("REFLEX_API_URL") or "https://i-m-s.nl",
 
     # Use port 8002 for Reflex backend (8001 is used by FastAPI)
     backend_port=8002,
