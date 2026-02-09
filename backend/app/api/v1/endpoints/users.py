@@ -16,6 +16,7 @@ from app.models.core_models import (
     UserRead,
     UserScopeRole,
     TenantUser,
+    TenantRole,
     Role,
     Scope,
 )
@@ -82,6 +83,7 @@ async def create_user(
     tenant_user = TenantUser(
         user_id=db_user.id,
         tenant_id=tenant_id,
+        role=TenantRole.MEMBER,
         is_default=True,
     )
     session.add(tenant_user)

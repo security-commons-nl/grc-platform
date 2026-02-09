@@ -41,6 +41,11 @@ class Language(str, Enum):
     NL = "nl"
     EN = "en"
 
+class TenantRole(str, Enum):
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    MEMBER = "MEMBER"
+
 class MappingType(str, Enum):
     EQUIVALENT = "Equivalent"
     SUBSET = "Subset"
@@ -747,6 +752,7 @@ class TenantUser(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     tenant_id: int = Field(foreign_key="tenant.id")
     user_id: int = Field(foreign_key="user.id")
+    role: TenantRole = TenantRole.MEMBER
 
     # Invitation tracking
     invited_by_id: Optional[int] = Field(default=None, foreign_key="user.id")

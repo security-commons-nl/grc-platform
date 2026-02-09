@@ -1,8 +1,8 @@
-"""Add risk transfer_party field (stub - applied manually before migration tracking)
+"""Add transfer_party column to risk table
 
 Revision ID: 006_add_risk_transfer_party
 Revises: 005_role_simplification
-Create Date: 2026-02-08
+Create Date: 2026-02-07
 
 """
 from typing import Sequence, Union
@@ -19,10 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # This migration was applied manually before migration tracking.
-    # Stub file to maintain the Alembic revision chain.
-    pass
+    op.add_column('risk', sa.Column('transfer_party', sa.String(), nullable=True))
 
 
 def downgrade() -> None:
-    pass
+    op.drop_column('risk', 'transfer_party')
