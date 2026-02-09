@@ -1,8 +1,14 @@
 """
 Relationship Graph Endpoint
 Returns nodes + edges for the interactive relationship web visualization.
+
+Filters:
+- Risk/Control/Assessment: status != CLOSED
+- Measure: is_active == True
+- Scope: is_active == True
+- Decision: status == ACTIVE
 """
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -15,6 +21,8 @@ from app.models.core_models import (
     Scope,
     Decision,
     Assessment,
+    DecisionStatus,
+    Status,
     ControlRiskLink,
     ControlMeasureLink,
     DecisionRiskLink,
@@ -22,15 +30,6 @@ from app.models.core_models import (
 )
 
 router = APIRouter()
-
-ENTITY_TYPE_MAP = {
-    "risk": Risk,
-    "control": Control,
-    "measure": Measure,
-    "scope": Scope,
-    "decision": Decision,
-    "assessment": Assessment,
-}
 
 
 @router.get("/relationships")
@@ -40,15 +39,24 @@ async def get_relationships(
     tenant_id: int = Query(1),
     session: AsyncSession = Depends(get_session),
 ):
-    """Build a relationship graph of nodes and edges for visualization."""
+    """Build a relationship graph of nodes and edges for visualization.
+
+    Only includes active/non-closed entities. Deleted or closed items are excluded.
+    """
     types = [t.strip() for t in entity_types.split(",") if t.strip()]
     nodes = []
     edges = []
     node_ids = set()
+    # Cache scope_id per node to avoid re-querying for edges
+    node_scope_map = {}  # node_id -> scope_id
+    node_parent_map = {}  # scope node_id -> parent_id
 
-    # --- Load entities as nodes ---
+    # --- Load entities as nodes (filtered on status/is_active) ---
     if "risk" in types:
-        stmt = select(Risk).where(Risk.tenant_id == tenant_id)
+        stmt = select(Risk).where(
+            Risk.tenant_id == tenant_id,
+            Risk.status != Status.CLOSED,
+        )
         if scope_id:
             stmt = stmt.where(Risk.scope_id == scope_id)
         result = await session.execute(stmt)
@@ -56,9 +64,14 @@ async def get_relationships(
             nid = f"risk-{r.id}"
             nodes.append({"id": nid, "type": "risk", "label": r.title, "entity_id": r.id, "has_gap": False})
             node_ids.add(nid)
+            if r.scope_id:
+                node_scope_map[nid] = r.scope_id
 
     if "control" in types:
-        stmt = select(Control).where(Control.tenant_id == tenant_id)
+        stmt = select(Control).where(
+            Control.tenant_id == tenant_id,
+            Control.status != Status.CLOSED,
+        )
         if scope_id:
             stmt = stmt.where(Control.scope_id == scope_id)
         result = await session.execute(stmt)
@@ -66,11 +79,14 @@ async def get_relationships(
             nid = f"control-{c.id}"
             nodes.append({"id": nid, "type": "control", "label": c.title, "entity_id": c.id, "has_gap": False})
             node_ids.add(nid)
+            if c.scope_id:
+                node_scope_map[nid] = c.scope_id
 
     if "measure" in types:
-        stmt = select(Measure)
-        if tenant_id:
-            stmt = stmt.where(Measure.tenant_id == tenant_id)
+        stmt = select(Measure).where(
+            Measure.tenant_id == tenant_id,
+            Measure.is_active == True,
+        )
         result = await session.execute(stmt)
         for m in result.scalars().all():
             nid = f"measure-{m.id}"
@@ -78,7 +94,10 @@ async def get_relationships(
             node_ids.add(nid)
 
     if "scope" in types:
-        stmt = select(Scope).where(Scope.tenant_id == tenant_id)
+        stmt = select(Scope).where(
+            Scope.tenant_id == tenant_id,
+            Scope.is_active == True,
+        )
         if scope_id:
             stmt = stmt.where(Scope.id == scope_id)
         result = await session.execute(stmt)
@@ -86,9 +105,14 @@ async def get_relationships(
             nid = f"scope-{s.id}"
             nodes.append({"id": nid, "type": "scope", "label": s.name, "entity_id": s.id, "has_gap": False})
             node_ids.add(nid)
+            if s.parent_id:
+                node_parent_map[nid] = s.parent_id
 
     if "decision" in types:
-        stmt = select(Decision).where(Decision.tenant_id == tenant_id)
+        stmt = select(Decision).where(
+            Decision.tenant_id == tenant_id,
+            Decision.status == DecisionStatus.ACTIVE,
+        )
         if scope_id:
             stmt = stmt.where(Decision.scope_id == scope_id)
         result = await session.execute(stmt)
@@ -96,9 +120,14 @@ async def get_relationships(
             nid = f"decision-{d.id}"
             nodes.append({"id": nid, "type": "decision", "label": d.decision_text[:50], "entity_id": d.id, "has_gap": False})
             node_ids.add(nid)
+            if d.scope_id:
+                node_scope_map[nid] = d.scope_id
 
     if "assessment" in types:
-        stmt = select(Assessment).where(Assessment.tenant_id == tenant_id)
+        stmt = select(Assessment).where(
+            Assessment.tenant_id == tenant_id,
+            Assessment.status != Status.CLOSED,
+        )
         if scope_id:
             stmt = stmt.where(Assessment.scope_id == scope_id)
         result = await session.execute(stmt)
@@ -106,6 +135,8 @@ async def get_relationships(
             nid = f"assessment-{a.id}"
             nodes.append({"id": nid, "type": "assessment", "label": a.title, "entity_id": a.id, "has_gap": False})
             node_ids.add(nid)
+            if a.scope_id:
+                node_scope_map[nid] = a.scope_id
 
     # --- Load edges ---
     # Control <-> Risk
@@ -141,39 +172,17 @@ async def get_relationships(
         if src in node_ids and tgt in node_ids:
             edges.append({"source": src, "target": tgt, "type": "depends_on", "label": dep.dependency_type or ""})
 
-    # Entity <-> Scope (implicit via scope_id)
-    for node in nodes:
-        if node["type"] in ("risk", "control", "decision", "assessment"):
-            entity_id = node["entity_id"]
-            # Look up scope_id from original entity
-            model = ENTITY_TYPE_MAP[node["type"]]
-            result = await session.execute(select(model).where(model.id == entity_id))
-            entity = result.scalars().first()
-            if entity and hasattr(entity, "scope_id") and entity.scope_id:
-                scope_nid = f"scope-{entity.scope_id}"
-                if scope_nid in node_ids:
-                    edges.append({
-                        "source": node["id"],
-                        "target": scope_nid,
-                        "type": "belongs_to",
-                        "label": "",
-                    })
+    # Entity <-> Scope (from cached scope_id, no re-query needed)
+    for nid, sid in node_scope_map.items():
+        scope_nid = f"scope-{sid}"
+        if scope_nid in node_ids:
+            edges.append({"source": nid, "target": scope_nid, "type": "belongs_to", "label": ""})
 
-    # Scope parent → child hierarchy
-    for node in nodes:
-        if node["type"] == "scope":
-            entity_id = node["entity_id"]
-            result = await session.execute(select(Scope).where(Scope.id == entity_id))
-            entity = result.scalars().first()
-            if entity and entity.parent_id:
-                parent_nid = f"scope-{entity.parent_id}"
-                if parent_nid in node_ids:
-                    edges.append({
-                        "source": node["id"],
-                        "target": parent_nid,
-                        "type": "child_of",
-                        "label": "",
-                    })
+    # Scope parent → child hierarchy (from cached parent_id)
+    for nid, pid in node_parent_map.items():
+        parent_nid = f"scope-{pid}"
+        if parent_nid in node_ids:
+            edges.append({"source": nid, "target": parent_nid, "type": "child_of", "label": ""})
 
     # --- Gap detection ---
     gaps = []
