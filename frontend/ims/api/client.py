@@ -1451,6 +1451,84 @@ class APIClient:
             return response.json()
 
     # =========================================================================
+    # RISK APPETITE (Risicotolerantie)
+    # =========================================================================
+
+    async def get_risk_appetites(
+        self,
+        current_only: bool = False,
+    ) -> List[Dict[str, Any]]:
+        async with self._get_client() as client:
+            params = {}
+            if current_only:
+                params["current_only"] = True
+            response = await client.get("/risk-appetite/", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_current_risk_appetite(self) -> Optional[Dict[str, Any]]:
+        async with self._get_client() as client:
+            response = await client.get("/risk-appetite/current")
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return response.json()
+
+    async def create_risk_appetite(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.post("/risk-appetite/", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_risk_appetite(self, appetite_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.patch(f"/risk-appetite/{appetite_id}", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def activate_risk_appetite(self, appetite_id: int) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.post(f"/risk-appetite/{appetite_id}/activate")
+            response.raise_for_status()
+            return response.json()
+
+    async def get_appetite_heatmap(
+        self,
+        appetite_level: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            params = {}
+            if appetite_level:
+                params["appetite_level"] = appetite_level
+            response = await client.get("/risk-appetite/heatmap", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_domain_heatmap(self, domain: str) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.get(f"/risk-appetite/heatmap/{domain}")
+            response.raise_for_status()
+            return response.json()
+
+    async def evaluate_risk_scope(self, risk_scope_id: int) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.get(f"/risk-appetite/evaluate/{risk_scope_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def evaluate_scope_risks(self, scope_id: int) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.get(f"/risk-appetite/evaluate/scope/{scope_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def evaluate_tenant_risks(self) -> Dict[str, Any]:
+        async with self._get_client() as client:
+            response = await client.get("/risk-appetite/evaluate/tenant")
+            response.raise_for_status()
+            return response.json()
+
+    # =========================================================================
     # GRAPH / RELATIONSHIPS
     # =========================================================================
 
