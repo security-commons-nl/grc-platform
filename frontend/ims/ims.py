@@ -24,7 +24,7 @@ from ims.pages.users import users_page
 from ims.pages.simulation import simulation_page
 from ims.pages.decisions import decisions_page
 from ims.pages.risk_framework import risk_framework_page
-from ims.pages.in_control import in_control_page
+
 from ims.pages.policy_principles import policy_principles_page
 from ims.pages.admin import admin_page
 from ims.pages.reports import reports_page
@@ -97,7 +97,7 @@ app.add_page(users_page, route="/users", title="Gebruikers - IMS")
 app.add_page(simulation_page, route="/simulation", title="Simulatie - IMS")
 app.add_page(decisions_page, route="/decisions", title="Besluiten - IMS")
 app.add_page(risk_framework_page, route="/risk-framework", title="Risicokader - IMS")
-app.add_page(in_control_page, route="/in-control", title="In-Control - IMS")
+
 app.add_page(policy_principles_page, route="/policy-principles", title="Beleidsuitgangspunten - IMS")
 app.add_page(admin_page, route="/admin", title="Beheer - IMS")
 app.add_page(reports_page, route="/reports", title="Rapportage - IMS")

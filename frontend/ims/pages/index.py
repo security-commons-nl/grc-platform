@@ -7,6 +7,7 @@ from ims.state.risk import RiskState
 from ims.state.dashboard import DashboardState
 from ims.state.journey import JourneyState
 from ims.state.organization_profile import OrganizationProfileState
+from ims.state.in_control import InControlState
 from ims.components.layout import layout
 from ims.components.heatmap import risk_heatmap
 from ims.components.guidance import pdca_ring_widget
@@ -31,6 +32,109 @@ def stat_card(title: str, value: rx.Var, icon: str, color: str) -> rx.Component:
             spacing="3",
         ),
         padding="16px",
+    )
+
+
+def _ic_metric_pill(label: str, value: rx.Var, color: str) -> rx.Component:
+    """Small inline metric pill for in-control cards."""
+    return rx.cond(
+        value.to(int) > 0,
+        rx.badge(rx.text(rx.fragment(value, " ", label), size="1"), color_scheme=color, variant="outline", size="1"),
+        rx.fragment(),
+    )
+
+
+def _ic_scope_card(item: dict) -> rx.Component:
+    """Compact scope status card for dashboard."""
+    return rx.card(
+        rx.hstack(
+            rx.vstack(
+                rx.text(item["scope_name"], weight="bold", size="2"),
+                rx.flex(
+                    _ic_metric_pill("risico's", item["open_risks_count"], "blue"),
+                    _ic_metric_pill("hoog/kritiek", item["high_risks_count"], "red"),
+                    _ic_metric_pill("bevindingen", item["open_findings_count"], "orange"),
+                    _ic_metric_pill("verlopen acties", item["overdue_actions_count"], "crimson"),
+                    _ic_metric_pill("ongetest", item["missing_controls_count"], "gray"),
+                    gap="2", wrap="wrap",
+                ),
+                spacing="1", align_items="start", flex="1",
+            ),
+            rx.match(
+                item["level"],
+                ("In control", rx.badge(
+                    rx.hstack(rx.icon("circle-check", size=12), rx.text("In control", size="1"), spacing="1"),
+                    color_scheme="green", variant="soft",
+                )),
+                ("Beperkt in control", rx.badge(
+                    rx.hstack(rx.icon("alert-triangle", size=12), rx.text("Beperkt", size="1"), spacing="1"),
+                    color_scheme="orange", variant="soft",
+                )),
+                ("Niet in control", rx.badge(
+                    rx.hstack(rx.icon("circle-x", size=12), rx.text("Niet in control", size="1"), spacing="1"),
+                    color_scheme="red", variant="soft",
+                )),
+                rx.badge("Niet beoordeeld", color_scheme="gray", variant="outline", size="1"),
+            ),
+            width="100%", align="center", spacing="3",
+        ),
+        padding="12px",
+    )
+
+
+def _in_control_section() -> rx.Component:
+    """In-Control status section for the dashboard."""
+    return rx.box(
+        rx.card(
+            rx.vstack(
+                rx.hstack(
+                    rx.icon("gauge", size=20, color="var(--accent-9)"),
+                    rx.heading("In-Control Status", size="4"),
+                    rx.spacer(),
+                    rx.cond(
+                        InControlState.not_in_control_count > 0,
+                        rx.badge(
+                            rx.fragment(InControlState.not_in_control_count, " niet in control"),
+                            color_scheme="red", variant="solid",
+                        ),
+                    ),
+                    rx.cond(
+                        InControlState.limited_count > 0,
+                        rx.badge(
+                            rx.fragment(InControlState.limited_count, " beperkt"),
+                            color_scheme="orange", variant="soft",
+                        ),
+                    ),
+                    rx.cond(
+                        InControlState.in_control_count > 0,
+                        rx.badge(
+                            rx.fragment(InControlState.in_control_count, " in control"),
+                            color_scheme="green", variant="soft",
+                        ),
+                    ),
+                    width="100%", align="center",
+                ),
+                rx.cond(
+                    InControlState.is_loading,
+                    rx.center(rx.spinner(size="2"), padding="20px"),
+                    rx.cond(
+                        InControlState.dashboard_items.length() > 0,
+                        rx.vstack(
+                            rx.foreach(InControlState.dashboard_items, _ic_scope_card),
+                            spacing="2", width="100%",
+                        ),
+                        rx.center(
+                            rx.text("Geen scopes gevonden", size="2", color="gray"),
+                            padding="20px",
+                        ),
+                    ),
+                ),
+                spacing="3", align_items="stretch",
+            ),
+            padding="20px",
+        ),
+        width="100%",
+        margin_top="24px",
     )
 
 
@@ -134,6 +238,9 @@ def dashboard_content() -> rx.Component:
             spacing="4",
             width="100%",
         ),
+
+        # In-Control status per scope
+        _in_control_section(),
 
         # My Tasks section
         rx.cond(
@@ -273,7 +380,7 @@ def dashboard_content() -> rx.Component:
 
         width="100%",
         spacing="0",
-        on_mount=[RiskState.load_heatmap, DashboardState.load_dashboard_data, JourneyState.load_journey_data],
+        on_mount=[RiskState.load_heatmap, DashboardState.load_dashboard_data, JourneyState.load_journey_data, InControlState.load_dashboard],
     )
 
 
