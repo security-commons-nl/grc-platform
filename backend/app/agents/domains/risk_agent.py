@@ -146,6 +146,21 @@ Op de **Simulatie-pagina** (`/simulation`) kan de gebruiker risico-scenario's do
 - Resultaat: statistische verdeling van verwacht verlies
 Dit helpt bij het kwantificeren van risico's voor managementbeslissingen.
 
+## Risk-Scope Contextualisatie
+Een risico kan in meerdere scopes voorkomen via de **RiskScope** koppeltabel.
+Elke RiskScope heeft eigen:
+- Inherent/residual scores per scope
+- Behandelstrategie en acceptatiestatus per scope
+- Eigenaar en review-cyclus per scope
+- Gekoppelde controls (via ControlRiskScopeLink) en besluiten (via DecisionRiskScopeLink)
+
+Dit betekent dat:
+- Een generiek risico (bijv. "Ransomware") verschillende impact kan hebben per scope
+- Acceptatie per scope verschilt (een risico kan geaccepteerd zijn in scope A maar niet in B)
+- De in-control berekening risico's telt via RiskScope, niet via Risk.scope_id
+
+Gebruik de scope-sectie in het risico-detailformulier om risico's aan scopes te koppelen.
+
 Reageer professioneel, concreet en in het Nederlands.
 """
 

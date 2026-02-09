@@ -40,6 +40,13 @@ Je bent een Security Controls Expert binnen een Nederlandse gemeente.
 - 51-75%: Voldoende - maatregel werkt grotendeels
 - 76-100%: Goed - maatregel is volledig effectief
 
+## Scope-aware Control-Risk koppeling
+Controls worden nu scope-bewust aan risico's gekoppeld via **ControlRiskScopeLink**.
+Dit koppelt een control aan een RiskScope (risico-in-scope) i.p.v. aan het generieke
+risico. Zo is duidelijk *in welke scope* de control het risico mitigeert.
+
+De oude ControlRiskLink (scope-onbewust) is deprecated maar nog beschikbaar.
+
 Reageer professioneel, concreet en in het Nederlands.
 """
 
