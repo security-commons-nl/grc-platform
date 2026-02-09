@@ -2514,7 +2514,10 @@ class CorrectiveAction(SQLModel, table=True):
     issue: Optional["Issue"] = Relationship(back_populates="corrective_actions")
     initiative: Optional["Initiative"] = Relationship(back_populates="corrective_actions")
     risk: Optional["Risk"] = Relationship(back_populates="corrective_actions")
-    control: Optional["Control"] = Relationship(back_populates="corrective_actions")
+    control: Optional["Control"] = Relationship(
+        back_populates="corrective_actions",
+        sa_relationship_kwargs={"foreign_keys": "[CorrectiveAction.control_id]"},
+    )
 
 
 # =============================================================================
