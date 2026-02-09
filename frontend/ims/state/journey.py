@@ -11,6 +11,7 @@ from ims.api.client import API_BASE_URL
 
 
 _JOURNEY_TIMEOUT = httpx.Timeout(connect=2.0, read=5.0, write=5.0, pool=5.0)
+_JOURNEY_HEADERS = {"X-User-ID": "1", "X-Tenant-ID": "1"}
 
 # Step definitions (1-indexed for display)
 STEP_TITLES = [
@@ -253,7 +254,8 @@ class JourneyState(rx.State):
 
         try:
             async with httpx.AsyncClient(
-                base_url=API_BASE_URL, timeout=_JOURNEY_TIMEOUT
+                base_url=API_BASE_URL, timeout=_JOURNEY_TIMEOUT,
+                headers=_JOURNEY_HEADERS,
             ) as client:
                 responses = await asyncio.gather(
                     client.get("/scopes/", params={"limit": 500}),

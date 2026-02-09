@@ -11,6 +11,7 @@ from ims.api.client import API_BASE_URL
 
 # Short-timeout client for report calls — prevents UI freeze when backend is down
 _REPORT_TIMEOUT = httpx.Timeout(connect=2.0, read=5.0, write=5.0, pool=5.0)
+_REPORT_HEADERS = {"X-User-ID": "1", "X-Tenant-ID": "1"}
 
 
 class ReportState(rx.State):
@@ -60,7 +61,8 @@ class ReportState(rx.State):
 
         try:
             async with httpx.AsyncClient(
-                base_url=API_BASE_URL, timeout=_REPORT_TIMEOUT
+                base_url=API_BASE_URL, timeout=_REPORT_TIMEOUT,
+                headers=_REPORT_HEADERS,
             ) as client:
                 responses = await asyncio.gather(
                     client.get("/reports/dashboard/executive"),
