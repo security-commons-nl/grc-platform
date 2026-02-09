@@ -174,14 +174,20 @@ class RiskState(rx.State):
     # FORM DIALOG METHODS
     # ==========================================================================
 
-    def open_create_dialog(self):
+    async def open_create_dialog(self):
         """Open dialog for creating a new risk."""
         self.is_editing = False
         self.editing_risk_id = None
         self.linked_controls = []
         self.all_controls = []
+        self.risk_scopes = []
+        self.all_scopes = []
+        self.selected_control_id_to_link = None
+        self.selected_scope_id_to_link = None
         self._reset_form()
         self.show_form_dialog = True
+        await self.load_all_controls()
+        await self.load_all_scopes()
 
     async def open_edit_dialog(self, risk_id: int):
         """Open dialog for editing an existing risk."""
@@ -289,32 +295,44 @@ class RiskState(rx.State):
             self.all_controls = []
 
     async def link_control(self):
-        """Link selected control to current risk."""
-        if not self.editing_risk_id or not self.selected_control_id_to_link:
+        """Link selected control to current risk (or stage it for create mode)."""
+        if not self.selected_control_id_to_link:
             return
 
-        try:
-            await api_client.link_risk_control(
-                self.editing_risk_id,
-                int(self.selected_control_id_to_link)
-            )
-            self.success_message = "Control gekoppeld"
-            await self.load_linked_controls(self.editing_risk_id)
+        if self.is_editing and self.editing_risk_id:
+            # Edit mode: link via API immediately
+            try:
+                await api_client.link_risk_control(
+                    self.editing_risk_id,
+                    int(self.selected_control_id_to_link)
+                )
+                self.success_message = "Control gekoppeld"
+                await self.load_linked_controls(self.editing_risk_id)
+                self.selected_control_id_to_link = None
+            except Exception as e:
+                self.error = f"Fout bij koppelen: {str(e)}"
+        else:
+            # Create mode: stage locally
+            cid = self.selected_control_id_to_link
+            for c in self.all_controls:
+                if str(c.get("id")) == cid:
+                    self.linked_controls.append(c)
+                    break
             self.selected_control_id_to_link = None
-        except Exception as e:
-            self.error = f"Fout bij koppelen: {str(e)}"
 
     async def unlink_control(self, control_id: int):
-        """Unlink control from current risk."""
-        if not self.editing_risk_id:
-            return
-
-        try:
-            await api_client.unlink_risk_control(self.editing_risk_id, control_id)
-            self.success_message = "Control ontkoppeld"
-            await self.load_linked_controls(self.editing_risk_id)
-        except Exception as e:
-            self.error = f"Fout bij ontkoppelen: {str(e)}"
+        """Unlink control from current risk (or unstage it in create mode)."""
+        if self.is_editing and self.editing_risk_id:
+            # Edit mode: unlink via API
+            try:
+                await api_client.unlink_risk_control(self.editing_risk_id, control_id)
+                self.success_message = "Control ontkoppeld"
+                await self.load_linked_controls(self.editing_risk_id)
+            except Exception as e:
+                self.error = f"Fout bij ontkoppelen: {str(e)}"
+        else:
+            # Create mode: remove from local staging list
+            self.linked_controls = [c for c in self.linked_controls if c.get("id") != control_id]
 
     # ==========================================================================
     # RISK-SCOPE LINKING METHODS
@@ -335,35 +353,57 @@ class RiskState(rx.State):
             self.all_scopes = []
 
     async def link_scope(self):
-        """Link current risk to selected scope (create RiskScope)."""
-        if not self.editing_risk_id or not self.selected_scope_id_to_link:
+        """Link current risk to selected scope (or stage it for create mode)."""
+        if not self.selected_scope_id_to_link:
             return
 
-        try:
-            auth = await self.get_state(AuthState)
-            data = {
-                "risk_id": self.editing_risk_id,
-                "scope_id": int(self.selected_scope_id_to_link),
-                "tenant_id": auth.tenant_id,
-            }
-            await api_client.create_risk_scope(data)
-            self.success_message = "Risico aan scope gekoppeld"
-            await self.load_risk_scopes(self.editing_risk_id)
+        if self.is_editing and self.editing_risk_id:
+            # Edit mode: create RiskScope via API immediately
+            try:
+                auth = await self.get_state(AuthState)
+                data = {
+                    "risk_id": self.editing_risk_id,
+                    "scope_id": int(self.selected_scope_id_to_link),
+                    "tenant_id": auth.tenant_id,
+                }
+                await api_client.create_risk_scope(data)
+                self.success_message = "Risico aan scope gekoppeld"
+                await self.load_risk_scopes(self.editing_risk_id)
+                self.selected_scope_id_to_link = None
+            except Exception as e:
+                self.error = f"Fout bij koppelen aan scope: {str(e)}"
+        else:
+            # Create mode: stage locally
+            sid = self.selected_scope_id_to_link
+            for s in self.all_scopes:
+                if str(s.get("id")) == sid:
+                    self.risk_scopes.append({
+                        "id": None,
+                        "scope_id": s.get("id"),
+                        "scope_name": s.get("name", f"Scope #{s.get('id')}"),
+                        "acceptance_status": None,
+                    })
+                    break
             self.selected_scope_id_to_link = None
-        except Exception as e:
-            self.error = f"Fout bij koppelen aan scope: {str(e)}"
 
-    async def unlink_scope(self, risk_scope_id: int):
-        """Remove risk-scope contextualization."""
-        if not self.editing_risk_id:
-            return
-
-        try:
-            await api_client.delete_risk_scope(risk_scope_id)
-            self.success_message = "Scope-koppeling verwijderd"
-            await self.load_risk_scopes(self.editing_risk_id)
-        except Exception as e:
-            self.error = f"Fout bij ontkoppelen scope: {str(e)}"
+    async def unlink_scope(self, scope_id: int):
+        """Remove risk-scope contextualization (or unstage in create mode)."""
+        if self.is_editing and self.editing_risk_id:
+            # Edit mode: find the risk_scope record by scope_id and delete via API
+            try:
+                rs_record = next(
+                    (rs for rs in self.risk_scopes if rs.get("scope_id") == scope_id),
+                    None,
+                )
+                if rs_record and rs_record.get("id"):
+                    await api_client.delete_risk_scope(rs_record["id"])
+                self.success_message = "Scope-koppeling verwijderd"
+                await self.load_risk_scopes(self.editing_risk_id)
+            except Exception as e:
+                self.error = f"Fout bij ontkoppelen scope: {str(e)}"
+        else:
+            # Create mode: remove from local staging list
+            self.risk_scopes = [rs for rs in self.risk_scopes if rs.get("scope_id") != scope_id]
 
     # ==========================================================================
     # CRUD METHODS
@@ -417,11 +457,32 @@ class RiskState(rx.State):
                 await api_client.update_risk(self.editing_risk_id, risk_data)
                 self.success_message = "Risico bijgewerkt"
             else:
-                await api_client.create_risk(risk_data)
+                new_risk = await api_client.create_risk(risk_data)
+                new_id = new_risk.get("id") if isinstance(new_risk, dict) else None
+                if new_id:
+                    # Link staged controls
+                    for ctrl in self.linked_controls:
+                        try:
+                            await api_client.link_risk_control(new_id, ctrl["id"])
+                        except Exception:
+                            pass
+                    # Create staged risk-scope contextualizations
+                    auth = await self.get_state(AuthState)
+                    for rs in self.risk_scopes:
+                        try:
+                            await api_client.create_risk_scope({
+                                "risk_id": new_id,
+                                "scope_id": rs["scope_id"],
+                                "tenant_id": auth.tenant_id,
+                            })
+                        except Exception:
+                            pass
                 self.success_message = "Risico aangemaakt"
 
             self.show_form_dialog = False
             self._reset_form()
+            self.linked_controls = []
+            self.risk_scopes = []
             # Reload the list
             return RiskState.load_risks
         except Exception as e:
