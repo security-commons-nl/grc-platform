@@ -5,6 +5,7 @@ from app.api.v1.endpoints import (
     scopes,
     risks,
     risk_scopes,
+    risk_appetite,
     measures,
     controls,
     users,
@@ -223,6 +224,13 @@ api_router.include_router(
     risk_framework.router,
     prefix="/risk-framework",
     tags=["Risk Framework"]
+)
+
+# Risk Appetite (Organisatie-brede risicotolerantie)
+api_router.include_router(
+    risk_appetite.router,
+    prefix="/risk-appetite",
+    tags=["Risk Appetite"]
 )
 
 # Hiaat 5: In-Control Status

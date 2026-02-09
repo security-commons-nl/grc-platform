@@ -2861,6 +2861,15 @@ class RiskAppetite(SQLModel, table=True):
     # Maximum acceptable residual risk score (1-16)
     max_acceptable_risk_score: int = 6
 
+    # Impact correlation per category (JSON)
+    # Maps RiskLevel to financial/quantitative ranges for dynamic heatmap thresholds
+    # Structure: {"financial": {"LOW": 10000, "MEDIUM": 100000, "HIGH": 500000, "CRITICAL": 1000000},
+    #             "legal": {...}, "reputation": {...}, "operational": {...}}
+    impact_correlation: Optional[str] = None  # JSON
+
+    # Financial threshold value (€) - the appetite expressed as max acceptable single-event loss
+    financial_threshold_value: Optional[int] = None  # e.g. 50000 = €50k
+
     # General risk appetite statement (for policies/documentation)
     appetite_statement: Optional[str] = None
 

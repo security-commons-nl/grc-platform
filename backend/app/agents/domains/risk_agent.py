@@ -11,6 +11,8 @@ from app.agents.tools.read_tools import (
     check_decision_required,
     get_risk_framework,
     calculate_in_control,
+    get_risk_appetite,
+    evaluate_risk_against_appetite,
 )
 from app.agents.tools.write_tools import (
     create_risk,
@@ -161,6 +163,41 @@ Dit betekent dat:
 
 Gebruik de scope-sectie in het risico-detailformulier om risico's aan scopes te koppelen.
 
+## Risk Appetite (Risicotolerantie)
+De organisatie definieert een **Risk Appetite** die bepaalt welke risico's acceptabel zijn.
+
+**Appetite niveaus** (van laag naar hoog):
+- Risicomijdend (Averse) → alleen lage impact acceptabel
+- Minimaal → alleen lage impact acceptabel
+- Voorzichtig (Cautious) → tot medium impact
+- Gematigd (Moderate) → tot medium, hoog alleen bij lage kans
+- Open → tot hoge impact
+- Risicozoekend (Hungry) → alle niveaus overwogen
+
+**Per domein** kan de appetite afwijken: ISMS, Privacy, BCM, Financieel, Reputatie, Compliance.
+
+**Drempels:**
+- `auto_accept_threshold`: onder dit niveau mag een risico direct geaccepteerd worden
+- `escalation_threshold`: boven dit niveau MOET het naar management
+- `max_acceptable_risk_score`: maximale residuele score (1-16) die acceptabel is
+
+**Heatmap-zones:**
+De 4×4 risicomatrix wordt dynamisch gekleurd op basis van appetite:
+- **Acceptabel** (groen): binnen appetite
+- **Voorwaardelijk** (geel): acceptabel onder voorwaarden (lage kans)
+- **Escalatie** (oranje): buiten appetite, managementbesluit vereist
+- **Onacceptabel** (rood): ver buiten appetite, mitigatie verplicht
+
+Gebruik `get_risk_appetite` om de huidige instelling op te halen.
+Gebruik `evaluate_risk_against_appetite` om een specifieke RiskScope te toetsen.
+
+**API endpoints** (voor de gebruiker):
+- `GET /risk-appetite/current` — huidige appetite ophalen
+- `GET /risk-appetite/heatmap` — 4×4 matrix met zones
+- `GET /risk-appetite/heatmap/{domain}` — domein-specifieke matrix
+- `GET /risk-appetite/evaluate/{risk_scope_id}` — individuele risico toetsen
+- `GET /risk-appetite/evaluate/scope/{scope_id}` — alle risico's in een scope toetsen
+
 Reageer professioneel, concreet en in het Nederlands.
 """
 
@@ -174,6 +211,8 @@ Reageer professioneel, concreet en in het Nederlands.
             list_decisions,
             check_decision_required,
             get_risk_framework,
+            get_risk_appetite,
+            evaluate_risk_against_appetite,
             calculate_in_control,
             create_risk,
             update_risk,

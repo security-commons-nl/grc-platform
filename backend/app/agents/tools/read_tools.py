@@ -11,6 +11,8 @@ from sqlmodel import select, func
 from app.core.db import get_session
 from app.models.core_models import (
     Risk,
+    RiskAppetite,
+    RiskScope,
     Measure,
     Policy,
     Scope,
@@ -32,6 +34,12 @@ from app.models.core_models import (
     Status,
     Control,
     ControlRiskLink,
+)
+from app.core.risk_appetite_engine import (
+    evaluate_risk_scope,
+    evaluate_scope_risks_bulk,
+    generate_heatmap_matrix,
+    HeatmapZone,
 )
 
 
@@ -508,6 +516,119 @@ Decision Rules:
 
 Established by: user #{fw.established_by_id or 'N/A'}
 Established date: {fw.established_date or 'Not yet established'}
+"""
+
+
+# =============================================================================
+# RISK APPETITE TOOLS
+# =============================================================================
+
+@tool
+async def get_risk_appetite(tenant_id: int) -> str:
+    """
+    Get the current active risk appetite for a tenant.
+    Shows overall and domain-specific appetite levels, thresholds, and acceptance criteria.
+    """
+    async for session in get_session():
+        result = await session.execute(
+            select(RiskAppetite).where(
+                RiskAppetite.tenant_id == tenant_id,
+                RiskAppetite.is_current == True,
+            )
+        )
+        appetite = result.scalars().first()
+        if not appetite:
+            return "Geen actieve Risk Appetite geconfigureerd voor deze tenant."
+
+        domains = []
+        if appetite.isms_appetite:
+            domains.append(f"  ISMS: {appetite.isms_appetite.value}")
+        if appetite.pims_appetite:
+            domains.append(f"  Privacy: {appetite.pims_appetite.value}")
+        if appetite.bcms_appetite:
+            domains.append(f"  BCM: {appetite.bcms_appetite.value}")
+        if appetite.financial_appetite:
+            domains.append(f"  Financieel: {appetite.financial_appetite.value}")
+        if appetite.reputational_appetite:
+            domains.append(f"  Reputatie: {appetite.reputational_appetite.value}")
+        if appetite.compliance_appetite:
+            domains.append(f"  Compliance: {appetite.compliance_appetite.value}")
+
+        domain_text = "\n".join(domains) if domains else "  Geen domein-specifieke instellingen"
+
+        return f"""
+Risk Appetite #{appetite.id} (v{appetite.version})
+Algehele appetite: {appetite.overall_appetite.value}
+
+Domein-specifieke appetites:
+{domain_text}
+
+Drempels:
+  Auto-acceptatie drempel: {appetite.auto_accept_threshold.value}
+  Escalatiedrempel: {appetite.escalation_threshold.value}
+  Max acceptabel risicoscore: {appetite.max_acceptable_risk_score}
+  Financieel plafond: €{appetite.financial_threshold_value or 'Niet ingesteld'}
+
+Statement: {appetite.appetite_statement or 'Geen statement'}
+Geldig vanaf: {appetite.effective_date}
+Volgende review: {appetite.next_review_date or 'Niet gepland'}
+"""
+
+
+@tool
+async def evaluate_risk_against_appetite(risk_scope_id: int, tenant_id: int) -> str:
+    """
+    Evaluate a specific RiskScope against the current risk appetite.
+    Returns whether the risk is acceptable, needs a decision, or must be escalated.
+    """
+    async for session in get_session():
+        # Get appetite
+        result = await session.execute(
+            select(RiskAppetite).where(
+                RiskAppetite.tenant_id == tenant_id,
+                RiskAppetite.is_current == True,
+            )
+        )
+        appetite = result.scalars().first()
+        if not appetite:
+            return "Geen actieve Risk Appetite — kan niet evalueren."
+
+        # Get RiskScope
+        result = await session.execute(
+            select(RiskScope).where(
+                RiskScope.id == risk_scope_id,
+                RiskScope.tenant_id == tenant_id,
+            )
+        )
+        rs = result.scalars().first()
+        if not rs:
+            return f"RiskScope #{risk_scope_id} niet gevonden."
+
+        # Get risk category
+        result = await session.execute(
+            select(Risk.risk_category).where(Risk.id == rs.risk_id)
+        )
+        category = result.scalar_one_or_none()
+
+        evaluation = evaluate_risk_scope(rs, appetite, category)
+
+        zone_labels = {
+            HeatmapZone.ACCEPTABLE: "ACCEPTABEL (groen)",
+            HeatmapZone.CONDITIONAL: "VOORWAARDELIJK ACCEPTABEL (geel)",
+            HeatmapZone.ESCALATION: "ESCALATIE VEREIST (oranje)",
+            HeatmapZone.UNACCEPTABLE: "ONACCEPTABEL (rood)",
+        }
+        zone_label = zone_labels.get(evaluation.get("zone"), "Onbekend")
+
+        return f"""
+Evaluatie RiskScope #{risk_scope_id}:
+Zone: {zone_label}
+Acceptabel: {evaluation.get('is_acceptable')}
+Besluit vereist: {evaluation.get('requires_decision')}
+Escalatie vereist: {evaluation.get('requires_escalation')}
+Residuele score: {evaluation.get('residual_score')}
+Appetite niveau: {evaluation.get('appetite_level')}
+Toelichting: {evaluation.get('reason')}
 """
 
 

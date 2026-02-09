@@ -4,7 +4,7 @@ CRUD for RiskScope: scope-specific risk scores, treatment, and acceptance.
 """
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -13,6 +13,7 @@ from app.core.crud import ScopedTenantCRUDBase
 from app.core.rbac import require_editor, require_configurer, get_tenant_id, get_scope_access
 from app.models.core_models import (
     Risk,
+    RiskAppetite,
     RiskScope,
     Scope,
     Control,
@@ -21,6 +22,7 @@ from app.models.core_models import (
     DecisionRiskScopeLink,
     User,
 )
+from app.core.risk_appetite_engine import evaluate_risk_scope
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,39 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 crud_risk = ScopedTenantCRUDBase(Risk)
 crud_scope = ScopedTenantCRUDBase(Scope)
+
+
+async def _check_appetite_warning(
+    session: AsyncSession,
+    risk_scope: RiskScope,
+    tenant_id: int,
+) -> Optional[dict]:
+    """Check RiskScope against active appetite; return warning dict if outside tolerance."""
+    result = await session.execute(
+        select(RiskAppetite).where(
+            RiskAppetite.tenant_id == tenant_id,
+            RiskAppetite.is_current == True,
+        )
+    )
+    appetite = result.scalars().first()
+    if not appetite:
+        return None
+
+    # Get risk category
+    result = await session.execute(
+        select(Risk.risk_category).where(Risk.id == risk_scope.risk_id)
+    )
+    category = result.scalar_one_or_none()
+
+    evaluation = evaluate_risk_scope(risk_scope, appetite, category)
+    if evaluation.get("is_acceptable") is False:
+        return {
+            "appetite_warning": evaluation["reason"],
+            "zone": evaluation["zone"],
+            "requires_decision": evaluation["requires_decision"],
+            "requires_escalation": evaluation["requires_escalation"],
+        }
+    return None
 
 
 # =============================================================================
@@ -88,6 +123,7 @@ async def get_risk_scope(
 @router.post("/", response_model=RiskScope, status_code=201)
 async def create_risk_scope(
     risk_scope: RiskScope,
+    response: Response,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
@@ -115,6 +151,13 @@ async def create_risk_scope(
     session.add(risk_scope)
     await session.commit()
     await session.refresh(risk_scope)
+
+    # Check appetite and add warning header if outside tolerance
+    warning = await _check_appetite_warning(session, risk_scope, tenant_id)
+    if warning:
+        response.headers["X-Appetite-Warning"] = warning["appetite_warning"]
+        response.headers["X-Appetite-Zone"] = warning["zone"]
+
     return risk_scope
 
 
@@ -122,6 +165,7 @@ async def create_risk_scope(
 async def update_risk_scope(
     risk_scope_id: int,
     risk_scope_update: RiskScope,
+    response: Response,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
@@ -153,6 +197,13 @@ async def update_risk_scope(
     session.add(db_rs)
     await session.commit()
     await session.refresh(db_rs)
+
+    # Check appetite and add warning header if outside tolerance
+    warning = await _check_appetite_warning(session, db_rs, tenant_id)
+    if warning:
+        response.headers["X-Appetite-Warning"] = warning["appetite_warning"]
+        response.headers["X-Appetite-Zone"] = warning["zone"]
+
     return db_rs
 
 
