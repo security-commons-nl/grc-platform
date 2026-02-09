@@ -457,7 +457,7 @@ def control_form_dialog() -> rx.Component:
                                 rx.select.trigger(placeholder="Selecteer risico om te koppelen..."),
                                 rx.select.content(
                                     rx.foreach(
-                                        ControlState.all_risks,
+                                        ControlState.available_risks,
                                         lambda r: rx.select.item(r["title"], value=r["id"].to_string()),
                                     ),
                                 ),

@@ -62,6 +62,12 @@ class ControlState(rx.State):
     def draft_count(self) -> int:
         return len([c for c in self.controls if c.get("status") == "Draft"])
 
+    @rx.var
+    def available_risks(self) -> List[Dict[str, Any]]:
+        """Risks not yet linked to the current control."""
+        linked_ids = {str(r.get("id")) for r in self.linked_risks}
+        return [r for r in self.all_risks if str(r.get("id")) not in linked_ids]
+
     async def load_controls(self):
         """Load controls from API."""
         self.is_loading = True
