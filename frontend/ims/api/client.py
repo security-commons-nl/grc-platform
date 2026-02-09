@@ -937,6 +937,75 @@ class APIClient:
 
 
     # =========================================================================
+    # TENANTS
+    # =========================================================================
+
+    async def get_tenants(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        is_active: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """Get list of tenants."""
+        async with self._get_client() as client:
+            params = {"skip": skip, "limit": limit, "is_active": is_active}
+            response = await client.get("/tenants/", params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def create_tenant(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new tenant."""
+        async with self._get_client() as client:
+            response = await client.post("/tenants/", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_tenant(self, tenant_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a tenant."""
+        async with self._get_client() as client:
+            response = await client.patch(f"/tenants/{tenant_id}", json=data)
+            response.raise_for_status()
+            return response.json()
+
+    async def deactivate_tenant(self, tenant_id: int) -> Dict[str, Any]:
+        """Deactivate a tenant (soft delete)."""
+        async with self._get_client() as client:
+            response = await client.delete(f"/tenants/{tenant_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def get_tenant_users(self, tenant_id: int) -> List[Dict[str, Any]]:
+        """Get all users in a tenant."""
+        async with self._get_client() as client:
+            response = await client.get(f"/tenants/{tenant_id}/users")
+            response.raise_for_status()
+            return response.json()
+
+    async def add_user_to_tenant_by_tid(self, tenant_id: int, user_id: int) -> Dict[str, Any]:
+        """Add a user to a tenant."""
+        async with self._get_client() as client:
+            response = await client.post(f"/tenants/{tenant_id}/users/{user_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def remove_user_from_tenant_by_tid(self, tenant_id: int, user_id: int) -> Dict[str, Any]:
+        """Remove a user from a tenant."""
+        async with self._get_client() as client:
+            response = await client.delete(f"/tenants/{tenant_id}/users/{user_id}")
+            response.raise_for_status()
+            return response.json()
+
+    async def update_tenant_user_role(self, tenant_id: int, user_id: int, role: str) -> Dict[str, Any]:
+        """Update a user's TenantRole."""
+        async with self._get_client() as client:
+            response = await client.patch(
+                f"/tenants/{tenant_id}/users/{user_id}/role",
+                json={"role": role},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    # =========================================================================
     # STATEMENT OF APPLICABILITY (SoA)
     # =========================================================================
 

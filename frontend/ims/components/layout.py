@@ -134,6 +134,10 @@ def _build_nav_links(link_fn):
                     rx.fragment(
                         link_fn("Gebruikers", "/users", "users"),
                         rx.cond(
+                            AuthState.is_superuser,
+                            link_fn("Organisaties", "/tenants", "building"),
+                        ),
+                        rx.cond(
                             AuthState.is_admin,
                             link_fn("Beheer", "/admin", "settings"),
                         ),

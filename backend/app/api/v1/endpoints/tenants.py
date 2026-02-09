@@ -155,6 +155,43 @@ async def add_user_to_tenant(
     return {"message": "User added to tenant"}
 
 
+@router.patch("/{tenant_id}/users/{user_id}/role")
+async def update_tenant_user_role(
+    tenant_id: int,
+    user_id: int,
+    body: dict,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_admin),
+):
+    """Update a user's TenantRole. Requires Beheerder role."""
+    from app.models.core_models import TenantRole
+
+    role_str = body.get("role")
+    if not role_str:
+        raise HTTPException(status_code=400, detail="role is required")
+
+    try:
+        new_role = TenantRole(role_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid role: {role_str}. Must be OWNER, ADMIN, or MEMBER")
+
+    result = await session.execute(
+        select(TenantUser).where(
+            TenantUser.tenant_id == tenant_id,
+            TenantUser.user_id == user_id,
+        )
+    )
+    tenant_user = result.scalars().first()
+    if not tenant_user:
+        raise HTTPException(status_code=404, detail="User not member of tenant")
+
+    tenant_user.role = new_role
+    session.add(tenant_user)
+    await session.commit()
+
+    return {"message": f"Role updated to {new_role.value}"}
+
+
 @router.delete("/{tenant_id}/users/{user_id}")
 async def remove_user_from_tenant(
     tenant_id: int,

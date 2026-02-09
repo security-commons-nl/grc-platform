@@ -81,6 +81,14 @@ class AuthState(rx.State):
         return user.get("permissions", {}) if user else {}
 
     @rx.var
+    def is_superuser(self) -> bool:
+        """Check if user is superuser (platform-level admin)."""
+        user = self.user
+        if not user:
+            return False
+        return user.get("is_superuser", False)
+
+    @rx.var
     def is_admin(self) -> bool:
         """Check if user is admin (superuser or Beheerder role)."""
         user = self.user
