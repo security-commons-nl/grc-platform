@@ -42,9 +42,13 @@ class Language(str, Enum):
     EN = "en"
 
 class TenantRole(str, Enum):
-    OWNER = "OWNER"
-    ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
+    """
+    Organizational membership level — governs who can manage the tenant itself.
+    NOT about GRC content access (that's Role via UserScopeRole).
+    """
+    OWNER = "OWNER"    # Tenant creator, billing, partnerships
+    ADMIN = "ADMIN"    # Can invite/remove users in this tenant
+    MEMBER = "MEMBER"  # Regular member, content access via UserScopeRole
 
 class MappingType(str, Enum):
     EQUIVALENT = "Equivalent"
@@ -78,12 +82,16 @@ class AssetType(str, Enum):
     NETWORK = "Network"
 
 class Role(str, Enum):
-    """Unified role model based on Three Lines model."""
-    BEHEERDER = "Beheerder"          # Platform admin, cross-tenant
-    COORDINATOR = "Coordinator"      # 2nd line, cross-tenant, user management
+    """
+    GRC functional roles (Three Lines model).
+    Assigned per scope via UserScopeRole — determines what a user can DO with content.
+    Not to be confused with TenantRole which governs organizational membership.
+    """
+    BEHEERDER = "Beheerder"          # Full GRC access within tenant, sees all scopes
+    COORDINATOR = "Coordinator"      # 2nd line, user management, sees all scopes
     EIGENAAR = "Eigenaar"            # 1st line, scope-bound, risk acceptance
     MEDEWERKER = "Medewerker"        # 1st line, scope-bound, controls & tasks
-    TOEZICHTHOUDER = "Toezichthouder"  # 3rd line, read all + write findings
+    TOEZICHTHOUDER = "Toezichthouder"  # 3rd line, read all scopes + write findings
 
 class TenantRelationshipType(str, Enum):
     """Types of relationships between tenants"""
