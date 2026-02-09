@@ -27,12 +27,13 @@ def upgrade() -> None:
     # =========================================================================
     # 1. Create AcceptanceStatus enum type (if not already created by SQLModel)
     # =========================================================================
-    acceptance_status_enum = sa.Enum(
-        "Voorgesteld", "Geaccepteerd", "Afgewezen", "Verlopen",
-        name="acceptancestatus",
-        create_type=False,
-    )
-    acceptance_status_enum.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE acceptancestatus AS ENUM ('Voorgesteld', 'Geaccepteerd', 'Afgewezen', 'Verlopen');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # =========================================================================
     # 2. Create RiskScope table
@@ -72,7 +73,7 @@ def upgrade() -> None:
         sa.Column("owner_user_id", sa.Integer(), sa.ForeignKey("user.id"), nullable=True),
 
         # Acceptance
-        sa.Column("acceptance_status", acceptance_status_enum, nullable=False, server_default="Voorgesteld"),
+        sa.Column("acceptance_status", sa.VARCHAR(), nullable=False, server_default="Voorgesteld"),
         sa.Column("accepted_by_decision_id", sa.Integer(), sa.ForeignKey("decision.id"), nullable=True),
         sa.Column("risk_accepted", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("accepted_by_id", sa.Integer(), sa.ForeignKey("user.id"), nullable=True),
@@ -295,4 +296,4 @@ def downgrade() -> None:
     op.drop_table("controlriskscopelink")
     op.drop_table("riskscope")
 
-    sa.Enum(name="acceptancestatus").drop(op.get_bind(), checkfirst=True)
+    op.execute("DROP TYPE IF EXISTS acceptancestatus")
