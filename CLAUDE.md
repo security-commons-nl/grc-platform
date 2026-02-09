@@ -27,13 +27,13 @@ uvicorn app.main:app --reload
 
 ## Workflow
 
-After every code change: **commit and push to origin only**. Do NOT push to `server` unless explicitly asked.
+**Na elke code-wijziging: ALTIJD zelf committen en pushen naar origin.** Niet vragen, gewoon doen.
 
 ```bash
 git add <files> && git commit -m "..." && git push origin main
 ```
 
-- `origin` = GitHub (standaard push)
+- `origin` = GitHub — **altijd automatisch pushen na wijzigingen**
 - `server` = VPS (Hetzner) — **alleen pushen als de gebruiker het expliciet vraagt** (`git push server main`)
 - Local dev: `cd frontend && python -m reflex run` on http://localhost:3000
 
