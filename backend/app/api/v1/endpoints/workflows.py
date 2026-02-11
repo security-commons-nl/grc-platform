@@ -10,7 +10,7 @@ from sqlmodel import select
 
 from app.core.db import get_session
 from app.core.crud import TenantCRUDBase, CRUDBase
-from app.core.rbac import get_tenant_id
+from app.core.rbac import get_tenant_id, require_editor
 from app.models.core_models import (
     WorkflowDefinition,
     WorkflowState,
@@ -18,7 +18,10 @@ from app.models.core_models import (
     WorkflowInstance,
     WorkflowStepHistory,
     WorkflowStatus,
+    User,
+    AuditAction,
 )
+from app.services.audit_service import record_audit
 
 router = APIRouter()
 crud_definition = TenantCRUDBase(WorkflowDefinition)
@@ -376,10 +379,10 @@ async def get_available_transitions(
 async def execute_transition(
     instance_id: int,
     transition_id: int,
-    user_id: int = Query(..., description="ID of user executing the transition"),
     comment: Optional[str] = Query(None, description="Comment for this transition"),
     tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_editor),
 ):
     """
     Execute a transition to move the workflow to the next state.
@@ -423,7 +426,7 @@ async def execute_transition(
         current_history.exited_at = datetime.utcnow()
         current_history.transition_id = transition_id
         current_history.transition_name = transition.name
-        current_history.transitioned_by_id = user_id
+        current_history.transitioned_by_id = current_user.id
         current_history.comment = comment
 
         # Calculate duration
@@ -468,16 +471,26 @@ async def execute_transition(
     await session.commit()
     await session.refresh(instance)
 
+    await record_audit(
+        session, tenant_id=tenant_id,
+        entity_type="WorkflowInstance", entity_id=instance_id,
+        action=AuditAction.STATUS_CHANGE, changed_by_id=current_user.id,
+        field_name="current_state_id",
+        old_value=str(transition.from_state_id),
+        new_value=str(target_state.id),
+        reason=comment,
+    )
+
     return instance
 
 
 @router.post("/instances/{instance_id}/cancel", response_model=WorkflowInstance)
 async def cancel_workflow_instance(
     instance_id: int,
-    user_id: int = Query(..., description="ID of user canceling"),
     reason: Optional[str] = Query(None, description="Cancellation reason"),
     tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_editor),
 ):
     """Cancel a workflow instance."""
     instance = await crud_instance.get_or_404(session, instance_id, tenant_id)
@@ -488,6 +501,7 @@ async def cancel_workflow_instance(
             detail=f"Cannot cancel workflow in {instance.status.value} status"
         )
 
+    old_status = instance.status.value
     instance.status = WorkflowStatus.CANCELLED
     instance.completed_at = datetime.utcnow()
     instance.updated_at = datetime.utcnow()
@@ -495,6 +509,14 @@ async def cancel_workflow_instance(
     session.add(instance)
     await session.commit()
     await session.refresh(instance)
+
+    await record_audit(
+        session, tenant_id=tenant_id,
+        entity_type="WorkflowInstance", entity_id=instance_id,
+        action=AuditAction.STATUS_CHANGE, changed_by_id=current_user.id,
+        field_name="status", old_value=old_status, new_value="CANCELLED",
+        reason=reason,
+    )
 
     return instance
 

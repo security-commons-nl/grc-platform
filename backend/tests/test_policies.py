@@ -89,7 +89,7 @@ class TestPolicyWorkflow:
         # 3. Approve
         approve_response = await client.post(
             f"/api/v1/policies/{policy_id}/approve",
-            params={"approved_by_id": 1}
+
         )
         assert approve_response.status_code == 200
         assert approve_response.json()["state"] == "Approved"
@@ -114,7 +114,7 @@ class TestPolicyWorkflow:
         # Try to approve without submitting for review first
         approve_response = await client.post(
             f"/api/v1/policies/{policy_id}/approve",
-            params={"approved_by_id": 1}
+
         )
         assert approve_response.status_code == 400
 

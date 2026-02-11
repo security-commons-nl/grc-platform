@@ -10,13 +10,16 @@ from sqlmodel import select
 
 from app.core.db import get_session
 from app.core.crud import TenantCRUDBase
-from app.core.rbac import get_tenant_id
+from app.core.rbac import get_tenant_id, require_configurer
 from app.models.core_models import (
     Document,
     Status,
+    User,
     VerificationStatus,
 )
 from app.services.knowledge_service import knowledge_service
+from app.services.audit_service import record_audit
+from app.models.core_models import AuditAction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -146,9 +149,9 @@ async def submit_for_review(
 @router.post("/{document_id}/approve", response_model=Document)
 async def approve_document(
     document_id: int,
-    approved_by_id: int,
     tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_configurer),
 ):
     """
     Approve a document.
@@ -166,7 +169,7 @@ async def approve_document(
     approved_document = await crud_document.update(session, db_obj=db_document, obj_in={
         "status": Status.ACTIVE,
         "verification_status": VerificationStatus.VERIFIED,
-        "approved_by_id": approved_by_id,
+        "approved_by_id": current_user.id,
         "approved_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }, tenant_id=tenant_id)
@@ -183,6 +186,12 @@ async def approve_document(
         )
     except Exception as e:
         logger.warning(f"Failed to index document {document_id} in knowledge base: {e}")
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="Document", entity_id=document_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="verification_status", old_value="PENDING_APPROVAL", new_value="VERIFIED",
+    )
 
     return approved_document
 

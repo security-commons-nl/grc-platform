@@ -21,7 +21,9 @@ from app.models.core_models import (
     User,
     CoverageType,
     ImplementationStatus,
+    AuditAction,
 )
+from app.services.audit_service import record_audit
 
 router = APIRouter()
 crud_soa = ScopedTenantCRUDBase(ApplicabilityStatement)
@@ -107,12 +109,12 @@ async def create_applicability_statement(
             detail="Applicability statement already exists for this scope/requirement"
         )
 
-    # Set coverage type based on measure links
-    if soa.local_measure_id and soa.shared_measure_id:
+    # Set coverage type based on control links
+    if soa.local_control_id and soa.shared_control_id:
         soa.coverage_type = CoverageType.COMBINED
-    elif soa.local_measure_id:
+    elif soa.local_control_id:
         soa.coverage_type = CoverageType.LOCAL
-    elif soa.shared_measure_id:
+    elif soa.shared_control_id:
         soa.coverage_type = CoverageType.SHARED
     elif not soa.is_applicable:
         soa.coverage_type = CoverageType.NOT_APPLICABLE
@@ -145,16 +147,16 @@ async def update_applicability_statement(
     """Update an applicability statement."""
     db_soa = await crud_soa.get_scoped_or_404(session, soa_id, tenant_id, accessible_scopes)
 
-    # Update coverage type based on measure changes
-    local_measure = soa_update.get("local_measure_id", db_soa.local_measure_id)
-    shared_measure = soa_update.get("shared_measure_id", db_soa.shared_measure_id)
+    # Update coverage type based on control changes
+    local_control = soa_update.get("local_control_id", db_soa.local_control_id)
+    shared_control = soa_update.get("shared_control_id", db_soa.shared_control_id)
     is_applicable = soa_update.get("is_applicable", db_soa.is_applicable)
 
-    if local_measure and shared_measure:
+    if local_control and shared_control:
         soa_update["coverage_type"] = CoverageType.COMBINED
-    elif local_measure:
+    elif local_control:
         soa_update["coverage_type"] = CoverageType.LOCAL
-    elif shared_measure:
+    elif shared_control:
         soa_update["coverage_type"] = CoverageType.SHARED
     elif not is_applicable:
         soa_update["coverage_type"] = CoverageType.NOT_APPLICABLE
@@ -293,8 +295,8 @@ async def link_measure_to_requirements(
 
         if existing:
             # Update existing
-            existing.local_measure_id = measure_id
-            if getattr(existing, "shared_measure_id", None):
+            existing.local_control_id = measure_id
+            if getattr(existing, "shared_control_id", None):
                 existing.coverage_type = CoverageType.COMBINED
             else:
                 existing.coverage_type = CoverageType.LOCAL
@@ -309,7 +311,7 @@ async def link_measure_to_requirements(
                 requirement_id=req_id,
                 is_applicable=True,
                 justification="Linked via measure",
-                local_measure_id=measure_id,
+                local_control_id=measure_id,
                 coverage_type=CoverageType.LOCAL,
                 implementation_status=ImplementationStatus.IN_PROGRESS,
             )
@@ -503,7 +505,6 @@ async def get_soa_by_standard(
 @router.post("/{soa_id}/review", response_model=ApplicabilityStatement)
 async def review_applicability_statement(
     soa_id: int,
-    reviewer_id: int = Query(..., description="ID of the reviewing user"),
     notes: Optional[str] = Query(None, description="Review notes"),
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
@@ -515,20 +516,28 @@ async def review_applicability_statement(
 
     update_data = {
         "last_reviewed_at": datetime.utcnow(),
-        "reviewed_by_id": reviewer_id,
+        "reviewed_by_id": current_user.id,
         "updated_at": datetime.utcnow(),
     }
 
     if notes:
         update_data["implementation_notes"] = (db_soa.implementation_notes or "") + f"\n[Review] {notes}"
 
-    return await crud_soa.update(session, db_obj=db_soa, obj_in=update_data, tenant_id=tenant_id)
+    result = await crud_soa.update(session, db_obj=db_soa, obj_in=update_data, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="ApplicabilityStatement", entity_id=soa_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="last_reviewed_at", new_value=datetime.utcnow().isoformat(),
+        reason=notes,
+    )
+
+    return result
 
 
 @router.post("/scope/{scope_id}/bulk-review")
 async def bulk_review_soa(
     scope_id: int,
-    reviewer_id: int = Query(..., description="ID of the reviewing user"),
     tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_configurer),
@@ -548,11 +557,18 @@ async def bulk_review_soa(
     now = datetime.utcnow()
     for soa in statements:
         soa.last_reviewed_at = now
-        soa.reviewed_by_id = reviewer_id
+        soa.reviewed_by_id = current_user.id
         soa.updated_at = now
         session.add(soa)
 
     await session.commit()
+
+    for soa in statements:
+        await record_audit(
+            session, tenant_id=tenant_id, entity_type="ApplicabilityStatement", entity_id=soa.id,
+            action=AuditAction.APPROVE, changed_by_id=current_user.id,
+            field_name="last_reviewed_at", new_value=now.isoformat(),
+        )
 
     return {
         "message": f"Reviewed {len(statements)} applicability statements",

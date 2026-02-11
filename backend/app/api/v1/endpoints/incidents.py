@@ -21,7 +21,9 @@ from app.models.core_models import (
     RiskLevel,
     FindingSeverity,
     User,
+    AuditAction,
 )
+from app.services.audit_service import record_audit
 
 router = APIRouter()
 crud_incident = ScopedTenantCRUDBase(Incident)
@@ -377,7 +379,6 @@ async def update_exception(
 @router.post("/exceptions/{exception_id}/approve", response_model=core_models.Exception)
 async def approve_exception(
     exception_id: int,
-    approved_by_id: int,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
@@ -389,11 +390,19 @@ async def approve_exception(
     if db_exception.status != Status.DRAFT:
         raise HTTPException(status_code=400, detail="Only draft exceptions can be approved")
 
-    return await crud_exception.update(session, db_obj=db_exception, obj_in={
+    result = await crud_exception.update(session, db_obj=db_exception, obj_in={
         "status": Status.ACTIVE,
         "approval_date": datetime.utcnow(),
-        "approved_by_id": approved_by_id,
+        "approved_by_id": current_user.id,
     }, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="Exception", entity_id=exception_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="status", old_value="Draft", new_value="Active",
+    )
+
+    return result
 
 
 @router.post("/exceptions/{exception_id}/reject", response_model=core_models.Exception)
@@ -421,7 +430,6 @@ async def extend_exception(
     exception_id: int,
     new_expiration_date: datetime,
     extension_justification: str,
-    approved_by_id: int,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
@@ -436,9 +444,21 @@ async def extend_exception(
             detail="New expiration date must be after current expiration"
         )
 
-    return await crud_exception.update(session, db_obj=db_exception, obj_in={
+    old_date = db_exception.expiration_date.isoformat() if db_exception.expiration_date else None
+    result = await crud_exception.update(session, db_obj=db_exception, obj_in={
         "expiration_date": new_expiration_date,
+        "approved_by_id": current_user.id,
     }, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="Exception", entity_id=exception_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="expiration_date", old_value=old_date,
+        new_value=new_expiration_date.isoformat(),
+        reason=extension_justification,
+    )
+
+    return result
 
 
 @router.get("/exceptions/expiring-soon", response_model=List[core_models.Exception])

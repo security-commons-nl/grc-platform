@@ -27,6 +27,8 @@ from app.models.core_models import (
     User,
 )
 from app.services.knowledge_service import knowledge_service
+from app.services.audit_service import record_audit
+from app.models.core_models import AuditAction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -252,7 +254,6 @@ async def delete_risk(
 @router.post("/{risk_id}/accept", response_model=Risk)
 async def accept_risk(
     risk_id: int,
-    accepted_by_id: int,
     justification: str,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
@@ -262,12 +263,21 @@ async def accept_risk(
     """Accept a risk (formal risk acceptance)."""
     db_risk = await crud_risk.get_scoped_or_404(session, risk_id, tenant_id, accessible_scopes)
 
-    return await crud_risk.update(session, db_obj=db_risk, obj_in={
+    result = await crud_risk.update(session, db_obj=db_risk, obj_in={
         "risk_accepted": True,
-        "accepted_by_id": accepted_by_id,
+        "accepted_by_id": current_user.id,
         "acceptance_date": datetime.utcnow(),
         "acceptance_justification": justification,
     }, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="Risk", entity_id=risk_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="risk_accepted", old_value="false", new_value="true",
+        reason=justification,
+    )
+
+    return result
 
 
 @router.post("/{risk_id}/revoke-acceptance", response_model=Risk)

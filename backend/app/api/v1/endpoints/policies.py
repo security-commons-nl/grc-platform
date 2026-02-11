@@ -17,6 +17,8 @@ from app.models.core_models import (
     User,
 )
 from app.services.knowledge_service import knowledge_service
+from app.services.audit_service import record_audit
+from app.models.core_models import AuditAction
 
 router = APIRouter()
 crud_policy = TenantCRUDBase(Policy)
@@ -148,7 +150,6 @@ async def submit_for_review(
 @router.post("/{policy_id}/approve", response_model=Policy)
 async def approve_policy(
     policy_id: int,
-    approved_by_id: int,
     tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_configurer),
@@ -162,11 +163,19 @@ async def approve_policy(
             detail=f"Only policies in review can be approved. Current state: {db_policy.state}"
         )
 
-    return await crud_policy.update(session, db_obj=db_policy, obj_in={
+    result = await crud_policy.update(session, db_obj=db_policy, obj_in={
         "state": PolicyState.APPROVED,
-        "approved_by_id": approved_by_id,
+        "approved_by_id": current_user.id,
         "updated_at": datetime.utcnow(),
     }, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="Policy", entity_id=policy_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="state", old_value="Review", new_value="Approved",
+    )
+
+    return result
 
 
 @router.post("/{policy_id}/reject", response_model=Policy)

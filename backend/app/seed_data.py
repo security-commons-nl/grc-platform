@@ -393,8 +393,8 @@ async def seed_database():
                 is_applicable=True,
                 justification="Applicable to organization scope",
                 implementation_status=ImplementationStatus.IMPLEMENTED if i < 5 else ImplementationStatus.IN_PROGRESS,
-                coverage_type=CoverageType.LOCAL if i < 7 else CoverageType.NOT_COVERED,
-                local_measure_id=measures[i % len(measures)].id if i < 7 else None,
+                coverage_type=CoverageType.NOT_COVERED,
+                local_control_id=None,
             )
             session.add(soa)
         await session.commit()

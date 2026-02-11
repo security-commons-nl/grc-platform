@@ -11,13 +11,16 @@ from sqlmodel import select
 
 from app.core.db import get_session
 from app.core.crud import ScopedTenantCRUDBase, TenantCRUDBase
-from app.core.rbac import get_tenant_id, get_scope_access
+from app.core.rbac import get_tenant_id, get_scope_access, require_editor
 from app.models.core_models import (
     ContinuityPlan,
     ContinuityTest,
     Status,
     AuditResult,
+    User,
+    AuditAction,
 )
+from app.services.audit_service import record_audit
 
 router = APIRouter()
 crud_plan = ScopedTenantCRUDBase(ContinuityPlan)
@@ -120,10 +123,10 @@ async def delete_continuity_plan(
 @router.post("/plans/{plan_id}/activate", response_model=ContinuityPlan)
 async def activate_plan(
     plan_id: int,
-    approved_by_id: int,
     tenant_id: int = Depends(get_tenant_id),
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_editor),
 ):
     """Activate a continuity plan."""
     db_plan = await crud_plan.get_scoped_or_404(session, plan_id, tenant_id, accessible_scopes)
@@ -134,12 +137,20 @@ async def activate_plan(
             detail="Only draft plans can be activated"
         )
 
-    return await crud_plan.update(session, db_obj=db_plan, obj_in={
+    result = await crud_plan.update(session, db_obj=db_plan, obj_in={
         "status": Status.ACTIVE,
-        "approved_by_id": approved_by_id,
+        "approved_by_id": current_user.id,
         "approved_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }, tenant_id=tenant_id)
+
+    await record_audit(
+        session, tenant_id=tenant_id, entity_type="ContinuityPlan", entity_id=plan_id,
+        action=AuditAction.APPROVE, changed_by_id=current_user.id,
+        field_name="status", old_value="Draft", new_value="Active",
+    )
+
+    return result
 
 
 @router.post("/plans/{plan_id}/archive", response_model=ContinuityPlan)

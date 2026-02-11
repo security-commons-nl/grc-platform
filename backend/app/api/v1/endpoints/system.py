@@ -10,7 +10,8 @@ import httpx
 
 from app.core.db import get_session
 from app.core.config import settings
-from app.models.core_models import User
+from app.core.rbac import get_tenant_id
+from app.models.core_models import User, AuditLog
 
 router = APIRouter()
 
@@ -89,24 +90,30 @@ async def system_stats(
 @router.get("/audit-log")
 async def audit_log(
     limit: int = 100,
+    tenant_id: int = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_session),
 ):
-    """Recent login activity (based on last_login field)."""
+    """Recent audit trail entries from the AuditLog table."""
     result = await session.execute(
-        select(User)
-        .where(User.last_login != None)
-        .order_by(User.last_login.desc())
+        select(AuditLog)
+        .where(AuditLog.tenant_id == tenant_id)
+        .order_by(AuditLog.changed_at.desc())
         .limit(limit)
     )
-    users = result.scalars().all()
+    entries = result.scalars().all()
 
     return [
         {
-            "user_id": u.id,
-            "username": u.username,
-            "full_name": u.full_name,
-            "last_login": u.last_login.isoformat() if u.last_login else None,
-            "is_active": u.is_active,
+            "id": e.id,
+            "entity_type": e.entity_type,
+            "entity_id": e.entity_id,
+            "action": e.action.value if e.action else None,
+            "field_name": e.field_name,
+            "old_value": e.old_value,
+            "new_value": e.new_value,
+            "changed_by_id": e.changed_by_id,
+            "changed_at": e.changed_at.isoformat() if e.changed_at else None,
+            "reason": e.reason,
         }
-        for u in users
+        for e in entries
     ]
