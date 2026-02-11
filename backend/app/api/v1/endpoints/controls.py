@@ -9,7 +9,7 @@ from datetime import datetime
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import select, delete
 
 from app.core.db import get_session
 from app.core.crud import ScopedTenantCRUDBase
@@ -126,8 +126,17 @@ async def delete_control(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_editor),
 ):
-    """Delete a control."""
+    """Delete a control and its risk/scope links."""
     await crud_control.get_scoped_or_404(session, control_id, tenant_id, accessible_scopes)
+
+    # Remove linked rows that block cascade-less deletion
+    await session.execute(
+        delete(ControlRiskLink).where(ControlRiskLink.control_id == control_id)
+    )
+    await session.execute(
+        delete(ControlRiskScopeLink).where(ControlRiskScopeLink.control_id == control_id)
+    )
+
     deleted = await crud_control.delete(session, id=control_id, tenant_id=tenant_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Control not found")
