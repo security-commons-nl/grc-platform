@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "ims"
     SQLALCHEMY_DATABASE_URI: str | None = None
 
+    # App-level DB user (non-superuser, RLS enforced)
+    # If not set, falls back to POSTGRES_USER (superuser — RLS bypassed!)
+    POSTGRES_APP_USER: str | None = None
+    POSTGRES_APP_PASSWORD: str | None = None
+    APP_DATABASE_URI: str | None = None
+
     # ==========================================================================
     # AI / LLM Configuration - Multi-Provider Gateway
     # ==========================================================================
@@ -83,6 +89,14 @@ class Settings(BaseSettings):
         if not self.SQLALCHEMY_DATABASE_URI:
             # Use asyncpg driver for async SQLAlchemy
             self.SQLALCHEMY_DATABASE_URI = f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        
+        if not self.APP_DATABASE_URI:
+            if self.POSTGRES_APP_USER and self.POSTGRES_APP_PASSWORD:
+                # Non-superuser for runtime (RLS enforced)
+                self.APP_DATABASE_URI = f"postgresql+asyncpg://{self.POSTGRES_APP_USER}:{self.POSTGRES_APP_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            else:
+                # Fallback: use superuser (RLS bypassed!)
+                self.APP_DATABASE_URI = self.SQLALCHEMY_DATABASE_URI
 
     class Config:
         case_sensitive = True

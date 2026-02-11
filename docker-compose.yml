@@ -55,6 +55,9 @@ services:
       AI_PROVIDER_PRIORITY: ${AI_PROVIDER_PRIORITY:-mistral,scaleway,ollama}
       AI_TIMEOUT: ${AI_TIMEOUT:-120}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-changeme}
+      # Non-superuser for RLS enforcement (if not set, falls back to POSTGRES_USER)
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-}
     ports:
       - "127.0.0.1:8001:8000"
     depends_on:
