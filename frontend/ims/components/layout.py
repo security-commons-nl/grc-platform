@@ -152,6 +152,10 @@ def _build_nav_links(link_fn):
 # Sidebar content (shared between desktop and mobile)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Sidebar content (shared between desktop and mobile)
+# ---------------------------------------------------------------------------
+
 def _sidebar_inner() -> rx.Component:
     """Sidebar content: header, navigation, user section."""
     return rx.vstack(
@@ -188,13 +192,13 @@ def _sidebar_inner() -> rx.Component:
                 align_items="start",
             ),
             rx.spacer(),
-            # X button — only visible on mobile
+            # X button — only visible on mobile (sm, md-1)
             rx.icon_button(
                 rx.icon("x", size=20),
                 variant="ghost",
                 size="2",
                 on_click=BaseState.close_sidebar,
-                display=rx.breakpoints(initial="flex", md="none"),
+                display=["flex", "flex", "none", "none", "none"],
             ),
             width="100%",
             padding="16px",
@@ -261,7 +265,7 @@ def desktop_sidebar() -> rx.Component:
     """Permanent sidebar for desktop — part of flex layout, pushes content."""
     return rx.box(
         _sidebar_inner(),
-        display=rx.breakpoints(initial="none", md="flex"),
+        display=["none", "none", "flex", "flex", "flex"],
         width="260px",
         min_width="260px",
         background="var(--gray-a2)",
@@ -334,7 +338,7 @@ def top_bar() -> rx.Component:
             padding="8px 12px",
             align="center",
         ),
-        display=rx.breakpoints(initial="block", md="none"),
+        display=["block", "block", "none", "none", "none"],
         border_bottom="1px solid var(--gray-a5)",
         background="var(--color-background)",
         position="sticky",
@@ -363,7 +367,7 @@ def page_header(title: str, subtitle: str = "") -> rx.Component:
             rx.spacer(),
             width="100%",
         ),
-        padding=rx.breakpoints(initial="12px 16px", md="24px"),
+        padding=["12px 16px", "12px 16px", "24px", "24px", "24px"],
         border_bottom="1px solid var(--gray-a5)",
     )
 
@@ -390,7 +394,7 @@ def layout(content: rx.Component, title: str = "", subtitle: str = "") -> rx.Com
                     ),
                     rx.box(
                         content,
-                        padding=rx.breakpoints(initial="12px", md="24px"),
+                        padding=["12px", "12px", "24px", "24px", "24px"],
                         overflow_y="auto",
                         flex="1",
                     ),
