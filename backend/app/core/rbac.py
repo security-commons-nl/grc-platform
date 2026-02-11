@@ -16,21 +16,58 @@ from collections import defaultdict
 from typing import Optional, Set
 
 from fastapi import Depends, Header, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.core.db import get_session
+from app.core.config import settings
 from app.models.core_models import User, UserScopeRole, Role, TenantUser, Scope
 
 logger = logging.getLogger(__name__)
 
+# Optional bearer scheme (auto_error=False so we can fall back to X-User-ID in dev)
+_bearer_scheme = HTTPBearer(auto_error=False)
+
+_DEV_MODE = settings.JWT_SECRET.startswith("CHANGE_ME")
+
 
 async def get_current_user(
-    x_user_id: int = Header(..., alias="X-User-ID"),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    x_user_id: int | None = Header(None, alias="X-User-ID"),
     session: AsyncSession = Depends(get_session),
 ) -> User:
-    """Extract user from X-User-ID header."""
-    result = await session.execute(select(User).where(User.id == x_user_id))
+    """Extract and verify the current user.
+
+    Priority:
+    1. JWT Bearer token (production)
+    2. X-User-ID header (dev/testing only, when JWT_SECRET is default)
+    """
+    user_id: int | None = None
+
+    # 1. Try JWT
+    if credentials and credentials.credentials:
+        from app.core.jwt import decode_access_token
+        from jose import JWTError
+        try:
+            payload = decode_access_token(credentials.credentials)
+            user_id = int(payload["sub"])
+        except (JWTError, KeyError, ValueError):
+            raise HTTPException(status_code=401, detail="Ongeldige of verlopen token")
+
+    # 2. Fallback to X-User-ID in dev mode only
+    if user_id is None and x_user_id is not None:
+        if not _DEV_MODE:
+            raise HTTPException(
+                status_code=401,
+                detail="X-User-ID header is niet toegestaan in productie. Gebruik een Bearer token.",
+            )
+        user_id = x_user_id
+
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Authenticatie vereist")
+
+    result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalars().first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Gebruiker niet gevonden of inactief")
@@ -83,23 +120,60 @@ async def get_tenant_id(
         return x_tenant_id
 
     # Fallback: resolve default tenant from memberships
-    logger.warning(
-        "X-Tenant-ID header missing for user %s — using default tenant (deprecated)",
-        current_user.id,
-    )
-    result = await session.execute(
-        select(TenantUser.tenant_id).where(
-            TenantUser.user_id == current_user.id,
-            TenantUser.is_active == True,
-        ).order_by(TenantUser.is_default.desc(), TenantUser.id.asc()).limit(1)
-    )
-    default_tid = result.scalars().first()
-    if not default_tid:
-        raise HTTPException(
-            status_code=403,
-            detail="Gebruiker heeft geen tenant-lidmaatschap",
+    if not current_user.is_superuser: # Optimization: superusers might not have memberships but can access everything
+        logger.warning(
+            "X-Tenant-ID header missing for user %s — using default tenant (deprecated)",
+            current_user.id,
         )
-    return default_tid
+        result = await session.execute(
+            select(TenantUser.tenant_id).where(
+                TenantUser.user_id == current_user.id,
+                TenantUser.is_active == True,
+            ).order_by(TenantUser.is_default.desc(), TenantUser.id.asc()).limit(1)
+        )
+        default_tid = result.scalars().first()
+        if not default_tid:
+            raise HTTPException(
+                status_code=403,
+                detail="Gebruiker heeft geen tenant-lidmaatschap",
+            )
+        tenant_id = default_tid
+    else:
+        # Superuser with no header: we need *some* tenant context if we are going to query RLS tables.
+        # But maybe they want to see *everything*? RLS policy for shared tables handles NULL.
+        # RLS policy for tenant-specific tables (tenant_isolation) usually REQUIRES a current_setting.
+        # If superuser, we might want to bypass RLS? 
+        # The app user has NOBYPASSRLS. So we MUST set a tenant if we want to read tenant data.
+        # For now, let's assume superuser must also specify tenant or have a default.
+        # If we really want "all tenants", we need a special "bypass" setting or use the proper postgres role.
+        # But we are running as 'ims_app' (NOBYPASSRLS).
+        
+        # Let's try to get *any* tenant or just fail if none provided for now, 
+        # unless we want to strictly require X-Tenant-ID for superusers too.
+        # For backward compatibility, let's look for a membership even for superuser.
+         result = await session.execute(
+            select(TenantUser.tenant_id).where(
+                TenantUser.user_id == current_user.id,
+                TenantUser.is_active == True,
+            ).order_by(TenantUser.is_default.desc(), TenantUser.id.asc()).limit(1)
+        )
+         tenant_id = result.scalars().first()
+         # If superuser has no tenants, they might be in trouble accessing RLS tables.
+         # We'll see.
+    
+    # -------------------------------------------------------------------------
+    # RLS CONTEXT SETUP
+    # -------------------------------------------------------------------------
+    # CRITICAL: Set app.current_tenant for the session
+    if tenant_id:
+        from sqlalchemy import text
+        # Use set_config because SET command does not support bind parameters in asyncpg
+        await session.execute(
+            text("SELECT set_config('app.current_tenant', :tenant_id, false)"), 
+            {"tenant_id": str(tenant_id)}
+        )
+    
+    return tenant_id
 
 
 # ---------------------------------------------------------------------------
@@ -195,26 +269,21 @@ def require_role(*allowed_roles: Role):
     Superusers bypass the check.
     """
     async def _guard(
-        x_user_id: int = Header(..., alias="X-User-ID"),
+        current_user: User = Depends(get_current_user),
         x_tenant_id: int | None = Header(None, alias="X-Tenant-ID"),
         session: AsyncSession = Depends(get_session),
     ) -> User:
-        result = await session.execute(select(User).where(User.id == x_user_id))
-        user = result.scalars().first()
-        if not user or not user.is_active:
-            raise HTTPException(status_code=401, detail="Gebruiker niet gevonden of inactief")
-
         # Superuser bypass
-        if user.is_superuser:
-            return user
+        if current_user.is_superuser:
+            return current_user
 
-        roles = await get_user_roles(user, session, tenant_id=x_tenant_id)
+        roles = await get_user_roles(current_user, session, tenant_id=x_tenant_id)
         if not roles.intersection(set(allowed_roles)):
             raise HTTPException(
                 status_code=403,
                 detail="Onvoldoende rechten voor deze actie",
             )
-        return user
+        return current_user
 
     return _guard
 
