@@ -129,13 +129,17 @@ async def delete_control(
     """Delete a control and its risk/scope links."""
     await crud_control.get_scoped_or_404(session, control_id, tenant_id, accessible_scopes)
 
-    # Remove linked rows that block cascade-less deletion
+    # Remove linked rows first, then flush so ORM sees them gone before the Control delete
     await session.execute(
         delete(ControlRiskLink).where(ControlRiskLink.control_id == control_id)
     )
     await session.execute(
         delete(ControlRiskScopeLink).where(ControlRiskScopeLink.control_id == control_id)
     )
+    await session.flush()
+
+    # Expire cached relationships so ORM doesn't try to blank-out already-deleted PKs
+    session.expire_all()
 
     deleted = await crud_control.delete(session, id=control_id, tenant_id=tenant_id)
     if not deleted:
