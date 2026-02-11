@@ -243,10 +243,14 @@ async def delete_risk(
     await crud_risk.get_scoped_or_404(session, risk_id, tenant_id, accessible_scopes)
 
     from sqlalchemy import text
+    # Delete controlriskscopelink via riskscope (indirect FK)
+    await session.execute(
+        text("DELETE FROM controlriskscopelink WHERE risk_scope_id IN (SELECT id FROM riskscope WHERE risk_id = :rid)"),
+        {"rid": risk_id},
+    )
     # Delete non-nullable FK rows
     for tbl, col in [
         ("controlrisklink", "risk_id"),
-        ("controlriskscopelink", "risk_id"),
         ("riskthreatlink", "risk_id"),
         ("decisionrisklink", "risk_id"),
         ("riskscope", "risk_id"),
