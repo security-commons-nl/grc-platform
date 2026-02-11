@@ -9,7 +9,7 @@ from datetime import datetime
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, delete
+from sqlmodel import select
 
 from app.core.db import get_session
 from app.core.crud import ScopedTenantCRUDBase
@@ -126,24 +126,33 @@ async def delete_control(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_editor),
 ):
-    """Delete a control and its risk/scope links."""
+    """Delete a control and all FK-dependent rows."""
     await crud_control.get_scoped_or_404(session, control_id, tenant_id, accessible_scopes)
 
-    # Remove linked rows first, then flush so ORM sees them gone before the Control delete
+    # Delete all FK-dependent rows via raw SQL to avoid ORM relationship conflicts
+    from sqlalchemy import text
+    for tbl, col in [
+        ("controlrisklink", "control_id"),
+        ("controlriskscopelink", "control_id"),
+        ("controlrequirementlink", "control_id"),
+        ("controlmeasurelink", "control_id"),
+        ("incidentcontrollink", "control_id"),
+        ("evidence", "control_id"),
+        ("finding", "control_id"),
+        ("sharedcontrol", "control_id"),
+        ("applicabilitystatement", "local_control_id"),
+        ("gapanalysisitem", "existing_control_id"),
+    ]:
+        await session.execute(text(f"DELETE FROM {tbl} WHERE {col} = :cid"), {"cid": control_id})
     await session.execute(
-        delete(ControlRiskLink).where(ControlRiskLink.control_id == control_id)
+        text("UPDATE correctiveaction SET control_id = NULL WHERE control_id = :cid"), {"cid": control_id}
     )
     await session.execute(
-        delete(ControlRiskScopeLink).where(ControlRiskScopeLink.control_id == control_id)
+        text("UPDATE correctiveaction SET control_created_id = NULL WHERE control_created_id = :cid"), {"cid": control_id}
     )
-    await session.flush()
+    await session.execute(text("DELETE FROM control WHERE id = :cid AND tenant_id = :tid"), {"cid": control_id, "tid": tenant_id})
+    await session.commit()
 
-    # Expire cached relationships so ORM doesn't try to blank-out already-deleted PKs
-    session.expire_all()
-
-    deleted = await crud_control.delete(session, id=control_id, tenant_id=tenant_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Control not found")
     return {"message": "Control deleted"}
 
 
