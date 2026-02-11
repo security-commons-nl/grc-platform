@@ -239,11 +239,33 @@ async def delete_risk(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_editor),
 ):
-    """Delete a risk."""
+    """Delete a risk and all FK-dependent rows."""
     await crud_risk.get_scoped_or_404(session, risk_id, tenant_id, accessible_scopes)
-    deleted = await crud_risk.delete(session, id=risk_id, tenant_id=tenant_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Risk not found")
+
+    from sqlalchemy import text
+    # Delete non-nullable FK rows
+    for tbl, col in [
+        ("controlrisklink", "risk_id"),
+        ("controlriskscopelink", "risk_id"),
+        ("riskthreatlink", "risk_id"),
+        ("decisionrisklink", "risk_id"),
+        ("riskscope", "risk_id"),
+    ]:
+        await session.execute(text(f"DELETE FROM {tbl} WHERE {col} = :rid"), {"rid": risk_id})
+    # Null out nullable FK columns
+    for tbl, col in [
+        ("issue", "risk_id"),
+        ("exception", "risk_id"),
+        ("correctiveaction", "risk_id"),
+        ("initiative", "risk_id"),
+    ]:
+        await session.execute(text(f"UPDATE {tbl} SET {col} = NULL WHERE {col} = :rid"), {"rid": risk_id})
+    # Delete the risk itself
+    await session.execute(
+        text("DELETE FROM risk WHERE id = :rid AND tenant_id = :tid"),
+        {"rid": risk_id, "tid": tenant_id},
+    )
+    await session.commit()
     return {"message": "Risk deleted"}
 
 

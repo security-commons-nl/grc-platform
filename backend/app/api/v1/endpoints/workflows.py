@@ -189,10 +189,21 @@ async def delete_workflow_state(
     state_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a workflow state."""
-    deleted = await crud_state.delete(session, id=state_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="State not found")
+    """Delete a workflow state and all FK-dependent rows."""
+    await crud_state.get_or_404(session, state_id)
+
+    from sqlalchemy import text
+    # Delete transitions referencing this state (from or to)
+    await session.execute(
+        text("DELETE FROM workflowtransition WHERE from_state_id = :sid OR to_state_id = :sid"),
+        {"sid": state_id},
+    )
+    # Delete the state itself
+    await session.execute(
+        text("DELETE FROM workflowstate WHERE id = :sid"),
+        {"sid": state_id},
+    )
+    await session.commit()
     return {"message": "State deleted"}
 
 

@@ -101,7 +101,7 @@ async def delete_continuity_plan(
     accessible_scopes: set[int] | None = Depends(get_scope_access),
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a continuity plan (only drafts)."""
+    """Delete a continuity plan (only drafts) and all FK-dependent rows."""
     db_plan = await crud_plan.get_scoped_or_404(session, plan_id, tenant_id, accessible_scopes)
 
     if db_plan.status != Status.DRAFT:
@@ -110,9 +110,23 @@ async def delete_continuity_plan(
             detail="Only draft plans can be deleted"
         )
 
-    deleted = await crud_plan.delete(session, id=plan_id, tenant_id=tenant_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Plan not found")
+    from sqlalchemy import text
+    # Delete non-nullable FK rows
+    await session.execute(
+        text("DELETE FROM continuitytest WHERE plan_id = :pid"),
+        {"pid": plan_id},
+    )
+    # Null out nullable FK columns
+    await session.execute(
+        text("UPDATE incident SET continuity_plan_id = NULL WHERE continuity_plan_id = :pid"),
+        {"pid": plan_id},
+    )
+    # Delete the plan itself
+    await session.execute(
+        text("DELETE FROM continuityplan WHERE id = :pid AND tenant_id = :tid"),
+        {"pid": plan_id, "tid": tenant_id},
+    )
+    await session.commit()
     return {"message": "Plan deleted"}
 
 

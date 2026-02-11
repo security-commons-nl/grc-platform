@@ -222,13 +222,31 @@ async def delete_assessment(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_configurer),
 ):
-    """Delete an assessment."""
+    """Delete an assessment and all FK-dependent rows."""
     await crud_assessment.get_scoped_or_404(
         session, assessment_id, tenant_id, accessible_scopes,
     )
-    deleted = await crud_assessment.delete(session, id=assessment_id, tenant_id=tenant_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    from sqlalchemy import text
+    # Delete non-nullable FK rows
+    await session.execute(
+        text("DELETE FROM assessmentresponse WHERE assessment_id = :aid"),
+        {"aid": assessment_id},
+    )
+    # Null out nullable FK columns
+    for tbl, col in [
+        ("evidence", "assessment_id"),
+        ("finding", "assessment_id"),
+        ("continuitytest", "assessment_id"),
+        ("auditplan", "assessment_id"),
+    ]:
+        await session.execute(text(f"UPDATE {tbl} SET {col} = NULL WHERE {col} = :aid"), {"aid": assessment_id})
+    # Delete the assessment itself
+    await session.execute(
+        text("DELETE FROM assessment WHERE id = :aid AND tenant_id = :tid"),
+        {"aid": assessment_id, "tid": tenant_id},
+    )
+    await session.commit()
     return {"message": "Assessment deleted"}
 
 

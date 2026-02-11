@@ -113,11 +113,27 @@ async def delete_incident(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_editor),
 ):
-    """Delete an incident."""
+    """Delete an incident and all FK-dependent rows."""
     await crud_incident.get_scoped_or_404(session, incident_id, tenant_id, accessible_scopes)
-    deleted = await crud_incident.delete(session, id=incident_id, tenant_id=tenant_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Incident not found")
+
+    from sqlalchemy import text
+    # Delete non-nullable FK rows
+    await session.execute(
+        text("DELETE FROM incidentcontrollink WHERE incident_id = :iid"),
+        {"iid": incident_id},
+    )
+    # Null out nullable FK columns
+    for tbl, col in [
+        ("correctiveaction", "incident_id"),
+        ("initiative", "incident_id"),
+    ]:
+        await session.execute(text(f"UPDATE {tbl} SET {col} = NULL WHERE {col} = :iid"), {"iid": incident_id})
+    # Delete the incident itself
+    await session.execute(
+        text("DELETE FROM incident WHERE id = :iid AND tenant_id = :tid"),
+        {"iid": incident_id, "tid": tenant_id},
+    )
+    await session.commit()
     return {"message": "Incident deleted"}
 
 
