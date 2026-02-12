@@ -2,7 +2,7 @@ import asyncio
 from typing import List, Optional
 
 import reflex as rx
-from .base import BaseState, User
+from .base import BaseState
 from ..api.client import api_client
 
 class IsmsImplementerState(BaseState):
