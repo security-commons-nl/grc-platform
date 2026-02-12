@@ -105,6 +105,14 @@ class DecisionState(rx.State):
         auth = await self.get_state(AuthState)
         tid = auth.tenant_id
 
+        # Normalize date if present
+        valid_until = self.form_valid_until
+        if valid_until and "/" in valid_until:
+            # Simple conversion for European format DD/MM/YYYY
+            parts = valid_until.split("/")
+            if len(parts) == 3:
+                valid_until = f"{parts[2]}-{parts[1]}-{parts[0]}"
+
         data = {
             "decision_type": self.form_decision_type,
             "decision_text": self.form_decision_text.strip(),
@@ -113,8 +121,8 @@ class DecisionState(rx.State):
         }
         if self.form_justification:
             data["justification"] = self.form_justification
-        if self.form_valid_until:
-            data["valid_until"] = self.form_valid_until
+        if valid_until:
+            data["valid_until"] = valid_until
         if self.form_scope_id:
             data["scope_id"] = int(self.form_scope_id)
 

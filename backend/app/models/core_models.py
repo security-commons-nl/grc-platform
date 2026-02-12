@@ -4,6 +4,7 @@ from sqlalchemy import Column
 from pgvector.sqlalchemy import Vector
 from datetime import datetime
 from enum import Enum
+from pydantic import field_validator
 
 # --- Layer 1: The Model (Schematic) ---
 
@@ -1439,9 +1440,27 @@ class Decision(SQLModel, table=True):
     decision_text: str
     decision_maker_id: Optional[int] = Field(default=None, foreign_key="user.id")  # management role
     decision_date: datetime = Field(default_factory=datetime.utcnow)
+    valid_until: Optional[datetime] = None  # Herijkdatum
+
+    @field_validator('valid_until', mode='before')
+    @classmethod
+    def parse_valid_until(cls, v):
+        if isinstance(v, str) and v:
+            try:
+                # Try ISO first (YYYY-MM-DD)
+                return datetime.strptime(v.split('T')[0], "%Y-%m-%d")
+            except ValueError:
+                try:
+                    # Try European (DD/MM/YYYY or DD-MM-YYYY)
+                    if "/" in v:
+                        return datetime.strptime(v, "%d/%m/%Y")
+                    else:
+                        return datetime.strptime(v, "%d-%m-%Y")
+                except ValueError:
+                    return v  # Let Pydantic handle the error
+        return v
 
     # Validity
-    valid_until: Optional[datetime] = None  # Herijkdatum
     status: DecisionStatus = DecisionStatus.ACTIVE
 
     # Links (optional — a decision can relate to one or more risks)

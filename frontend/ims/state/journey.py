@@ -3,15 +3,12 @@ Journey State - 7-step PDCA onboarding progress tracker
 Loads data from existing endpoints and computes step completion/blockers.
 """
 import asyncio
-import httpx
 import reflex as rx
 from typing import List, Dict, Any
 
-from ims.api.client import API_BASE_URL
+from ims.api.client import API_BASE_URL, api_client
+from ims.state.auth import AuthState
 
-
-_JOURNEY_TIMEOUT = httpx.Timeout(connect=2.0, read=5.0, write=5.0, pool=5.0)
-_JOURNEY_HEADERS = {"X-User-ID": "1", "X-Tenant-ID": "1"}
 
 # Step definitions (1-indexed for display)
 STEP_TITLES = [
@@ -248,49 +245,47 @@ class JourneyState(rx.State):
     # --- Data loading ---
 
     async def load_journey_data(self):
-        """Load data from 6 endpoints in parallel."""
+        """Load data from 5 endpoints in parallel using api_client."""
         self.is_loading = True
         self.error = ""
 
         try:
-            async with httpx.AsyncClient(
-                base_url=API_BASE_URL, timeout=_JOURNEY_TIMEOUT,
-                headers=_JOURNEY_HEADERS,
-            ) as client:
-                responses = await asyncio.gather(
-                    client.get("/scopes/", params={"limit": 500}),
-                    client.get("/risks/", params={"limit": 500}),
-                    client.get("/controls/", params={"limit": 500}),
-                    client.get("/decisions/", params={"limit": 500}),
-                    client.get("/assessments/", params={"limit": 500}),
-                    return_exceptions=True,
-                )
-
-            def safe_json(r):
-                if isinstance(r, Exception):
+            # Helper to wrap api_client calls and return empty list on error
+            async def safe_fetch(coro):
+                try:
+                    return await coro
+                except Exception:
                     return []
-                if r.status_code == 200:
-                    data = r.json()
-                    return data if isinstance(data, list) else []
-                return []
 
-            self._scopes = safe_json(responses[0])
-            self._risks = safe_json(responses[1])
-            controls = safe_json(responses[2])
+            # Use api_client which handles auth internally (defaults to X-User-ID: 1)
+            # This matches RiskState's working implementation.
+            results = await asyncio.gather(
+                safe_fetch(api_client.get_scopes(limit=500)),
+                safe_fetch(api_client.get_risks(limit=500)),
+                safe_fetch(api_client.get_controls(limit=500)),
+                safe_fetch(api_client.get_decisions(limit=500)),
+                safe_fetch(api_client.get_assessments(limit=500)),
+            )
+
+            self._scopes = results[0]
+            self._risks = results[1]
+            controls = results[2]
             self._controls = controls
-            self._decisions = safe_json(responses[3])
-            self._assessments = safe_json(responses[4])
+            self._decisions = results[3]
+            self._assessments = results[4]
 
             # Count risk-control links: controls that have linked risks
             links = 0
             for c in controls:
+                # Check for various link indicators based on API response structure
                 if c.get("risk_ids") or c.get("linked_risks"):
                     links += 1
                 elif c.get("scope_id"):
                     links += 1  # Scope-bound controls count as linked
             self._risk_control_links = links
 
-        except Exception:
+        except Exception as e:
             self.error = "Kon voortgangsdata niet laden"
+            # print(f"Journey load error: {e}")
 
         self.is_loading = False

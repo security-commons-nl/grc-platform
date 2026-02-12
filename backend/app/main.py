@@ -25,6 +25,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # HSTS (only if HTTPS, but good practice to allow it to be set by proxy)
+    # We can force it if we are sure we are behind HTTPS or set it conditionally.
+    # For now, let's set it. HSTS: 1 year.
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 # CORS — allow Reflex frontend (same-origin in prod, localhost in dev)
 app.add_middleware(
     CORSMiddleware,
