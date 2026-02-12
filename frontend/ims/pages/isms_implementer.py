@@ -14,39 +14,103 @@ def step_header(step_number: int, title: str, description: str) -> rx.Component:
     )
 
 
+def context_dashboard() -> rx.Component:
+    """Dashboard showing progress for Context phase."""
+    return rx.card(
+        rx.hstack(
+            rx.vstack(
+                rx.heading("Fase Voortgang", size="4"),
+                rx.text("Overzicht van vereiste activiteiten.", color="gray", size="2"),
+                rx.box(
+                    rx.progress(value=IsmsImplementerState.context_progress, width="100%", height="8px"),
+                    rx.hstack(
+                        rx.text(f"{IsmsImplementerState.context_progress}%", weight="bold", size="2", color="var(--accent-9)"),
+                        rx.text("Voltooid", size="2", color="gray"),
+                        justify="between",
+                        margin_top="8px",
+                        width="100%",
+                    ),
+                    width="100%",
+                    margin_top="12px",
+                ),
+                align_items="start",
+                width="50%",
+            ),
+            rx.spacer(),
+            rx.vstack(
+                rx.heading("Activiteiten", size="3", margin_bottom="8px"),
+                rx.hstack(
+                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_context_issues, "var(--green-9)", "var(--gray-8)"), size=20),
+                    rx.text("1. Identificeer Context & Issues", size="2", color=rx.cond(IsmsImplementerState.has_context_issues, "var(--gray-12)", "var(--gray-10)")),
+                    align="center",
+                ),
+                rx.hstack(
+                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_stakeholders, "var(--green-9)", "var(--gray-8)"), size=20),
+                    rx.text("2. Relevante Belanghebbenden", size="2", color=rx.cond(IsmsImplementerState.has_stakeholders, "var(--gray-12)", "var(--gray-10)")),
+                    align="center",
+                ),
+                rx.hstack(
+                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_scope, "var(--green-9)", "var(--gray-8)"), size=20),
+                    rx.text("3. Reikwijdte (Scope) Definiëren", size="2", color=rx.cond(IsmsImplementerState.has_scope, "var(--gray-12)", "var(--gray-10)")),
+                    align="center",
+                ),
+                align_items="start",
+                width="40%",
+                spacing="2",
+            ),
+            width="100%",
+            align_items="center",
+            spacing="5",
+        ),
+        width="100%",
+        size="3",
+        variant="surface",
+        margin_bottom="24px",
+        style={"background": "linear-gradient(135deg, var(--gray-1) 0%, var(--gray-3) 100%)"},
+    )
+
+
 def step_1_content() -> rx.Component:
     """Content for Step 1: Context & Organisatie."""
     return rx.vstack(
         step_header(1, "Context & Organisatie", "Bepaal de interne en externe context, stakeholders en scope van het ISMS."),
+        
+        # Dashboard
+        context_dashboard(),
 
-        # 1. Organization Profile
+        # 1. Context (SWOT) / Issues
+        rx.heading("1. Interne & Externe Issues (Context)", size="4", margin_top="8px"),
+        rx.text("Identificeer relevante issues die invloed hebben op het ISMS (ISO 27001 \u00a74.1).", color="gray", size="2"),
+        
         rx.card(
             rx.vstack(
-                rx.heading("Organisatie Profiel", size="4"),
-                rx.text("Basisgegevens van de organisatie.", color="gray", size="2"),
-                rx.separator(),
+                rx.heading("Organisatie Profiel", size="3"),
                 rx.hstack(
-                    rx.text("Sector:", weight="bold"),
+                    rx.text("Sector:", weight="bold", width="80px"),
                     rx.text(rx.cond(IsmsImplementerState.organization_profile, IsmsImplementerState.organization_profile["sector"], "-")),
-                    rx.spacer(),
-                    rx.text("Grootte:", weight="bold"),
+                    width="100%",
+                ),
+                rx.hstack(
+                    rx.text("Grootte:", weight="bold", width="80px"),
                     rx.text(rx.cond(IsmsImplementerState.organization_profile, IsmsImplementerState.organization_profile["size"], "-")),
                     width="100%",
                 ),
-                align_items="start",
-                width="100%",
+                rx.separator(),
+                rx.hstack(
+                    rx.text("SWOT Analyse:", weight="bold"),
+                    rx.spacer(),
+                    rx.button("Bewerk SWOT", variant="outline", size="1", on_click=rx.window_alert("SWOT editor coming soon!")),
+                    width="100%",
+                    align="center",
+                ),
                 spacing="3",
+                width="100%",
             ),
             width="100%",
         ),
 
-        # 2. Context (SWOT)
-        rx.heading("Interne & Externe Context (SWOT)", size="4", margin_top="16px"),
-        rx.text("Analyseer Sterktes, Zwaktes, Kansen en Bedreigingen (ISO 27001 \u00a74.1).", color="gray", size="2"),
-        rx.button("Bewerk SWOT Analyse", variant="outline", on_click=rx.window_alert("SWOT editor coming soon!")),
-
-        # 3. Stakeholders
-        rx.heading("Belanghebbenden (Stakeholders)", size="4", margin_top="16px"),
+        # 2. Stakeholders
+        rx.heading("2. Belanghebbenden (Stakeholders)", size="4", margin_top="16px"),
         rx.text("Identificeer belanghebbenden en hun eisen (ISO 27001 \u00a74.2).", color="gray", size="2"),
 
         # Stakeholder List
@@ -95,7 +159,7 @@ def step_1_content() -> rx.Component:
         # Add Stakeholder Form
         rx.dialog.root(
             rx.dialog.trigger(
-                rx.button(rx.icon("plus"), "Stakeholder Toevoegen", margin_top="8px"),
+                rx.button(rx.icon("plus"), "Stakeholder Toevoegen", margin_top="8px", variant="soft"),
             ),
             rx.dialog.content(
                 rx.dialog.title("Nieuwe Stakeholder"),
@@ -142,6 +206,56 @@ def step_1_content() -> rx.Component:
                     justify="end",
                 ),
             ),
+        ),
+
+        # 3. Scope
+        rx.heading("3. Reikwijdte (Scope)", size="4", margin_top="16px"),
+        rx.text("Bepaal de grenzen en toepasbaarheid van het ISMS (ISO 27001 \u00a74.3).", color="gray", size="2"),
+        
+        rx.vstack(
+            rx.foreach(
+                IsmsImplementerState.scopes,
+                lambda s: rx.card(
+                    rx.hstack(
+                        rx.text(s["description"], size="2"),
+                        rx.spacer(),
+                        rx.icon_button(
+                            rx.icon("trash-2", size=16), 
+                            variant="ghost", 
+                            color_scheme="red",
+                            on_click=lambda: IsmsImplementerState.delete_scope(s["id"])
+                        ),
+                        width="100%",
+                        align="center",
+                    ),
+                    width="100%",
+                    size="1",
+                )
+            ),
+            spacing="2",
+            width="100%",
+        ),
+        
+        rx.card(
+            rx.vstack(
+                rx.text("Nieuwe Scope Definitie", weight="bold", size="2"),
+                rx.text_area(
+                    placeholder="Beschrijf de scope van het ISMS (bijv. alle afdelingen, locaties...)",
+                    value=IsmsImplementerState.new_scope_description,
+                    on_change=IsmsImplementerState.set_new_scope_description,
+                    min_height="80px",
+                ),
+                rx.hstack(
+                    rx.spacer(),
+                    rx.button("Toevoegen", on_click=IsmsImplementerState.add_scope),
+                    width="100%",
+                ),
+                spacing="3",
+                width="100%",
+            ),
+            width="100%",
+            variant="ghost",
+            border="1px dashed var(--gray-a8)",
         ),
 
         align_items="start",

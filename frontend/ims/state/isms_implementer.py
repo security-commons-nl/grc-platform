@@ -127,3 +127,70 @@ class IsmsImplementerState(BaseState):
             self.stakeholders = [s for s in self.stakeholders if s["id"] != id]
         except Exception as e:
             self.error = f"Fout bij verwijderen stakeholder: {str(e)}"
+
+    # --- Actions for Scope ---
+    
+    new_scope_description: str = ""
+    
+    async def add_scope(self):
+        """Add a scope definition."""
+        if not self.new_scope_description:
+            return
+            
+        try:
+            # We treat scope as a single item or list of items defining the ISMS boundaries
+            data = {"description": self.new_scope_description, "tenant_id": 1}
+            # Assuming create_scope exists, if not we might need to adapt
+            await api_client.create_scope(data) # Placeholder if not exists
+            
+            self.scopes = await api_client.get_scopes()
+            self.new_scope_description = ""
+        except Exception as e:
+            self.error = f"Fout bij toevoegen scope: {str(e)}"
+
+    async def delete_scope(self, id: int):
+        try:
+            await api_client.delete_scope(id)
+            self.scopes = [s for s in self.scopes if s["id"] != id]
+        except Exception as e:
+            self.error = f"Fout bij verwijderen scope: {str(e)}"
+
+    # --- Progress Calculation ---
+
+    @rx.var
+    def context_progress(self) -> int:
+        """
+        Calculate percentage completion for Context phase.
+        Based on:
+        1. Issues/Context (using organization_profile or context items) - 33%
+        2. Stakeholders (at least 1) - 33%
+        3. Scope (at least 1) - 34%
+        """
+        progress = 0
+        
+        # 1. Context / Issues (simple check if profile exists for now, or use context items if valid)
+        if self.organization_profile: 
+            progress += 33
+            
+        # 2. Stakeholders
+        if self.stakeholders and len(self.stakeholders) > 0:
+            progress += 33
+            
+        # 3. Scope
+        if self.scopes and len(self.scopes) > 0:
+            progress += 34
+            
+        return progress
+
+    @rx.var
+    def has_context_issues(self) -> bool:
+        return self.organization_profile is not None
+
+    @rx.var
+    def has_stakeholders(self) -> bool:
+        return len(self.stakeholders) > 0
+
+    @rx.var
+    def has_scope(self) -> bool:
+        return len(self.scopes) > 0
+
