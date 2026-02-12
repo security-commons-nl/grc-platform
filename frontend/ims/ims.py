@@ -35,6 +35,7 @@ from ims.pages.risk_appetite import risk_appetite_page
 from ims.pages.corrective_actions import corrective_actions_page
 from ims.pages.tasks import tasks_page
 from ims.pages.tenants import tenants_page
+from ims.pages.isms_implementer import isms_implementer_page
 
 # Import state (to ensure it's registered)
 from ims.state.auth import AuthState
@@ -65,6 +66,7 @@ from ims.state.organization_profile import OrganizationProfileState
 from ims.state.risk_appetite import RiskAppetiteState
 from ims.state.corrective_action import CorrectiveActionState
 from ims.state.tenant import TenantState
+from ims.state.isms_implementer import IsmsImplementerState
 
 
 # Create app
@@ -115,3 +117,4 @@ app.add_page(risk_appetite_page, route="/risk-appetite", title="Risicotolerantie
 app.add_page(corrective_actions_page, route="/corrective-actions", title="Verbeteracties - IMS")
 app.add_page(tasks_page, route="/tasks", title="Mijn Taken - IMS")
 app.add_page(tenants_page, route="/tenants", title="Organisaties - IMS")
+app.add_page(isms_implementer_page, route="/isms-implementer", title="ISMS Implementatie - IMS")
