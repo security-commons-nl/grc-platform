@@ -3,7 +3,6 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, func
 
-from app import crud
 from app.api import deps
 from app.models.core_models import (
     Stakeholder,
