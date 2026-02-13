@@ -140,19 +140,10 @@ def _build_nav_links(link_fn):
                     BaseState.menu_inrichten_open,
                     rx.fragment(
                         link_fn("Mijn Organisatie", "/organization", "landmark"),
-                        # IMS Implementatie — collapsible sub-section
-                        _subsection_header("IMS Implementatie", "package", BaseState.menu_ims_impl_open, BaseState.toggle_menu_ims_impl),
-                        rx.cond(
-                            BaseState.menu_ims_impl_open,
-                            rx.box(
-                                link_fn("ISMS Dashboard", "/isms-dashboard", "list-start"),
-                                link_fn("PIMS Dashboard", "/pims-dashboard", "fingerprint"),
-                                link_fn("BCMS Dashboard", "/bcms-dashboard", "shield-alert"),
-                                link_fn("AIMS Dashboard", "/aims-dashboard", "brain"),
-                                padding_left="20px",
-                                width="100%",
-                            ),
-                        ),
+                        link_fn("ISMS Dashboard", "/isms-dashboard", "list-start"),
+                        link_fn("PIMS Dashboard", "/pims-dashboard", "fingerprint"),
+                        link_fn("BCMS Dashboard", "/bcms-dashboard", "shield-alert"),
+                        link_fn("AIMS Dashboard", "/aims-dashboard", "brain"),
                         link_fn("Risicotolerantie", "/risk-appetite", "gauge"),
                         link_fn("Beleid", "/policies", "file-text"),
                         link_fn("Scopes", "/scopes", "git-branch"),
