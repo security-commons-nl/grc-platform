@@ -26,6 +26,7 @@ class BaseState(rx.State):
     menu_doen_open: bool = True
     menu_ontdekken_open: bool = False
     menu_inrichten_open: bool = False
+    menu_ims_impl_open: bool = False
     menu_beheer_open: bool = False
 
     def toggle_sidebar(self):
@@ -48,6 +49,9 @@ class BaseState(rx.State):
 
     def toggle_menu_inrichten(self):
         self.menu_inrichten_open = not self.menu_inrichten_open
+
+    def toggle_menu_ims_impl(self):
+        self.menu_ims_impl_open = not self.menu_ims_impl_open
 
     def toggle_menu_beheer(self):
         self.menu_beheer_open = not self.menu_beheer_open
