@@ -140,6 +140,7 @@ def _build_nav_links(link_fn):
                     BaseState.menu_inrichten_open,
                     rx.fragment(
                         link_fn("Mijn Organisatie", "/organization", "landmark"),
+                        link_fn("Leidse IMS", "/leidse-ims", "package"),
                         link_fn("ISMS Dashboard", "/isms-dashboard", "list-start"),
                         link_fn("PIMS Dashboard", "/pims-dashboard", "fingerprint"),
                         link_fn("BCMS Dashboard", "/bcms-dashboard", "shield-alert"),
