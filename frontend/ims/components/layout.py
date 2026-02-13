@@ -138,7 +138,7 @@ def _build_nav_links(link_fn):
                         rx.cond(
                             BaseState.menu_ims_impl_open,
                             rx.box(
-                                link_fn("ISMS Implementatie", "/isms-implementer", "list-start"),
+                                link_fn("ISMS Dashboard", "/isms-implementer", "list-start"),
                                 padding_left="20px",
                                 width="100%",
                             ),
