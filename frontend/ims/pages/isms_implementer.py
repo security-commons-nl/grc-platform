@@ -233,7 +233,7 @@ def step_1_content() -> rx.Component:
 
         # 3. Vaststellen toepassingsgebied (scope)
         rx.heading("3. Vaststellen toepassingsgebied (scope)", size="4", margin_top="16px"),
-        rx.text("Bepaal de grenzen en toepasbaarheid van het ISMS (ISO 27001 §4.3).", color="gray", size="2"),
+        rx.text("Het vaststellen van het toepassingsgebied (scope).", color="gray", size="2"),
         
         rx.vstack(
             rx.foreach(
