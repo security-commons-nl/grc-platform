@@ -103,7 +103,7 @@ def step_1_content() -> rx.Component:
 
         # 1. Interne en externe analyse
         rx.heading("1. Interne en externe analyse", size="4", margin_top="8px"),
-        rx.text("Identificeer relevante issues die invloed hebben op het ISMS (ISO 27001 §4.1).", color="gray", size="2"),
+        rx.text("Het uitvoeren van een interne en externe analyse.", color="gray", size="2"),
         
         rx.card(
             rx.vstack(
