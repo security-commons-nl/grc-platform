@@ -626,19 +626,117 @@ def step_bc_content() -> rx.Component:
     )
 
 
+def _pp_table_row(
+    fase: str, stap: str, activiteit: str, output: str, verantwoordelijke: str, planning: str,
+) -> rx.Component:
+    return rx.table.row(
+        rx.table.cell(rx.text(fase, size="2")),
+        rx.table.cell(rx.text(stap, size="2")),
+        rx.table.cell(rx.text(activiteit, size="2")),
+        rx.table.cell(rx.text(output, size="2")),
+        rx.table.cell(rx.text(verantwoordelijke, size="2")),
+        rx.table.cell(rx.text(planning, size="2")),
+    )
+
+
 def step_pp_content() -> rx.Component:
     """Content for preparation step: Projectplan."""
-    return _step_page(
-        0, "Projectplan",
-        "Dit Projectplan is opgesteld aan de hand van het instrument Work Breakdown "
-        "Structure, zodat uitsluitend de benodigde en relevante onderdelen binnen het "
-        "plan zijn opgenomen. Daarnaast is het plan ingericht conform de PDCA-cyclus. "
-        "Het doel van dit project is het realiseren van een effectief ISMS dat voldoet "
-        "aan normatieve eisen, wettelijke kaders en bijdraagt aan het behalen van de "
-        "informatiebeveiligingsdoelstellingen van de gemeente.",
-        "gantt-chart", "amber",
-        "Het projectplan is nog in ontwikkeling. Hier komt een overzicht van "
-        "de planning, mijlpalen, resources en verantwoordelijkheden.",
+    return rx.vstack(
+        step_header(0, "Projectplan"),
+        # Banner
+        rx.box(
+            rx.hstack(
+                rx.icon("info", size=20, color="var(--amber-4)", flex_shrink="0"),
+                rx.text(
+                    "Dit Projectplan is opgesteld aan de hand van het instrument Work Breakdown "
+                    "Structure, zodat uitsluitend de benodigde en relevante onderdelen binnen het "
+                    "plan zijn opgenomen. Daarnaast is het plan ingericht conform de PDCA-cyclus. "
+                    "Het doel van dit project is het realiseren van een effectief ISMS dat voldoet "
+                    "aan normatieve eisen, wettelijke kaders en bijdraagt aan het behalen van de "
+                    "informatiebeveiligingsdoelstellingen van de gemeente.",
+                    size="2",
+                    color="var(--amber-3)",
+                    line_height="1.7",
+                ),
+                spacing="3",
+                align="start",
+            ),
+            background="linear-gradient(135deg, var(--amber-9), var(--amber-11))",
+            border_radius="var(--radius-3)",
+            padding="20px 24px",
+            width="100%",
+        ),
+        # Projectplan tabel
+        rx.box(
+            rx.vstack(
+                rx.box(width="100%", height="3px", background="var(--amber-9)", border_radius="var(--radius-3) var(--radius-3) 0 0"),
+                rx.vstack(
+                    rx.hstack(
+                        rx.box(
+                            rx.icon("gantt-chart", size=18, color="white"),
+                            background="var(--amber-9)",
+                            padding="8px",
+                            border_radius="var(--radius-2)",
+                        ),
+                        rx.text("Work Breakdown Structure", size="3", weight="bold"),
+                        width="100%",
+                        align="center",
+                        spacing="3",
+                    ),
+                    rx.divider(),
+                    rx.table.root(
+                        rx.table.header(
+                            rx.table.row(
+                                rx.table.column_header_cell("Fase"),
+                                rx.table.column_header_cell("Stap"),
+                                rx.table.column_header_cell("Activiteit"),
+                                rx.table.column_header_cell("Output"),
+                                rx.table.column_header_cell("Verantwoordelijke"),
+                                rx.table.column_header_cell("Planning & Deadline"),
+                            ),
+                        ),
+                        rx.table.body(
+                            # PLAN
+                            _pp_table_row("Plan", "1. Context", "Interne en externe analyse (SWOT)", "SWOT-analyse", "", ""),
+                            _pp_table_row("Plan", "1. Context", "Stakeholders identificeren en analyseren", "Stakeholderregister", "", ""),
+                            _pp_table_row("Plan", "1. Context", "Toepassingsgebied (scope) vaststellen", "Scopedocument", "", ""),
+                            _pp_table_row("Plan", "2. Gap-analyse", "Nulmeting t.o.v. ISO 27001 / BIO 2.0", "Gap-analyserapport", "", ""),
+                            _pp_table_row("Plan", "3. Leiderschap", "Informatiebeveiligingsbeleid opstellen", "Beleidsdocument", "", ""),
+                            _pp_table_row("Plan", "3. Leiderschap", "Rollen en verantwoordelijkheden toewijzen", "RACI-matrix", "", ""),
+                            _pp_table_row("Plan", "4. Risicomanagement", "Risico-identificatie en -analyse", "Risicoregister", "", ""),
+                            _pp_table_row("Plan", "4. Risicomanagement", "Risicobehandelplan opstellen", "Risicobehandelplan", "", ""),
+                            # DO
+                            _pp_table_row("Do", "5. Middelen & Bewustzijn", "Bewustwordingsprogramma opzetten", "Trainingsplan", "", ""),
+                            _pp_table_row("Do", "5. Middelen & Bewustzijn", "Competenties en opleidingen borgen", "Competentiematrix", "", ""),
+                            _pp_table_row("Do", "6. Beheersing & SoA", "Beheersmaatregelen implementeren", "Verklaring van Toepasselijkheid (SoA)", "", ""),
+                            _pp_table_row("Do", "6. Beheersing & SoA", "Documentatie en procedures opstellen", "Proceduredocumenten", "", ""),
+                            # CHECK
+                            _pp_table_row("Check", "7. Evaluatie & Audit", "Interne audit uitvoeren", "Auditrapport", "", ""),
+                            _pp_table_row("Check", "7. Evaluatie & Audit", "Directiebeoordeling uitvoeren", "Management review verslag", "", ""),
+                            _pp_table_row("Check", "7. Evaluatie & Audit", "Prestatie-indicatoren meten", "KPI-rapportage", "", ""),
+                            # ACT
+                            _pp_table_row("Act", "8. Verbetering", "Corrigerende maatregelen doorvoeren", "CAPA-register", "", ""),
+                            _pp_table_row("Act", "8. Verbetering", "Continue verbetering borgen", "Verbeterplan", "", ""),
+                        ),
+                        variant="surface",
+                        width="100%",
+                    ),
+                    spacing="4",
+                    width="100%",
+                    padding="20px",
+                ),
+                spacing="0",
+                width="100%",
+            ),
+            background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+            border="1px solid var(--gray-a4)",
+            border_radius="var(--radius-3)",
+            overflow="hidden",
+            width="100%",
+        ),
+        align_items="start",
+        width="100%",
+        spacing="5",
     )
 
 
