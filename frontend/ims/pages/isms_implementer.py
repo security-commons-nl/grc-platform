@@ -5,7 +5,8 @@ from ims.components.layout import layout
 
 def step_header(step_number: int, title: str, description: str = "") -> rx.Component:
     """Header for each implementation step."""
-    children = [rx.heading(f"Stap {step_number}: {title}", size="5")]
+    heading_text = f"Stap {step_number}: {title}" if step_number >= 1 else title
+    children = [rx.heading(heading_text, size="5")]
     if description:
         children.append(rx.text(description, color="gray", size="2", margin_top="4px"))
     return rx.box(
@@ -626,9 +627,9 @@ def step_bc_content() -> rx.Component:
 
 
 def step_pp_content() -> rx.Component:
-    """Content for preparation step: Projectplan / Implementatieplan."""
+    """Content for preparation step: Projectplan."""
     return _step_page(
-        0, "Projectplan / Implementatieplan",
+        0, "Projectplan",
         "Dit Projectplan is opgesteld aan de hand van het instrument Work Breakdown "
         "Structure, zodat uitsluitend de benodigde en relevante onderdelen binnen het "
         "plan zijn opgenomen. Daarnaast is het plan ingericht conform de PDCA-cyclus. "
