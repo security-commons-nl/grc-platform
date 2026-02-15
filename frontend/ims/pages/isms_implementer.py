@@ -237,7 +237,7 @@ def step_1_content() -> rx.Component:
 
         # 1. Interne en externe analyse
         rx.heading("1. Interne en externe analyse", size="4", margin_top="8px"),
-        rx.text("Het uitvoeren van een interne en externe analyse.", color="gray", size="2"),
+        rx.text("Het uitvoeren van een interne en externe analyse. Hiervoor wordt het SWOT-instrument voor toegepast.", color="gray", size="2"),
         
         # SWOT Analyse — visuele 2×2 grid
         swot_grid(),
