@@ -878,7 +878,7 @@ def isms_implementer_page() -> rx.Component:
                 rx.hstack(
                     rx.badge("Voorbereiding", color_scheme="amber", variant="soft", size="1"),
                     rx.spacer(),
-                    rx.badge("ISMS Implementatie (ISO 27001)", color_scheme="indigo", variant="soft", size="1"),
+                    rx.badge("Implementatiestappen", color_scheme="indigo", variant="soft", size="1"),
                     width="100%",
                 ),
                 rx.hstack(
