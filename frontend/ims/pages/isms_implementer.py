@@ -3,69 +3,110 @@ from ims.state.isms_implementer import IsmsImplementerState
 from ims.components.layout import layout
 
 
-def step_header(step_number: int, title: str, description: str) -> rx.Component:
+def step_header(step_number: int, title: str, description: str = "") -> rx.Component:
     """Header for each implementation step."""
+    children = [rx.heading(f"Stap {step_number}: {title}", size="5")]
+    if description:
+        children.append(rx.text(description, color="gray", size="2", margin_top="4px"))
     return rx.box(
-        rx.heading(f"Stap {step_number}: {title}", size="5"),
-        rx.text(description, color="gray", size="2", margin_top="4px"),
+        *children,
         border_bottom="1px solid var(--gray-a5)",
         padding_bottom="16px",
         margin_bottom="24px",
     )
 
 
+def _activity_check(label: str, is_done: rx.Var) -> rx.Component:
+    """Single activity check item."""
+    return rx.hstack(
+        rx.icon(
+            "circle-check",
+            color=rx.cond(is_done, "var(--green-9)", "var(--gray-a6)"),
+            size=18,
+        ),
+        rx.text(
+            label,
+            size="2",
+            color=rx.cond(is_done, "var(--gray-12)", "var(--gray-10)"),
+            text_decoration=rx.cond(is_done, "line-through", "none"),
+        ),
+        align="center",
+        spacing="2",
+    )
+
+
 def context_dashboard() -> rx.Component:
     """Dashboard showing progress for Context phase."""
-    return rx.card(
-        rx.hstack(
+    return rx.box(
+        rx.vstack(
+            # Accent bar
+            rx.box(
+                width="100%",
+                height="3px",
+                background="var(--indigo-9)",
+                border_radius="var(--radius-3) var(--radius-3) 0 0",
+            ),
             rx.vstack(
-                rx.heading("Fase Voortgang", size="4"),
-                rx.box(
-                    rx.progress(value=IsmsImplementerState.context_progress, width="100%", height="8px"),
-                    rx.hstack(
-                        rx.text(f"{IsmsImplementerState.context_progress}%", weight="bold", size="2", color="var(--accent-9)"),
-                        rx.text("Voltooid", size="2", color="gray"),
-                        justify="between",
-                        margin_top="8px",
-                        width="100%",
+                # Header
+                rx.hstack(
+                    rx.box(
+                        rx.icon("gauge", size=20, color="white"),
+                        background="var(--indigo-9)",
+                        padding="8px",
+                        border_radius="var(--radius-2)",
+                    ),
+                    rx.text("Fase Voortgang", size="3", weight="bold"),
+                    rx.spacer(),
+                    rx.badge(
+                        rx.fragment(IsmsImplementerState.context_progress.to(str), "%"),
+                        color_scheme=rx.cond(
+                            IsmsImplementerState.context_progress >= 100,
+                            "green",
+                            rx.cond(IsmsImplementerState.context_progress > 0, "blue", "gray"),
+                        ),
+                        variant="soft",
+                        size="2",
                     ),
                     width="100%",
-                    margin_top="12px",
+                    align="center",
                 ),
-                align_items="start",
-                width="50%",
+                # Progress bar
+                rx.box(
+                    rx.box(
+                        width=rx.cond(
+                            IsmsImplementerState.context_progress > 0,
+                            IsmsImplementerState.context_progress.to(str) + "%",
+                            "0%",
+                        ),
+                        height="100%",
+                        background="var(--indigo-9)",
+                        border_radius="4px",
+                        transition="width 0.5s ease",
+                    ),
+                    width="100%",
+                    height="8px",
+                    background="var(--gray-a4)",
+                    border_radius="4px",
+                    overflow="hidden",
+                ),
+                rx.divider(),
+                # Activities checklist
+                rx.text("Activiteiten", size="2", weight="bold", color="var(--gray-11)"),
+                _activity_check("1. Interne en externe analyse", IsmsImplementerState.has_context_issues),
+                _activity_check("2. Stakeholders identificeren, analyseren en adresseren", IsmsImplementerState.has_stakeholders),
+                _activity_check("3. Vaststellen toepassingsgebied (scope)", IsmsImplementerState.has_scope),
+                spacing="3",
+                width="100%",
+                padding="20px",
             ),
-            rx.spacer(),
-            rx.vstack(
-                rx.heading("Activiteiten", size="3", margin_bottom="8px"),
-                rx.hstack(
-                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_context_issues, "var(--green-9)", "var(--gray-8)"), size=20),
-                    rx.text("1. Interne en externe analyse", size="2", color=rx.cond(IsmsImplementerState.has_context_issues, "var(--gray-12)", "var(--gray-10)")),
-                    align="center",
-                ),
-                rx.hstack(
-                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_stakeholders, "var(--green-9)", "var(--gray-8)"), size=20),
-                    rx.text("2. Stakeholders identificeren, analyseren en adresseren", size="2", color=rx.cond(IsmsImplementerState.has_stakeholders, "var(--gray-12)", "var(--gray-10)")),
-                    align="center",
-                ),
-                rx.hstack(
-                    rx.icon("circle-check", color=rx.cond(IsmsImplementerState.has_scope, "var(--green-9)", "var(--gray-8)"), size=20),
-                    rx.text("3. Vaststellen toepassingsgebied (scope)", size="2", color=rx.cond(IsmsImplementerState.has_scope, "var(--gray-12)", "var(--gray-10)")),
-                    align="center",
-                ),
-                align_items="start",
-                width="40%",
-                spacing="2",
-            ),
+            spacing="0",
             width="100%",
-            align_items="center",
-            spacing="5",
         ),
+        background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+        border="1px solid var(--gray-a4)",
+        border_radius="var(--radius-3)",
+        overflow="hidden",
         width="100%",
-        size="3",
-        variant="surface",
-        margin_bottom="24px",
-        style={"background": "linear-gradient(135deg, var(--gray-1) 0%, var(--gray-3) 100%)"},
     )
 
 
@@ -236,219 +277,337 @@ def step_1_content() -> rx.Component:
         # Dashboard
         context_dashboard(),
 
-        # 1. Interne en externe analyse
-        rx.heading("1. Interne en externe analyse", size="4", margin_top="8px"),
-        rx.text("Het uitvoeren van een interne en externe analyse, waarbij het SWOT-instrument wordt gebruikt. Om de SWOT kwalitatief en volledig in te vullen kunnen aanvullende methodieken worden toegepast, zoals een PEST-analyse voor externe ontwikkelingen en het McKinsey 7S-model voor de interne analyse.", color="gray", size="2"),
-        
-        # SWOT Analyse — visuele 2×2 grid
-        swot_grid(),
+        # ── Sectie 1: Interne en externe analyse ──────────────────
+        rx.box(
+            rx.vstack(
+                rx.box(width="100%", height="3px", background="var(--blue-9)", border_radius="var(--radius-3) var(--radius-3) 0 0"),
+                rx.vstack(
+                    rx.hstack(
+                        rx.box(
+                            rx.icon("search", size=18, color="white"),
+                            background="var(--blue-9)",
+                            padding="8px",
+                            border_radius="var(--radius-2)",
+                        ),
+                        rx.vstack(
+                            rx.text("1. Interne en externe analyse", size="3", weight="bold"),
+                            rx.text(
+                                "Het uitvoeren van een interne en externe analyse, waarbij het "
+                                "SWOT-instrument wordt gebruikt. Om de SWOT kwalitatief en volledig "
+                                "in te vullen kunnen aanvullende methodieken worden toegepast, zoals "
+                                "een PEST-analyse voor externe ontwikkelingen en het McKinsey "
+                                "7S-model voor de interne analyse.",
+                                size="2",
+                                color="var(--gray-10)",
+                                line_height="1.6",
+                            ),
+                            spacing="1",
+                            align_items="start",
+                        ),
+                        width="100%",
+                        align="start",
+                        spacing="3",
+                    ),
+                    rx.divider(),
+                    swot_grid(),
+                    spacing="4",
+                    width="100%",
+                    padding="20px",
+                ),
+                spacing="0",
+                width="100%",
+            ),
+            background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+            border="1px solid var(--gray-a4)",
+            border_radius="var(--radius-3)",
+            overflow="hidden",
+            width="100%",
+        ),
 
         # SWOT edit dialog
         swot_edit_dialog(),
 
-        # 2. Stakeholders identificeren, analyseren en adresseren
-        rx.heading("2. Stakeholders identificeren, analyseren en adresseren", size="4", margin_top="16px"),
-        rx.text("Het identificeren en analyseren van de behoeften, eisen en verwachtingen van relevante belanghebbenden en het bepalen welke daarvan binnen het managementsysteem worden geadresseerd. Onderstaande tabel wordt gebruikt om in één oogopslag inzichtelijk te maken hoe met de verschillende stakeholders wordt omgegaan.", color="gray", size="2"),
-
-        # Stakeholder List
-        rx.table.root(
-            rx.table.header(
-                rx.table.row(
-                    rx.table.column_header_cell("Naam"),
-                    rx.table.column_header_cell("Type"),
-                    rx.table.column_header_cell("Eisen & Verwachtingen"),
-                    rx.table.column_header_cell("Relevantie"),
-                    rx.table.column_header_cell("Acties"),
-                ),
-            ),
-            rx.table.body(
-                rx.foreach(
-                    IsmsImplementerState.stakeholders,
-                    lambda sh: rx.table.row(
-                        rx.table.cell(sh["name"]),
-                        rx.table.cell(sh["type"]),
-                        rx.table.cell(sh["requirements"]),
-                        rx.table.cell(
-                            rx.badge(
-                                sh["relevance_level"],
-                                color_scheme=rx.cond(
-                                    sh["relevance_level"] == "High",
-                                    "red",
-                                    rx.cond(sh["relevance_level"] == "Medium", "orange", "gray"),
-                                ),
-                            )
-                        ),
-                        rx.table.cell(
-                            rx.icon_button(
-                                rx.icon("trash-2", size=16),
-                                variant="ghost",
-                                color_scheme="red",
-                                on_click=lambda: IsmsImplementerState.delete_stakeholder(sh["id"]),
-                            )
-                        ),
-                    ),
-                ),
-            ),
-            variant="surface",
-            width="100%",
-        ),
-
-        # Add Stakeholder Form
-        rx.dialog.root(
-            rx.dialog.trigger(
-                rx.button(rx.icon("plus"), "Stakeholder Toevoegen", margin_top="8px", variant="soft"),
-            ),
-            rx.dialog.content(
-                rx.dialog.title("Nieuwe Stakeholder"),
-                rx.dialog.description("Voeg een belanghebbende toe aan het ISMS."),
-                rx.flex(
-                    rx.text("Naam", size="2", weight="bold"),
-                    rx.input(
-                        placeholder="Bijv. Klanten, Directie...",
-                        value=IsmsImplementerState.new_stakeholder_name,
-                        on_change=IsmsImplementerState.set_new_stakeholder_name,
-                    ),
-                    rx.text("Type", size="2", weight="bold", margin_top="12px"),
-                    rx.select(
-                        ["Internal", "External", "Partner"],
-                        default_value="Internal",
-                        value=IsmsImplementerState.new_stakeholder_type,
-                        on_change=IsmsImplementerState.set_new_stakeholder_type,
-                    ),
-                    rx.text("Eisen & Verwachtingen", size="2", weight="bold", margin_top="12px"),
-                    rx.text_area(
-                        placeholder="Wat verwachten zij van informatiebeveiliging?",
-                        value=IsmsImplementerState.new_stakeholder_reqs,
-                        on_change=IsmsImplementerState.set_new_stakeholder_reqs,
-                    ),
-                    rx.text("Relevantie", size="2", weight="bold", margin_top="12px"),
-                    rx.select(
-                        ["High", "Medium", "Low"],
-                        default_value="High",
-                        value=IsmsImplementerState.new_stakeholder_rel,
-                        on_change=IsmsImplementerState.set_new_stakeholder_rel,
-                    ),
-                    direction="column",
-                    spacing="2",
-                ),
-                rx.flex(
-                    rx.dialog.close(
-                        rx.button("Annuleren", variant="soft", color_scheme="gray"),
-                    ),
-                    rx.dialog.close(
-                        rx.button("Opslaan", on_click=IsmsImplementerState.add_stakeholder),
-                    ),
-                    spacing="3",
-                    margin_top="16px",
-                    justify="end",
-                ),
-            ),
-        ),
-
-        # 3. Vaststellen toepassingsgebied (scope)
-        rx.heading("3. Vaststellen toepassingsgebied (scope)", size="4", margin_top="16px"),
-        rx.text("Het vaststellen van het toepassingsgebied (scope) van het ISMS. Hoewel de scope door de organisatie zelf kan worden bepaald, stelt de BIO2 aanvullend op ISO 27001 dat deze minimaal alle kritische processen moet omvatten. Daarom worden de kritische processen als uitgangspunt genomen. Hieronder vallen tevens alle onderliggende taakspecifieke applicaties, bedrijfsmiddelen (assets), de gehele IT-infrastructuur (van applicaties tot en met netwerkcomponenten zoals routers) en de fysieke locaties en gebouwen waarvan deze kritische processen afhankelijk zijn.", color="gray", size="2"),
-        
-        # Kritische processen lijst
-        rx.card(
+        # ── Sectie 2: Stakeholders ────────────────────────────────
+        rx.box(
             rx.vstack(
-                rx.hstack(
-                    rx.icon("list-checks", size=18, color="var(--blue-9)"),
-                    rx.text("Kritische processen binnen het toepassingsgebied", size="3", weight="bold"),
-                    spacing="2",
-                    align="center",
-                ),
-                rx.cond(
-                    IsmsImplementerState.critical_processes.length() > 0,
-                    rx.vstack(
-                        rx.foreach(
-                            IsmsImplementerState.critical_processes,
-                            lambda p, idx: rx.hstack(
-                                rx.badge(
-                                    (idx + 1).to(str),
-                                    color_scheme="blue",
-                                    variant="soft",
-                                    size="1",
-                                ),
-                                rx.text(p, size="2"),
-                                rx.spacer(),
-                                rx.icon_button(
-                                    rx.icon("trash-2", size=14),
-                                    variant="ghost",
-                                    color_scheme="red",
-                                    size="1",
-                                    on_click=IsmsImplementerState.delete_critical_process(idx),
-                                ),
-                                width="100%",
-                                align="center",
-                                padding_y="4px",
+                rx.box(width="100%", height="3px", background="var(--violet-9)", border_radius="var(--radius-3) var(--radius-3) 0 0"),
+                rx.vstack(
+                    rx.hstack(
+                        rx.box(
+                            rx.icon("users", size=18, color="white"),
+                            background="var(--violet-9)",
+                            padding="8px",
+                            border_radius="var(--radius-2)",
+                        ),
+                        rx.vstack(
+                            rx.text("2. Stakeholders identificeren, analyseren en adresseren", size="3", weight="bold"),
+                            rx.text(
+                                "Het identificeren en analyseren van de behoeften, eisen en "
+                                "verwachtingen van relevante belanghebbenden en het bepalen welke "
+                                "daarvan binnen het managementsysteem worden geadresseerd. "
+                                "Onderstaande tabel wordt gebruikt om in één oogopslag inzichtelijk "
+                                "te maken hoe met de verschillende stakeholders wordt omgegaan.",
+                                size="2",
+                                color="var(--gray-10)",
+                                line_height="1.6",
+                            ),
+                            spacing="1",
+                            align_items="start",
+                        ),
+                        width="100%",
+                        align="start",
+                        spacing="3",
+                    ),
+                    rx.divider(),
+                    # Stakeholder table
+                    rx.table.root(
+                        rx.table.header(
+                            rx.table.row(
+                                rx.table.column_header_cell("Naam"),
+                                rx.table.column_header_cell("Type"),
+                                rx.table.column_header_cell("Eisen & Verwachtingen"),
+                                rx.table.column_header_cell("Relevantie"),
+                                rx.table.column_header_cell("Acties"),
                             ),
                         ),
-                        spacing="1",
+                        rx.table.body(
+                            rx.foreach(
+                                IsmsImplementerState.stakeholders,
+                                lambda sh: rx.table.row(
+                                    rx.table.cell(sh["name"]),
+                                    rx.table.cell(sh["type"]),
+                                    rx.table.cell(sh["requirements"]),
+                                    rx.table.cell(
+                                        rx.badge(
+                                            sh["relevance_level"],
+                                            color_scheme=rx.cond(
+                                                sh["relevance_level"] == "High",
+                                                "red",
+                                                rx.cond(sh["relevance_level"] == "Medium", "orange", "gray"),
+                                            ),
+                                        )
+                                    ),
+                                    rx.table.cell(
+                                        rx.icon_button(
+                                            rx.icon("trash-2", size=16),
+                                            variant="ghost",
+                                            color_scheme="red",
+                                            on_click=lambda: IsmsImplementerState.delete_stakeholder(sh["id"]),
+                                        )
+                                    ),
+                                ),
+                            ),
+                        ),
+                        variant="surface",
                         width="100%",
                     ),
-                    rx.text(
-                        "Nog geen kritische processen toegevoegd.",
-                        size="2",
-                        color="var(--gray-9)",
-                        font_style="italic",
+                    # Add stakeholder button
+                    rx.dialog.root(
+                        rx.dialog.trigger(
+                            rx.button(rx.icon("plus", size=14), "Stakeholder Toevoegen", variant="soft", size="2"),
+                        ),
+                        rx.dialog.content(
+                            rx.dialog.title("Nieuwe Stakeholder"),
+                            rx.dialog.description("Voeg een belanghebbende toe aan het ISMS."),
+                            rx.flex(
+                                rx.text("Naam", size="2", weight="bold"),
+                                rx.input(
+                                    placeholder="Bijv. Klanten, Directie...",
+                                    value=IsmsImplementerState.new_stakeholder_name,
+                                    on_change=IsmsImplementerState.set_new_stakeholder_name,
+                                ),
+                                rx.text("Type", size="2", weight="bold", margin_top="12px"),
+                                rx.select(
+                                    ["Internal", "External", "Partner"],
+                                    default_value="Internal",
+                                    value=IsmsImplementerState.new_stakeholder_type,
+                                    on_change=IsmsImplementerState.set_new_stakeholder_type,
+                                ),
+                                rx.text("Eisen & Verwachtingen", size="2", weight="bold", margin_top="12px"),
+                                rx.text_area(
+                                    placeholder="Wat verwachten zij van informatiebeveiliging?",
+                                    value=IsmsImplementerState.new_stakeholder_reqs,
+                                    on_change=IsmsImplementerState.set_new_stakeholder_reqs,
+                                ),
+                                rx.text("Relevantie", size="2", weight="bold", margin_top="12px"),
+                                rx.select(
+                                    ["High", "Medium", "Low"],
+                                    default_value="High",
+                                    value=IsmsImplementerState.new_stakeholder_rel,
+                                    on_change=IsmsImplementerState.set_new_stakeholder_rel,
+                                ),
+                                direction="column",
+                                spacing="2",
+                            ),
+                            rx.flex(
+                                rx.dialog.close(
+                                    rx.button("Annuleren", variant="soft", color_scheme="gray"),
+                                ),
+                                rx.dialog.close(
+                                    rx.button("Opslaan", on_click=IsmsImplementerState.add_stakeholder),
+                                ),
+                                spacing="3",
+                                margin_top="16px",
+                                justify="end",
+                            ),
+                        ),
                     ),
-                ),
-                rx.hstack(
-                    rx.input(
-                        placeholder="Naam van het kritische proces...",
-                        value=IsmsImplementerState.new_critical_process,
-                        on_change=IsmsImplementerState.set_new_critical_process,
-                        width="100%",
-                    ),
-                    rx.button(
-                        rx.icon("plus", size=14),
-                        "Toevoegen",
-                        variant="soft",
-                        size="2",
-                        on_click=IsmsImplementerState.add_critical_process,
-                    ),
+                    spacing="4",
                     width="100%",
-                    spacing="2",
+                    padding="20px",
                 ),
-                spacing="3",
+                spacing="0",
                 width="100%",
             ),
+            background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+            border="1px solid var(--gray-a4)",
+            border_radius="var(--radius-3)",
+            overflow="hidden",
             width="100%",
-            padding="20px",
         ),
 
-        # Uitsluitingen
-        rx.card(
+        # ── Sectie 3: Toepassingsgebied (scope) ──────────────────
+        rx.box(
             rx.vstack(
-                rx.hstack(
-                    rx.icon("shield-off", size=18, color="var(--orange-9)"),
-                    rx.text("Buiten het toepassingsgebied", size="3", weight="bold"),
-                    spacing="2",
-                    align="center",
-                ),
-                rx.text(
-                    "Beschrijf hier eventuele onderdelen die buiten het toepassingsgebied van het ISMS vallen.",
-                    size="2",
-                    color="var(--gray-10)",
-                ),
-                rx.text_area(
-                    placeholder="Bijv. specifieke afdelingen, locaties of systemen die niet in scope zijn...",
-                    value=IsmsImplementerState.scope_exclusions,
-                    on_change=IsmsImplementerState.set_scope_exclusions,
-                    min_height="100px",
+                rx.box(width="100%", height="3px", background="var(--green-9)", border_radius="var(--radius-3) var(--radius-3) 0 0"),
+                rx.vstack(
+                    rx.hstack(
+                        rx.box(
+                            rx.icon("target", size=18, color="white"),
+                            background="var(--green-9)",
+                            padding="8px",
+                            border_radius="var(--radius-2)",
+                        ),
+                        rx.vstack(
+                            rx.text("3. Vaststellen toepassingsgebied (scope)", size="3", weight="bold"),
+                            rx.text(
+                                "Het vaststellen van het toepassingsgebied (scope) van het ISMS. "
+                                "Hoewel de scope door de organisatie zelf kan worden bepaald, stelt "
+                                "de BIO2 aanvullend op ISO 27001 dat deze minimaal alle kritische "
+                                "processen moet omvatten. Daarom worden de kritische processen als "
+                                "uitgangspunt genomen. Hieronder vallen tevens alle onderliggende "
+                                "taakspecifieke applicaties, bedrijfsmiddelen (assets), de gehele "
+                                "IT-infrastructuur (van applicaties tot en met netwerkcomponenten "
+                                "zoals routers) en de fysieke locaties en gebouwen waarvan deze "
+                                "kritische processen afhankelijk zijn.",
+                                size="2",
+                                color="var(--gray-10)",
+                                line_height="1.6",
+                            ),
+                            spacing="1",
+                            align_items="start",
+                        ),
+                        width="100%",
+                        align="start",
+                        spacing="3",
+                    ),
+                    rx.divider(),
+                    # Kritische processen
+                    rx.vstack(
+                        rx.hstack(
+                            rx.icon("list-checks", size=16, color="var(--green-9)"),
+                            rx.text("Kritische processen binnen het toepassingsgebied", size="2", weight="bold"),
+                            spacing="2",
+                            align="center",
+                        ),
+                        rx.cond(
+                            IsmsImplementerState.critical_processes.length() > 0,
+                            rx.vstack(
+                                rx.foreach(
+                                    IsmsImplementerState.critical_processes,
+                                    lambda p, idx: rx.hstack(
+                                        rx.badge(
+                                            (idx + 1).to(str),
+                                            color_scheme="green",
+                                            variant="soft",
+                                            size="1",
+                                        ),
+                                        rx.text(p, size="2"),
+                                        rx.spacer(),
+                                        rx.icon_button(
+                                            rx.icon("trash-2", size=14),
+                                            variant="ghost",
+                                            color_scheme="red",
+                                            size="1",
+                                            on_click=IsmsImplementerState.delete_critical_process(idx),
+                                        ),
+                                        width="100%",
+                                        align="center",
+                                        padding_y="4px",
+                                    ),
+                                ),
+                                spacing="1",
+                                width="100%",
+                            ),
+                            rx.text(
+                                "Nog geen kritische processen toegevoegd.",
+                                size="2",
+                                color="var(--gray-9)",
+                                font_style="italic",
+                            ),
+                        ),
+                        rx.hstack(
+                            rx.input(
+                                placeholder="Naam van het kritische proces...",
+                                value=IsmsImplementerState.new_critical_process,
+                                on_change=IsmsImplementerState.set_new_critical_process,
+                                width="100%",
+                            ),
+                            rx.button(
+                                rx.icon("plus", size=14),
+                                "Toevoegen",
+                                variant="soft",
+                                color_scheme="green",
+                                size="2",
+                                on_click=IsmsImplementerState.add_critical_process,
+                            ),
+                            width="100%",
+                            spacing="2",
+                        ),
+                        spacing="3",
+                        width="100%",
+                    ),
+                    rx.divider(),
+                    # Uitsluitingen
+                    rx.vstack(
+                        rx.hstack(
+                            rx.icon("shield-off", size=16, color="var(--orange-9)"),
+                            rx.text("Buiten het toepassingsgebied", size="2", weight="bold"),
+                            spacing="2",
+                            align="center",
+                        ),
+                        rx.text(
+                            "Beschrijf hier eventuele onderdelen die buiten het toepassingsgebied van het ISMS vallen.",
+                            size="2",
+                            color="var(--gray-10)",
+                        ),
+                        rx.text_area(
+                            placeholder="Bijv. specifieke afdelingen, locaties of systemen die niet in scope zijn...",
+                            value=IsmsImplementerState.scope_exclusions,
+                            on_change=IsmsImplementerState.set_scope_exclusions,
+                            min_height="100px",
+                            width="100%",
+                        ),
+                        spacing="3",
+                        width="100%",
+                    ),
+                    spacing="4",
                     width="100%",
+                    padding="20px",
                 ),
-                spacing="3",
+                spacing="0",
                 width="100%",
             ),
+            background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+            border="1px solid var(--gray-a4)",
+            border_radius="var(--radius-3)",
+            overflow="hidden",
             width="100%",
-            padding="20px",
         ),
 
         align_items="start",
         width="100%",
-        spacing="4",
+        spacing="5",
     )
 
 
