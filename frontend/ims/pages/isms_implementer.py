@@ -207,7 +207,7 @@ def swot_edit_dialog() -> rx.Component:
 def step_1_content() -> rx.Component:
     """Content for Step 1: Context & Organisatie."""
     return rx.vstack(
-        step_header(1, "Context & Organisatie", "Bepaal de interne en externe context, stakeholders en scope van het ISMS."),
+        step_header(1, "Context & Organisatie", ""),
 
         # Inleidende banner
         rx.box(
