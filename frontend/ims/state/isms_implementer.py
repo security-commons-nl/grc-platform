@@ -191,8 +191,8 @@ class IsmsImplementerState(BaseState):
         {
             "fase": "Define and establish",
             "stap": "Business Case",
-            "activiteit": "Het opstellen van een business case voor de implementatie van het ISMS. Het beheer van het ISMS, dat na de implementatie volgt, valt buiten de scope.",
-            "output": "",
+            "activiteit": "Het opstellen en vaststellen van een business case voor de implementatie van het ISMS. Het beheer van het ISMS, dat na de implementatie volgt, valt buiten de scope.",
+            "output": "Vastgestelde business case",
             "verantwoordelijke": "CISO",
             "planning": "Q2 2026",
         },
