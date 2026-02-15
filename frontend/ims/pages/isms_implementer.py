@@ -629,10 +629,12 @@ def step_pp_content() -> rx.Component:
     """Content for preparation step: Projectplan / Implementatieplan."""
     return _step_page(
         0, "Projectplan / Implementatieplan",
-        "Het projectplan beschrijft hoe het ISMS wordt geïmplementeerd: de scope "
-        "van het project, de planning, mijlpalen, benodigde resources, rollen en "
-        "verantwoordelijkheden, en de communicatiestrategie. Dit plan is de leidraad "
-        "voor het gehele implementatietraject.",
+        "Dit Projectplan is opgesteld aan de hand van het instrument Work Breakdown "
+        "Structure, zodat uitsluitend de benodigde en relevante onderdelen binnen het "
+        "plan zijn opgenomen. Daarnaast is het plan ingericht conform de PDCA-cyclus. "
+        "Het doel van dit project is het realiseren van een effectief ISMS dat voldoet "
+        "aan normatieve eisen, wettelijke kaders en bijdraagt aan het behalen van de "
+        "informatiebeveiligingsdoelstellingen van de gemeente.",
         "gantt-chart", "amber",
         "Het projectplan is nog in ontwikkeling. Hier komt een overzicht van "
         "de planning, mijlpalen, resources en verantwoordelijkheden.",
