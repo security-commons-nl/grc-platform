@@ -101,9 +101,9 @@ def step_1_content() -> rx.Component:
         # Dashboard
         context_dashboard(),
 
-        # 1. Context (SWOT) / Issues
-        rx.heading("1. Interne & Externe Issues (Context)", size="4", margin_top="8px"),
-        rx.text("Identificeer relevante issues die invloed hebben op het ISMS (ISO 27001 \u00a74.1).", color="gray", size="2"),
+        # 1. Interne en externe analyse
+        rx.heading("1. Interne en externe analyse", size="4", margin_top="8px"),
+        rx.text("Identificeer relevante issues die invloed hebben op het ISMS (ISO 27001 §4.1).", color="gray", size="2"),
         
         rx.card(
             rx.vstack(
@@ -132,9 +132,9 @@ def step_1_content() -> rx.Component:
             width="100%",
         ),
 
-        # 2. Stakeholders
-        rx.heading("2. Belanghebbenden (Stakeholders)", size="4", margin_top="16px"),
-        rx.text("Identificeer belanghebbenden en hun eisen (ISO 27001 \u00a74.2).", color="gray", size="2"),
+        # 2. Stakeholders identificeren, analyseren en adresseren
+        rx.heading("2. Stakeholders identificeren, analyseren en adresseren", size="4", margin_top="16px"),
+        rx.text("Identificeer belanghebbenden en hun eisen (ISO 27001 §4.2).", color="gray", size="2"),
 
         # Stakeholder List
         rx.table.root(
@@ -231,9 +231,9 @@ def step_1_content() -> rx.Component:
             ),
         ),
 
-        # 3. Scope
-        rx.heading("3. Reikwijdte (Scope)", size="4", margin_top="16px"),
-        rx.text("Bepaal de grenzen en toepasbaarheid van het ISMS (ISO 27001 \u00a74.3).", color="gray", size="2"),
+        # 3. Vaststellen toepassingsgebied (scope)
+        rx.heading("3. Vaststellen toepassingsgebied (scope)", size="4", margin_top="16px"),
+        rx.text("Bepaal de grenzen en toepasbaarheid van het ISMS (ISO 27001 §4.3).", color="gray", size="2"),
         
         rx.vstack(
             rx.foreach(
