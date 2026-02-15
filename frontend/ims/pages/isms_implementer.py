@@ -414,6 +414,6 @@ def isms_implementer_page() -> rx.Component:
             spacing="4",
             on_mount=IsmsImplementerState.load_data,
         ),
-        title="ISMS Implementatie",
+        title="ISMS Dashboard",
         subtitle="Stapsgewijze implementatiegids",
     )
