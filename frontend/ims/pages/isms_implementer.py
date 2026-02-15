@@ -696,27 +696,7 @@ def step_pp_content() -> rx.Component:
                             ),
                         ),
                         rx.table.body(
-                            # PLAN
-                            _pp_table_row("Plan", "1. Context", "Interne en externe analyse (SWOT)", "SWOT-analyse", "", ""),
-                            _pp_table_row("Plan", "1. Context", "Stakeholders identificeren en analyseren", "Stakeholderregister", "", ""),
-                            _pp_table_row("Plan", "1. Context", "Toepassingsgebied (scope) vaststellen", "Scopedocument", "", ""),
-                            _pp_table_row("Plan", "2. Gap-analyse", "Nulmeting t.o.v. ISO 27001 / BIO 2.0", "Gap-analyserapport", "", ""),
-                            _pp_table_row("Plan", "3. Leiderschap", "Informatiebeveiligingsbeleid opstellen", "Beleidsdocument", "", ""),
-                            _pp_table_row("Plan", "3. Leiderschap", "Rollen en verantwoordelijkheden toewijzen", "RACI-matrix", "", ""),
-                            _pp_table_row("Plan", "4. Risicomanagement", "Risico-identificatie en -analyse", "Risicoregister", "", ""),
-                            _pp_table_row("Plan", "4. Risicomanagement", "Risicobehandelplan opstellen", "Risicobehandelplan", "", ""),
-                            # DO
-                            _pp_table_row("Do", "5. Middelen & Bewustzijn", "Bewustwordingsprogramma opzetten", "Trainingsplan", "", ""),
-                            _pp_table_row("Do", "5. Middelen & Bewustzijn", "Competenties en opleidingen borgen", "Competentiematrix", "", ""),
-                            _pp_table_row("Do", "6. Beheersing & SoA", "Beheersmaatregelen implementeren", "Verklaring van Toepasselijkheid (SoA)", "", ""),
-                            _pp_table_row("Do", "6. Beheersing & SoA", "Documentatie en procedures opstellen", "Proceduredocumenten", "", ""),
-                            # CHECK
-                            _pp_table_row("Check", "7. Evaluatie & Audit", "Interne audit uitvoeren", "Auditrapport", "", ""),
-                            _pp_table_row("Check", "7. Evaluatie & Audit", "Directiebeoordeling uitvoeren", "Management review verslag", "", ""),
-                            _pp_table_row("Check", "7. Evaluatie & Audit", "Prestatie-indicatoren meten", "KPI-rapportage", "", ""),
-                            # ACT
-                            _pp_table_row("Act", "8. Verbetering", "Corrigerende maatregelen doorvoeren", "CAPA-register", "", ""),
-                            _pp_table_row("Act", "8. Verbetering", "Continue verbetering borgen", "Verbeterplan", "", ""),
+                            _pp_table_row("", "", "", "", "", ""),
                         ),
                         variant="surface",
                         width="100%",
