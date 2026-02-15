@@ -168,8 +168,26 @@ class IsmsImplementerState(BaseState):
         except Exception as e:
             self.error = f"Fout bij verwijderen stakeholder: {str(e)}"
 
+    # --- Kritische Processen & Uitsluitingen ---
+    critical_processes: List[str] = []
+    new_critical_process: str = ""
+    scope_exclusions: str = ""
+
+    def add_critical_process(self):
+        """Add a critical process to the scope."""
+        if not self.new_critical_process.strip():
+            return
+        self.critical_processes = self.critical_processes + [self.new_critical_process.strip()]
+        self.new_critical_process = ""
+
+    def delete_critical_process(self, index: int):
+        """Remove a critical process by index."""
+        self.critical_processes = [
+            p for i, p in enumerate(self.critical_processes) if i != index
+        ]
+
     # --- Actions for Scope ---
-    
+
     new_scope_description: str = ""
     
     async def add_scope(self):

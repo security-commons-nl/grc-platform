@@ -349,50 +349,101 @@ def step_1_content() -> rx.Component:
         rx.heading("3. Vaststellen toepassingsgebied (scope)", size="4", margin_top="16px"),
         rx.text("Het vaststellen van het toepassingsgebied (scope) van het ISMS. Hoewel de scope door de organisatie zelf kan worden bepaald, stelt de BIO2 aanvullend op ISO 27001 dat deze minimaal alle kritische processen moet omvatten. Daarom worden de kritische processen als uitgangspunt genomen. Hieronder vallen tevens alle onderliggende taakspecifieke applicaties, bedrijfsmiddelen (assets), de gehele IT-infrastructuur (van applicaties tot en met netwerkcomponenten zoals routers) en de fysieke locaties en gebouwen waarvan deze kritische processen afhankelijk zijn.", color="gray", size="2"),
         
-        rx.vstack(
-            rx.foreach(
-                IsmsImplementerState.scopes,
-                lambda s: rx.card(
-                    rx.hstack(
-                        rx.text(s["description"], size="2"),
-                        rx.spacer(),
-                        rx.icon_button(
-                            rx.icon("trash-2", size=16), 
-                            variant="ghost", 
-                            color_scheme="red",
-                            on_click=lambda: IsmsImplementerState.delete_scope(s["id"])
-                        ),
-                        width="100%",
-                        align="center",
-                    ),
-                    width="100%",
-                    size="1",
-                )
-            ),
-            spacing="2",
-            width="100%",
-        ),
-        
+        # Kritische processen lijst
         rx.card(
             rx.vstack(
-                rx.text("Nieuwe Scope Definitie", weight="bold", size="2"),
-                rx.text_area(
-                    placeholder="Beschrijf de scope van het ISMS (bijv. alle afdelingen, locaties...)",
-                    value=IsmsImplementerState.new_scope_description,
-                    on_change=IsmsImplementerState.set_new_scope_description,
-                    min_height="80px",
+                rx.hstack(
+                    rx.icon("list-checks", size=18, color="var(--blue-9)"),
+                    rx.text("Kritische processen binnen het toepassingsgebied", size="3", weight="bold"),
+                    spacing="2",
+                    align="center",
+                ),
+                rx.cond(
+                    IsmsImplementerState.critical_processes.length() > 0,
+                    rx.vstack(
+                        rx.foreach(
+                            IsmsImplementerState.critical_processes,
+                            lambda p, idx: rx.hstack(
+                                rx.badge(
+                                    (idx + 1).to(str),
+                                    color_scheme="blue",
+                                    variant="soft",
+                                    size="1",
+                                ),
+                                rx.text(p, size="2"),
+                                rx.spacer(),
+                                rx.icon_button(
+                                    rx.icon("trash-2", size=14),
+                                    variant="ghost",
+                                    color_scheme="red",
+                                    size="1",
+                                    on_click=IsmsImplementerState.delete_critical_process(idx),
+                                ),
+                                width="100%",
+                                align="center",
+                                padding_y="4px",
+                            ),
+                        ),
+                        spacing="1",
+                        width="100%",
+                    ),
+                    rx.text(
+                        "Nog geen kritische processen toegevoegd.",
+                        size="2",
+                        color="var(--gray-9)",
+                        font_style="italic",
+                    ),
                 ),
                 rx.hstack(
-                    rx.spacer(),
-                    rx.button("Toevoegen", on_click=IsmsImplementerState.add_scope),
+                    rx.input(
+                        placeholder="Naam van het kritische proces...",
+                        value=IsmsImplementerState.new_critical_process,
+                        on_change=IsmsImplementerState.set_new_critical_process,
+                        width="100%",
+                    ),
+                    rx.button(
+                        rx.icon("plus", size=14),
+                        "Toevoegen",
+                        variant="soft",
+                        size="2",
+                        on_click=IsmsImplementerState.add_critical_process,
+                    ),
+                    width="100%",
+                    spacing="2",
+                ),
+                spacing="3",
+                width="100%",
+            ),
+            width="100%",
+            padding="20px",
+        ),
+
+        # Uitsluitingen
+        rx.card(
+            rx.vstack(
+                rx.hstack(
+                    rx.icon("shield-off", size=18, color="var(--orange-9)"),
+                    rx.text("Buiten het toepassingsgebied", size="3", weight="bold"),
+                    spacing="2",
+                    align="center",
+                ),
+                rx.text(
+                    "Beschrijf hier eventuele onderdelen die buiten het toepassingsgebied van het ISMS vallen.",
+                    size="2",
+                    color="var(--gray-10)",
+                ),
+                rx.text_area(
+                    placeholder="Bijv. specifieke afdelingen, locaties of systemen die niet in scope zijn...",
+                    value=IsmsImplementerState.scope_exclusions,
+                    on_change=IsmsImplementerState.set_scope_exclusions,
+                    min_height="100px",
                     width="100%",
                 ),
                 spacing="3",
                 width="100%",
             ),
             width="100%",
-            variant="ghost",
-            border="1px dashed var(--gray-a8)",
+            padding="20px",
         ),
 
         align_items="start",
