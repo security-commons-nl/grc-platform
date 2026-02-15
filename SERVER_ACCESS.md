@@ -71,9 +71,9 @@ curl -s -X POST -H "Authorization: Bearer $env:HETZNER_API_KEY" https://api.hetz
 | User | SSH Command | Doel |
 |------|------------|------|
 | `ims` (admin) | `ssh ims-admin` | Volledige servertoegang (sudo) |
-| `webhostiq` (Vasilis) | `ssh -p 2222 webhostiq@77.42.66.251` | Deployment & git push |
+| `vasilis` | `ssh -p 2222 vasilis@77.42.66.251` | Deployment & git push |
 
-### webhostiq (Vasilis Theocharis)
+### vasilis (Vasilis Theocharis)
 
 - **Email**: vasilistheocharis@outlook.com
 - **SSH Key**: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPqAPJ5gto4CfVw05idmn1ilFBGugTZ8HWdkXGKIehdv`
@@ -82,10 +82,8 @@ curl -s -X POST -H "Authorization: Bearer $env:HETZNER_API_KEY" https://api.hetz
 
 ```bash
 # Vasilis verbindt met:
-ssh -p 2222 webhostiq@77.42.66.251
+ssh -p 2222 vasilis@77.42.66.251
 ```
-
-> **TODO**: Git repo toegang configureren voor webhostiq (bijv. shared group op `/opt/IMS`)
 
 ---
 
