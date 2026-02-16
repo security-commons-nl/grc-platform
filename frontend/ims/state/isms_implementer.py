@@ -119,6 +119,12 @@ class IsmsImplementerState(BaseState):
         self.swot_editing = ""
         self.swot_edit_text = ""
 
+    def handle_swot_dialog_change(self, is_open: bool):
+        """Handle Radix dialog open/close (e.g. clicking outside)."""
+        if not is_open:
+            self.swot_editing = ""
+            self.swot_edit_text = ""
+
     # --- Actions for Step 1 ---
 
     async def add_stakeholder_from_ui(self):
@@ -347,6 +353,12 @@ class IsmsImplementerState(BaseState):
         self.bc_editing = ""
         self.bc_edit_text = ""
 
+    def handle_bc_dialog_change(self, is_open: bool):
+        """Handle Radix dialog open/close (e.g. clicking outside)."""
+        if not is_open:
+            self.bc_editing = ""
+            self.bc_edit_text = ""
+
     bmc_editing: str = ""
     bmc_edit_text: str = ""
 
@@ -393,6 +405,12 @@ class IsmsImplementerState(BaseState):
     def close_bmc_edit(self):
         self.bmc_editing = ""
         self.bmc_edit_text = ""
+
+    def handle_bmc_dialog_change(self, is_open: bool):
+        """Handle Radix dialog open/close (e.g. clicking outside)."""
+        if not is_open:
+            self.bmc_editing = ""
+            self.bmc_edit_text = ""
 
     # --- Projectplan WBS Tabel ---
     wbs_rows: List[dict] = [

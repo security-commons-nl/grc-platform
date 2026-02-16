@@ -243,6 +243,7 @@ def swot_edit_dialog() -> rx.Component:
             max_width="500px",
         ),
         open=IsmsImplementerState.swot_editing != "",
+        on_open_change=IsmsImplementerState.handle_swot_dialog_change,
     )
 
 
@@ -816,6 +817,7 @@ def bmc_edit_dialog() -> rx.Component:
             max_width="550px",
         ),
         open=IsmsImplementerState.bmc_editing != "",
+        on_open_change=IsmsImplementerState.handle_bmc_dialog_change,
     )
 
 
@@ -895,6 +897,7 @@ def bc_edit_dialog() -> rx.Component:
             max_width="550px",
         ),
         open=IsmsImplementerState.bc_editing != "",
+        on_open_change=IsmsImplementerState.handle_bc_dialog_change,
     )
 
 
