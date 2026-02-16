@@ -281,41 +281,71 @@ class IsmsImplementerState(BaseState):
     )
 
     # --- Business Case Elementen ---
-    bc_elements: dict = {
-        "omgeving": "Beschrijving van de interne en externe context waarin de organisatie opereert en die aanleiding geeft tot de behoefte aan een ISMS.",
-        "doelen": "Het overkoepelende doel van het ISMS en de specifieke, meetbare doelstellingen die ermee worden nagestreefd.",
-        "samenvatting": "Een beknopt overzicht van het implementatieproject: wat wordt er gedaan, voor wie en waarom.",
-        "voordelen": "De verwachte baten van het ISMS, zoals verbeterde beveiliging, compliance, vertrouwen van stakeholders en risicoreductie.",
-        "scope": "Een eerste afbakening van het toepassingsgebied: welke processen, afdelingen en systemen vallen binnen het ISMS.",
-        "succesfactoren": "Voorwaarden die bepalend zijn voor het slagen van het project, zoals draagvlak van de directie en beschikbaarheid van middelen.",
-        "projectplan": "Een globaal overzicht van de aanpak, fasen en activiteiten die nodig zijn om het ISMS te implementeren.",
-        "deadlines": "De belangrijkste tijdsgebonden momenten en oplevermomenten gedurende het implementatietraject.",
-        "rollen": "Wie is betrokken bij het project en welke rol en verantwoordelijkheid heeft elke betrokkene.",
-        "middelen_bc": "De benodigde resources: personeel, tooling, externe ondersteuning en overige faciliteiten.",
-        "budget": "De financiële raming voor het implementatietraject, inclusief interne en externe kosten.",
-        "beperkingen": "Randvoorwaarden en beperkingen die van invloed zijn op het project, zoals tijd, capaciteit of organisatorische restricties.",
-    }
+    bc_omgeving: str = "Beschrijving van de interne en externe context waarin de organisatie opereert en die aanleiding geeft tot de behoefte aan een ISMS."
+    bc_doelen: str = "Het overkoepelende doel van het ISMS en de specifieke, meetbare doelstellingen die ermee worden nagestreefd."
+    bc_samenvatting: str = "Een beknopt overzicht van het implementatieproject: wat wordt er gedaan, voor wie en waarom."
+    bc_voordelen: str = "De verwachte baten van het ISMS, zoals verbeterde beveiliging, compliance, vertrouwen van stakeholders en risicoreductie."
+    bc_scope: str = "Een eerste afbakening van het toepassingsgebied: welke processen, afdelingen en systemen vallen binnen het ISMS."
+    bc_succesfactoren: str = "Voorwaarden die bepalend zijn voor het slagen van het project, zoals draagvlak van de directie en beschikbaarheid van middelen."
+    bc_projectplan: str = "Een globaal overzicht van de aanpak, fasen en activiteiten die nodig zijn om het ISMS te implementeren."
+    bc_deadlines: str = "De belangrijkste tijdsgebonden momenten en oplevermomenten gedurende het implementatietraject."
+    bc_rollen: str = "Wie is betrokken bij het project en welke rol en verantwoordelijkheid heeft elke betrokkene."
+    bc_middelen: str = "De benodigde resources: personeel, tooling, externe ondersteuning en overige faciliteiten."
+    bc_budget: str = "De financiële raming voor het implementatietraject, inclusief interne en externe kosten."
+    bc_beperkingen: str = "Randvoorwaarden en beperkingen die van invloed zijn op het project, zoals tijd, capaciteit of organisatorische restricties."
+
     bc_editing: str = ""
     bc_edit_text: str = ""
 
     def open_bc_edit(self, block: str):
         self.bc_editing = block
-        self.bc_edit_text = self.bc_elements.get(block, "")
+        mapping = {
+            "omgeving": self.bc_omgeving,
+            "doelen": self.bc_doelen,
+            "samenvatting": self.bc_samenvatting,
+            "voordelen": self.bc_voordelen,
+            "scope": self.bc_scope,
+            "succesfactoren": self.bc_succesfactoren,
+            "projectplan": self.bc_projectplan,
+            "deadlines": self.bc_deadlines,
+            "rollen": self.bc_rollen,
+            "middelen": self.bc_middelen,
+            "budget": self.bc_budget,
+            "beperkingen": self.bc_beperkingen,
+        }
+        self.bc_edit_text = mapping.get(block, "")
 
     def save_bc_edit(self):
-        if self.bc_editing and self.bc_editing in self.bc_elements:
-            self.bc_elements[self.bc_editing] = self.bc_edit_text
+        if self.bc_editing == "omgeving":
+            self.bc_omgeving = self.bc_edit_text
+        elif self.bc_editing == "doelen":
+            self.bc_doelen = self.bc_edit_text
+        elif self.bc_editing == "samenvatting":
+            self.bc_samenvatting = self.bc_edit_text
+        elif self.bc_editing == "voordelen":
+            self.bc_voordelen = self.bc_edit_text
+        elif self.bc_editing == "scope":
+            self.bc_scope = self.bc_edit_text
+        elif self.bc_editing == "succesfactoren":
+            self.bc_succesfactoren = self.bc_edit_text
+        elif self.bc_editing == "projectplan":
+            self.bc_projectplan = self.bc_edit_text
+        elif self.bc_editing == "deadlines":
+            self.bc_deadlines = self.bc_edit_text
+        elif self.bc_editing == "rollen":
+            self.bc_rollen = self.bc_edit_text
+        elif self.bc_editing == "middelen":
+            self.bc_middelen = self.bc_edit_text
+        elif self.bc_editing == "budget":
+            self.bc_budget = self.bc_edit_text
+        elif self.bc_editing == "beperkingen":
+            self.bc_beperkingen = self.bc_edit_text
         self.bc_editing = ""
         self.bc_edit_text = ""
 
     def close_bc_edit(self):
         self.bc_editing = ""
         self.bc_edit_text = ""
-
-    def set_bc_dialog_open(self, is_open: bool):
-        if not is_open:
-            self.bc_editing = ""
-            self.bc_edit_text = ""
 
     bmc_editing: str = ""
     bmc_edit_text: str = ""
@@ -363,11 +393,6 @@ class IsmsImplementerState(BaseState):
     def close_bmc_edit(self):
         self.bmc_editing = ""
         self.bmc_edit_text = ""
-
-    def set_bmc_dialog_open(self, is_open: bool):
-        if not is_open:
-            self.bmc_editing = ""
-            self.bmc_edit_text = ""
 
     # --- Projectplan WBS Tabel ---
     wbs_rows: List[dict] = [

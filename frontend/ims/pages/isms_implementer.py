@@ -803,8 +803,12 @@ def bmc_edit_dialog() -> rx.Component:
                 auto_focus=True,
             ),
             rx.flex(
-                rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bmc_edit),
-                rx.button("Opslaan", on_click=IsmsImplementerState.save_bmc_edit),
+                rx.dialog.close(
+                    rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bmc_edit),
+                ),
+                rx.dialog.close(
+                    rx.button("Opslaan", on_click=IsmsImplementerState.save_bmc_edit),
+                ),
                 spacing="3",
                 margin_top="16px",
                 justify="end",
@@ -812,7 +816,6 @@ def bmc_edit_dialog() -> rx.Component:
             max_width="550px",
         ),
         open=IsmsImplementerState.bmc_editing != "",
-        on_open_change=IsmsImplementerState.set_bmc_dialog_open,
     )
 
 
@@ -863,7 +866,7 @@ def bc_edit_dialog() -> rx.Component:
                     ("projectplan", "Projectplan bewerken"),
                     ("deadlines", "Deadlines en mijlpalen bewerken"),
                     ("rollen", "Rollen en verantwoordelijkheden bewerken"),
-                    ("middelen_bc", "Middelen bewerken"),
+                    ("middelen", "Middelen bewerken"),
                     ("budget", "Budget bewerken"),
                     ("beperkingen", "Beperkingen bewerken"),
                     "Element bewerken",
@@ -871,6 +874,7 @@ def bc_edit_dialog() -> rx.Component:
             ),
             rx.dialog.description("Pas de inhoud aan. Gebruik bullet points (•) voor opsommingen."),
             rx.text_area(
+                placeholder="Voer hier de inhoud in...",
                 value=IsmsImplementerState.bc_edit_text,
                 on_change=IsmsImplementerState.set_bc_edit_text,
                 min_height="250px",
@@ -878,8 +882,12 @@ def bc_edit_dialog() -> rx.Component:
                 auto_focus=True,
             ),
             rx.flex(
-                rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bc_edit),
-                rx.button("Opslaan", on_click=IsmsImplementerState.save_bc_edit),
+                rx.dialog.close(
+                    rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bc_edit),
+                ),
+                rx.dialog.close(
+                    rx.button("Opslaan", on_click=IsmsImplementerState.save_bc_edit),
+                ),
                 spacing="3",
                 margin_top="16px",
                 justify="end",
@@ -887,7 +895,6 @@ def bc_edit_dialog() -> rx.Component:
             max_width="550px",
         ),
         open=IsmsImplementerState.bc_editing != "",
-        on_open_change=IsmsImplementerState.set_bc_dialog_open,
     )
 
 
@@ -939,18 +946,18 @@ def step_bc_content() -> rx.Component:
                         spacing="3",
                     ),
                     rx.divider(),
-                    _bc_section("globe", "Omgeving", IsmsImplementerState.bc_elements["omgeving"], IsmsImplementerState.open_bc_edit("omgeving")),
-                    _bc_section("target", "Doel en doelstellingen", IsmsImplementerState.bc_elements["doelen"], IsmsImplementerState.open_bc_edit("doelen")),
-                    _bc_section("file-text", "Projectsamenvatting", IsmsImplementerState.bc_elements["samenvatting"], IsmsImplementerState.open_bc_edit("samenvatting")),
-                    _bc_section("trophy", "Verwachte voordelen", IsmsImplementerState.bc_elements["voordelen"], IsmsImplementerState.open_bc_edit("voordelen")),
-                    _bc_section("scan", "Voorlopige scope", IsmsImplementerState.bc_elements["scope"], IsmsImplementerState.open_bc_edit("scope")),
-                    _bc_section("check-circle", "Kritische succesfactoren", IsmsImplementerState.bc_elements["succesfactoren"], IsmsImplementerState.open_bc_edit("succesfactoren")),
-                    _bc_section("gantt-chart", "Projectplan", IsmsImplementerState.bc_elements["projectplan"], IsmsImplementerState.open_bc_edit("projectplan")),
-                    _bc_section("calendar", "Deadlines en mijlpalen", IsmsImplementerState.bc_elements["deadlines"], IsmsImplementerState.open_bc_edit("deadlines")),
-                    _bc_section("users", "Rollen en verantwoordelijkheden", IsmsImplementerState.bc_elements["rollen"], IsmsImplementerState.open_bc_edit("rollen")),
-                    _bc_section("cpu", "Middelen", IsmsImplementerState.bc_elements["middelen_bc"], IsmsImplementerState.open_bc_edit("middelen_bc")),
-                    _bc_section("wallet", "Budget", IsmsImplementerState.bc_elements["budget"], IsmsImplementerState.open_bc_edit("budget")),
-                    _bc_section("alert-triangle", "Beperkingen", IsmsImplementerState.bc_elements["beperkingen"], IsmsImplementerState.open_bc_edit("beperkingen")),
+                    _bc_section("globe", "Omgeving", IsmsImplementerState.bc_omgeving, IsmsImplementerState.open_bc_edit("omgeving")),
+                    _bc_section("target", "Doel en doelstellingen", IsmsImplementerState.bc_doelen, IsmsImplementerState.open_bc_edit("doelen")),
+                    _bc_section("file-text", "Projectsamenvatting", IsmsImplementerState.bc_samenvatting, IsmsImplementerState.open_bc_edit("samenvatting")),
+                    _bc_section("trophy", "Verwachte voordelen", IsmsImplementerState.bc_voordelen, IsmsImplementerState.open_bc_edit("voordelen")),
+                    _bc_section("scan", "Voorlopige scope", IsmsImplementerState.bc_scope, IsmsImplementerState.open_bc_edit("scope")),
+                    _bc_section("circle-check", "Kritische succesfactoren", IsmsImplementerState.bc_succesfactoren, IsmsImplementerState.open_bc_edit("succesfactoren")),
+                    _bc_section("gantt-chart", "Projectplan", IsmsImplementerState.bc_projectplan, IsmsImplementerState.open_bc_edit("projectplan")),
+                    _bc_section("calendar", "Deadlines en mijlpalen", IsmsImplementerState.bc_deadlines, IsmsImplementerState.open_bc_edit("deadlines")),
+                    _bc_section("users", "Rollen en verantwoordelijkheden", IsmsImplementerState.bc_rollen, IsmsImplementerState.open_bc_edit("rollen")),
+                    _bc_section("cpu", "Middelen", IsmsImplementerState.bc_middelen, IsmsImplementerState.open_bc_edit("middelen")),
+                    _bc_section("wallet", "Budget", IsmsImplementerState.bc_budget, IsmsImplementerState.open_bc_edit("budget")),
+                    _bc_section("triangle-alert", "Beperkingen", IsmsImplementerState.bc_beperkingen, IsmsImplementerState.open_bc_edit("beperkingen")),
                     spacing="3",
                     width="100%",
                     padding="20px",
