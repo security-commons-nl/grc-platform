@@ -816,8 +816,8 @@ def bmc_edit_dialog() -> rx.Component:
     )
 
 
-def _bc_section(icon: str, title: str, description: str) -> rx.Component:
-    """Single Business Case section card."""
+def _bc_section(icon: str, title: str, content: rx.Var, on_click_handler) -> rx.Component:
+    """Single clickable Business Case section card."""
     return rx.hstack(
         rx.box(
             rx.icon(icon, size=16, color="var(--amber-9)"),
@@ -828,9 +828,10 @@ def _bc_section(icon: str, title: str, description: str) -> rx.Component:
         ),
         rx.vstack(
             rx.text(title, size="2", weight="bold"),
-            rx.text(description, size="2", color="var(--gray-10)", line_height="1.6"),
+            rx.text(content, size="2", color="var(--gray-10)", line_height="1.6", white_space="pre-wrap"),
             spacing="1",
             align_items="start",
+            width="100%",
         ),
         width="100%",
         align="start",
@@ -838,6 +839,55 @@ def _bc_section(icon: str, title: str, description: str) -> rx.Component:
         padding="12px",
         background="var(--gray-a2)",
         border_radius="var(--radius-2)",
+        cursor="pointer",
+        _hover={"background": "var(--amber-a3)", "border_color": "var(--amber-a5)"},
+        border="1px solid transparent",
+        transition="all 0.15s ease",
+        on_click=on_click_handler,
+    )
+
+
+def bc_edit_dialog() -> rx.Component:
+    """Dialog for editing a Business Case element."""
+    return rx.dialog.root(
+        rx.dialog.content(
+            rx.dialog.title(
+                rx.match(
+                    IsmsImplementerState.bc_editing,
+                    ("omgeving", "Omgeving bewerken"),
+                    ("doelen", "Doel en doelstellingen bewerken"),
+                    ("samenvatting", "Projectsamenvatting bewerken"),
+                    ("voordelen", "Verwachte voordelen bewerken"),
+                    ("scope", "Voorlopige scope bewerken"),
+                    ("succesfactoren", "Kritische succesfactoren bewerken"),
+                    ("projectplan", "Projectplan bewerken"),
+                    ("deadlines", "Deadlines en mijlpalen bewerken"),
+                    ("rollen", "Rollen en verantwoordelijkheden bewerken"),
+                    ("middelen_bc", "Middelen bewerken"),
+                    ("budget", "Budget bewerken"),
+                    ("beperkingen", "Beperkingen bewerken"),
+                    "Element bewerken",
+                ),
+            ),
+            rx.dialog.description("Pas de inhoud aan. Gebruik bullet points (•) voor opsommingen."),
+            rx.text_area(
+                value=IsmsImplementerState.bc_edit_text,
+                on_change=IsmsImplementerState.set_bc_edit_text,
+                min_height="250px",
+                width="100%",
+                auto_focus=True,
+            ),
+            rx.flex(
+                rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bc_edit),
+                rx.button("Opslaan", on_click=IsmsImplementerState.save_bc_edit),
+                spacing="3",
+                margin_top="16px",
+                justify="end",
+            ),
+            max_width="550px",
+        ),
+        open=IsmsImplementerState.bc_editing != "",
+        on_open_change=IsmsImplementerState.set_bc_dialog_open,
     )
 
 
@@ -882,23 +932,25 @@ def step_bc_content() -> rx.Component:
                             border_radius="var(--radius-2)",
                         ),
                         rx.text("Elementen van de Business Case", size="3", weight="bold"),
+                        rx.spacer(),
+                        rx.text("Klik op een element om te bewerken", size="1", color="var(--gray-9)"),
                         width="100%",
                         align="center",
                         spacing="3",
                     ),
                     rx.divider(),
-                    _bc_section("globe", "Omgeving", "Beschrijving van de interne en externe context waarin de organisatie opereert en die aanleiding geeft tot de behoefte aan een ISMS."),
-                    _bc_section("target", "Doel en doelstellingen", "Het overkoepelende doel van het ISMS en de specifieke, meetbare doelstellingen die ermee worden nagestreefd."),
-                    _bc_section("file-text", "Projectsamenvatting", "Een beknopt overzicht van het implementatieproject: wat wordt er gedaan, voor wie en waarom."),
-                    _bc_section("trophy", "Verwachte voordelen", "De verwachte baten van het ISMS, zoals verbeterde beveiliging, compliance, vertrouwen van stakeholders en risicoreductie."),
-                    _bc_section("scan", "Voorlopige scope", "Een eerste afbakening van het toepassingsgebied: welke processen, afdelingen en systemen vallen binnen het ISMS."),
-                    _bc_section("check-circle", "Kritische succesfactoren", "Voorwaarden die bepalend zijn voor het slagen van het project, zoals draagvlak van de directie en beschikbaarheid van middelen."),
-                    _bc_section("gantt-chart", "Projectplan", "Een globaal overzicht van de aanpak, fasen en activiteiten die nodig zijn om het ISMS te implementeren."),
-                    _bc_section("calendar", "Deadlines en mijlpalen", "De belangrijkste tijdsgebonden momenten en oplevermomenten gedurende het implementatietraject."),
-                    _bc_section("users", "Rollen en verantwoordelijkheden", "Wie is betrokken bij het project en welke rol en verantwoordelijkheid heeft elke betrokkene."),
-                    _bc_section("cpu", "Middelen", "De benodigde resources: personeel, tooling, externe ondersteuning en overige faciliteiten."),
-                    _bc_section("wallet", "Budget", "De financiële raming voor het implementatietraject, inclusief interne en externe kosten."),
-                    _bc_section("alert-triangle", "Beperkingen", "Randvoorwaarden en beperkingen die van invloed zijn op het project, zoals tijd, capaciteit of organisatorische restricties."),
+                    _bc_section("globe", "Omgeving", IsmsImplementerState.bc_elements["omgeving"], IsmsImplementerState.open_bc_edit("omgeving")),
+                    _bc_section("target", "Doel en doelstellingen", IsmsImplementerState.bc_elements["doelen"], IsmsImplementerState.open_bc_edit("doelen")),
+                    _bc_section("file-text", "Projectsamenvatting", IsmsImplementerState.bc_elements["samenvatting"], IsmsImplementerState.open_bc_edit("samenvatting")),
+                    _bc_section("trophy", "Verwachte voordelen", IsmsImplementerState.bc_elements["voordelen"], IsmsImplementerState.open_bc_edit("voordelen")),
+                    _bc_section("scan", "Voorlopige scope", IsmsImplementerState.bc_elements["scope"], IsmsImplementerState.open_bc_edit("scope")),
+                    _bc_section("check-circle", "Kritische succesfactoren", IsmsImplementerState.bc_elements["succesfactoren"], IsmsImplementerState.open_bc_edit("succesfactoren")),
+                    _bc_section("gantt-chart", "Projectplan", IsmsImplementerState.bc_elements["projectplan"], IsmsImplementerState.open_bc_edit("projectplan")),
+                    _bc_section("calendar", "Deadlines en mijlpalen", IsmsImplementerState.bc_elements["deadlines"], IsmsImplementerState.open_bc_edit("deadlines")),
+                    _bc_section("users", "Rollen en verantwoordelijkheden", IsmsImplementerState.bc_elements["rollen"], IsmsImplementerState.open_bc_edit("rollen")),
+                    _bc_section("cpu", "Middelen", IsmsImplementerState.bc_elements["middelen_bc"], IsmsImplementerState.open_bc_edit("middelen_bc")),
+                    _bc_section("wallet", "Budget", IsmsImplementerState.bc_elements["budget"], IsmsImplementerState.open_bc_edit("budget")),
+                    _bc_section("alert-triangle", "Beperkingen", IsmsImplementerState.bc_elements["beperkingen"], IsmsImplementerState.open_bc_edit("beperkingen")),
                     spacing="3",
                     width="100%",
                     padding="20px",
@@ -912,6 +964,7 @@ def step_bc_content() -> rx.Component:
             overflow="hidden",
             width="100%",
         ),
+        bc_edit_dialog(),
         align_items="start",
         width="100%",
         spacing="5",
