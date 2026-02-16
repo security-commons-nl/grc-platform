@@ -71,7 +71,8 @@ curl -s -X POST -H "Authorization: Bearer $env:HETZNER_API_KEY" https://api.hetz
 | User | SSH Command | Doel |
 |------|------------|------|
 | `ims` (admin) | `ssh ims-admin` | Volledige servertoegang (sudo) |
-| `vasilis` | `ssh -p 2222 vasilis@77.42.66.251` | Deployment & git push |
+| `vasilis` | `ssh -p 2222 vasilis@77.42.66.251` | Volledige servertoegang (sudo) |
+| `michael` | `ssh -p 2222 michael@77.42.66.251` | Volledige servertoegang (sudo) |
 
 ### vasilis (Vasilis Theocharis)
 
@@ -83,6 +84,18 @@ curl -s -X POST -H "Authorization: Bearer $env:HETZNER_API_KEY" https://api.hetz
 ```bash
 # Vasilis verbindt met:
 ssh -p 2222 vasilis@77.42.66.251
+```
+
+### michael
+
+- **SSH Key**: *(volgt nog)*
+- **Aangemaakt**: 2026-02-16
+- **Shell**: `/bin/bash`
+- **Groepen**: `users`, `docker`, `ims`, `sudo (NOPASSWD)`
+
+```bash
+# Michael verbindt met:
+ssh -p 2222 michael@77.42.66.251
 ```
 
 ---
