@@ -16,7 +16,7 @@ class APIClient:
 
     def __init__(self, base_url: str = API_BASE_URL):
         self.base_url = base_url
-        self.timeout = httpx.Timeout(120.0)
+        self.timeout = httpx.Timeout(5.0)
 
     def _get_client(
         self,
