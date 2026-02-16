@@ -186,6 +186,147 @@ class IsmsImplementerState(BaseState):
             p for i, p in enumerate(self.critical_processes) if i != index
         ]
 
+    # --- Business Model Canvas ---
+    bmc_partners: str = (
+        "• Gemeentesecretaris, CIO en directie\n"
+        "• CISO / informatiebeveiligingscoördinator\n"
+        "• Functioneel beheer ISMS-tool\n"
+        "• Privacy officer / FG\n"
+        "• Proces- en systeemeigenaren\n"
+        "• Interne audit functie\n"
+        "• Leveranciers van (kritieke) gemeentelijke systemen\n"
+        "• GRC Leverancier\n"
+        "• IBD – Levert dreigingsinformatie, ondersteuning incidenten, is CSIRT voor incident meldingen\n"
+        "• RDI (Rijksinspectie Digitale Infrastructuur) – Toezichthouder\n"
+        "• NCSC ontvangt incidentmeldingen en beheert het register van essentiële en belangrijke entiteiten."
+    )
+    bmc_activiteiten: str = (
+        "• Uitvoeren risicoanalyses (BIA, MAPGOOD, DPIA) door proceseigenaren\n"
+        "• Opstellen/onderhouden beveiligingsbeleid, processen en maatregelen (BIO/BIO2)\n"
+        "• Monitoren & opvolgen van incidenten\n"
+        "• Monitoren van de beheersing van de informatiebeveiligingsprocessen\n"
+        "• Registreren van de gemeente als kritieke entiteit\n"
+        "• Naleving meldplicht ernstige incidenten bij RDI\n"
+        "• Melden incidenten bij CSIRT\n"
+        "• Begeleiden van audits en reviews\n"
+        "• ISMS beheren (PDCA-cyclus, rapportages)"
+    )
+    bmc_waarde: str = (
+        "• Gemeente is aantoonbaar in control op informatiebeveiliging\n"
+        "• Voldoet aan wet- en regelgeving (BIO2, AVG, CBW/NIS2)\n"
+        "• Voorkomt boetes, toezichtmaatregelen en imagoschade\n"
+        "• Biedt overzicht en stuurinformatie aan bestuur en directie\n"
+        "• Biedt verantwoording en zekerheid aan de gemeenteraad en college van B&W\n"
+        "• Ondersteunt het ENSIA proces"
+    )
+    bmc_relaties: str = (
+        "• Advies en begeleiding voor proceseigenaren\n"
+        "• Interactie bij risicoanalyses en audits\n"
+        "• Contractmanagement en leveranciersrelaties (incl. TPRM)\n"
+        "• Interne auditfunctie (borging ISMS-doelstellingen)\n"
+        "• Proactieve communicatie bij incidenten en dreigingen\n"
+        "• Naleving rapportage- en meldverplichtingen"
+    )
+    bmc_segmenten: str = (
+        "• Proces-, informatie- en systeemeigenaren\n"
+        "• Gemeentesecretaris, CIO, directie\n"
+        "• PO / FG / privacyjuristen\n"
+        "• Binnengemeentelijke partijen met ISMS relatie, HR, Audit, contractmanagement, inkoop, I&A/ICT\n"
+        "• IBD\n"
+        "• RDI (als toezichthouder)\n"
+        "• College en raad bij \"grote\" incidenten en datalekken"
+    )
+    bmc_middelen: str = (
+        "• GRC- of ISMS-tool (SaaS)\n"
+        "• Risico- en maatregelregister\n"
+        "• Templates voor DPIA, incidentmeldingen, maatregelen\n"
+        "• Toegang tot BIO2, CBW\n"
+        "• Interne capaciteit: CISO, FG, beheer, lijnmanagement\n"
+        "• Leveranciers\n"
+        "• Procedures en rapportage (formats)"
+    )
+    bmc_kanalen: str = (
+        "• ISMS-dashboard en rapportages\n"
+        "• Operationele maandrapportages directie\n"
+        "• Incidentenregistratie- en meldsysteem\n"
+        "• Awareness programma's\n"
+        "• Intranet, mailingen\n"
+        "• Rapportages richting RDI\n"
+        "• Persoonlijk contact (teams, live)"
+    )
+    bmc_kosten: str = (
+        "• Interne personeelskosten\n"
+        "• Incident kosten\n"
+        "• Toolinglicenties\n"
+        "• Auditkosten\n"
+        "• Externe personeelskosten/inhuur\n"
+        "• Bewustwordingstrainingen\n"
+        "• Non compliancy kosten en boetes"
+    )
+    bmc_inkomsten: str = (
+        "• Geen directe inkomsten\n"
+        "• Indirect: voorkomen toezichtmaatregelen, boetes en faalkosten\n"
+        "• Verlaging gevolgen van incidenten\n"
+        "• Verbeterde continuïteit en bestuurlijke zekerheid"
+    )
+    bmc_aspecten: str = (
+        "Kritieke succesfactoren:\n"
+        "• Balans tussen risico en maatregelen\n"
+        "• Goede samenwerking met stakeholders\n"
+        "• Transparante communicatie\n"
+        "• Kennis en kunde bestuur en leiding\n\n"
+        "Wettelijk kader:\n"
+        "• Cbw, Cbb, AMvB, BIO2, AVG, Wpg\n"
+        "• Archiefwet - dossiers moeten permanent bewaard worden"
+    )
+
+    bmc_editing: str = ""
+    bmc_edit_text: str = ""
+
+    def open_bmc_edit(self, block: str):
+        self.bmc_editing = block
+        mapping = {
+            "partners": self.bmc_partners,
+            "activiteiten": self.bmc_activiteiten,
+            "waarde": self.bmc_waarde,
+            "relaties": self.bmc_relaties,
+            "segmenten": self.bmc_segmenten,
+            "middelen": self.bmc_middelen,
+            "kanalen": self.bmc_kanalen,
+            "kosten": self.bmc_kosten,
+            "inkomsten": self.bmc_inkomsten,
+            "aspecten": self.bmc_aspecten,
+        }
+        self.bmc_edit_text = mapping.get(block, "")
+
+    def save_bmc_edit(self):
+        if self.bmc_editing == "partners":
+            self.bmc_partners = self.bmc_edit_text
+        elif self.bmc_editing == "activiteiten":
+            self.bmc_activiteiten = self.bmc_edit_text
+        elif self.bmc_editing == "waarde":
+            self.bmc_waarde = self.bmc_edit_text
+        elif self.bmc_editing == "relaties":
+            self.bmc_relaties = self.bmc_edit_text
+        elif self.bmc_editing == "segmenten":
+            self.bmc_segmenten = self.bmc_edit_text
+        elif self.bmc_editing == "middelen":
+            self.bmc_middelen = self.bmc_edit_text
+        elif self.bmc_editing == "kanalen":
+            self.bmc_kanalen = self.bmc_edit_text
+        elif self.bmc_editing == "kosten":
+            self.bmc_kosten = self.bmc_edit_text
+        elif self.bmc_editing == "inkomsten":
+            self.bmc_inkomsten = self.bmc_edit_text
+        elif self.bmc_editing == "aspecten":
+            self.bmc_aspecten = self.bmc_edit_text
+        self.bmc_editing = ""
+        self.bmc_edit_text = ""
+
+    def close_bmc_edit(self):
+        self.bmc_editing = ""
+        self.bmc_edit_text = ""
+
     # --- Projectplan WBS Tabel ---
     wbs_rows: List[dict] = [
         {

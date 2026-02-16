@@ -612,6 +612,213 @@ def step_1_content() -> rx.Component:
     )
 
 
+def _bmc_block(
+    title: str, icon: str, content: rx.Var, color: str, on_click_handler, min_h: str = "200px",
+) -> rx.Component:
+    """Single clickable BMC block."""
+    return rx.box(
+        rx.vstack(
+            rx.hstack(
+                rx.icon(icon, size=14, color=f"var(--{color}-9)"),
+                rx.text(title, size="1", weight="bold", color=f"var(--{color}-11)"),
+                spacing="1",
+                align="center",
+            ),
+            rx.text(
+                content, size="1", color="var(--gray-11)", white_space="pre-wrap", line_height="1.5",
+            ),
+            spacing="2",
+            width="100%",
+        ),
+        background=f"var(--{color}-a2)",
+        border=f"1px solid var(--{color}-a4)",
+        border_radius="var(--radius-2)",
+        padding="12px",
+        min_height=min_h,
+        cursor="pointer",
+        _hover={"border_color": f"var(--{color}-a7)", "background": f"var(--{color}-a3)"},
+        transition="all 0.15s ease",
+        on_click=on_click_handler,
+        overflow="hidden",
+    )
+
+
+def bmc_canvas() -> rx.Component:
+    """Visual Business Model Canvas grid."""
+    return rx.box(
+        rx.vstack(
+            rx.box(width="100%", height="3px", background="var(--indigo-9)", border_radius="var(--radius-3) var(--radius-3) 0 0"),
+            rx.vstack(
+                # Header
+                rx.hstack(
+                    rx.box(
+                        rx.icon("layout-grid", size=18, color="white"),
+                        background="var(--indigo-9)",
+                        padding="8px",
+                        border_radius="var(--radius-2)",
+                    ),
+                    rx.vstack(
+                        rx.text("Business Model Canvas", size="3", weight="bold"),
+                        rx.text("ISMS-proces — Gemeente", size="1", color="var(--gray-10)"),
+                        spacing="0",
+                        align_items="start",
+                    ),
+                    rx.spacer(),
+                    rx.text("Klik op een blok om te bewerken", size="1", color="var(--gray-9)"),
+                    width="100%",
+                    align="center",
+                    spacing="3",
+                ),
+                rx.divider(),
+                # Row 1: Partners | Activities + Resources | Value Prop | Relations + Channels | Segments
+                rx.grid(
+                    # Kern partners (spans 2 rows)
+                    rx.box(
+                        _bmc_block(
+                            "Kern partners", "handshake", IsmsImplementerState.bmc_partners,
+                            "slate", IsmsImplementerState.open_bmc_edit("partners"), "100%",
+                        ),
+                        grid_row="1 / 3",
+                        grid_column="1",
+                    ),
+                    # Kern activiteiten (top of col 2)
+                    rx.box(
+                        _bmc_block(
+                            "Kern activiteiten", "settings", IsmsImplementerState.bmc_activiteiten,
+                            "blue", IsmsImplementerState.open_bmc_edit("activiteiten"), "100%",
+                        ),
+                        grid_row="1",
+                        grid_column="2",
+                    ),
+                    # Waarde propositie (spans 2 rows, center)
+                    rx.box(
+                        _bmc_block(
+                            "Waarde propositie", "gem", IsmsImplementerState.bmc_waarde,
+                            "amber", IsmsImplementerState.open_bmc_edit("waarde"), "100%",
+                        ),
+                        grid_row="1 / 3",
+                        grid_column="3",
+                    ),
+                    # Klant relaties (top of col 4)
+                    rx.box(
+                        _bmc_block(
+                            "Klant relaties", "heart-handshake", IsmsImplementerState.bmc_relaties,
+                            "violet", IsmsImplementerState.open_bmc_edit("relaties"), "100%",
+                        ),
+                        grid_row="1",
+                        grid_column="4",
+                    ),
+                    # Klant segmenten (spans 2 rows)
+                    rx.box(
+                        _bmc_block(
+                            "Klant segmenten", "users", IsmsImplementerState.bmc_segmenten,
+                            "green", IsmsImplementerState.open_bmc_edit("segmenten"), "100%",
+                        ),
+                        grid_row="1 / 3",
+                        grid_column="5",
+                    ),
+                    # Kern middelen (bottom of col 2)
+                    rx.box(
+                        _bmc_block(
+                            "Kern middelen", "database", IsmsImplementerState.bmc_middelen,
+                            "blue", IsmsImplementerState.open_bmc_edit("middelen"), "100%",
+                        ),
+                        grid_row="2",
+                        grid_column="2",
+                    ),
+                    # Kanalen (bottom of col 4)
+                    rx.box(
+                        _bmc_block(
+                            "Kanalen", "send", IsmsImplementerState.bmc_kanalen,
+                            "violet", IsmsImplementerState.open_bmc_edit("kanalen"), "100%",
+                        ),
+                        grid_row="2",
+                        grid_column="4",
+                    ),
+                    display="grid",
+                    grid_template_columns="1fr 1fr 1fr 1fr 1fr",
+                    grid_template_rows="1fr 1fr",
+                    gap="8px",
+                    width="100%",
+                ),
+                # Row 2: Cost Structure | Kern aspecten | Revenue Streams
+                rx.grid(
+                    _bmc_block(
+                        "Kosten structuur", "receipt", IsmsImplementerState.bmc_kosten,
+                        "red", IsmsImplementerState.open_bmc_edit("kosten"), "160px",
+                    ),
+                    _bmc_block(
+                        "Kern aspecten", "star", IsmsImplementerState.bmc_aspecten,
+                        "indigo", IsmsImplementerState.open_bmc_edit("aspecten"), "160px",
+                    ),
+                    _bmc_block(
+                        "Inkomstenbronnen", "trending-up", IsmsImplementerState.bmc_inkomsten,
+                        "green", IsmsImplementerState.open_bmc_edit("inkomsten"), "160px",
+                    ),
+                    columns="3",
+                    spacing="2",
+                    width="100%",
+                ),
+                spacing="3",
+                width="100%",
+                padding="20px",
+            ),
+            spacing="0",
+            width="100%",
+        ),
+        background="linear-gradient(135deg, var(--gray-1), var(--gray-3))",
+        border="1px solid var(--gray-a4)",
+        border_radius="var(--radius-3)",
+        overflow="hidden",
+        width="100%",
+    )
+
+
+def bmc_edit_dialog() -> rx.Component:
+    """Dialog for editing a BMC block."""
+    return rx.dialog.root(
+        rx.dialog.content(
+            rx.dialog.title(
+                rx.match(
+                    IsmsImplementerState.bmc_editing,
+                    ("partners", "Kern partners bewerken"),
+                    ("activiteiten", "Kern activiteiten bewerken"),
+                    ("waarde", "Waarde propositie bewerken"),
+                    ("relaties", "Klant relaties bewerken"),
+                    ("segmenten", "Klant segmenten bewerken"),
+                    ("middelen", "Kern middelen bewerken"),
+                    ("kanalen", "Kanalen bewerken"),
+                    ("kosten", "Kosten structuur bewerken"),
+                    ("inkomsten", "Inkomstenbronnen bewerken"),
+                    ("aspecten", "Kern aspecten bewerken"),
+                    "BMC bewerken",
+                ),
+            ),
+            rx.dialog.description("Pas de inhoud aan. Gebruik bullet points (•) voor opsommingen."),
+            rx.text_area(
+                value=IsmsImplementerState.bmc_edit_text,
+                on_change=IsmsImplementerState.set_bmc_edit_text,
+                min_height="250px",
+                width="100%",
+                auto_focus=True,
+            ),
+            rx.flex(
+                rx.dialog.close(
+                    rx.button("Annuleren", variant="soft", color_scheme="gray", on_click=IsmsImplementerState.close_bmc_edit),
+                ),
+                rx.dialog.close(
+                    rx.button("Opslaan", on_click=IsmsImplementerState.save_bmc_edit),
+                ),
+                spacing="3",
+                margin_top="16px",
+                justify="end",
+            ),
+            max_width="550px",
+        ),
+        open=IsmsImplementerState.bmc_editing != "",
+    )
+
+
 def _bc_section(icon: str, title: str, description: str) -> rx.Component:
     """Single Business Case section card."""
     return rx.hstack(
@@ -662,6 +869,9 @@ def step_bc_content() -> rx.Component:
             padding="20px 24px",
             width="100%",
         ),
+        # Business Model Canvas
+        bmc_canvas(),
+        bmc_edit_dialog(),
         # Elementen card
         rx.box(
             rx.vstack(
