@@ -88,7 +88,8 @@ ssh -p 2222 vasilis@77.42.66.251
 
 ### michael
 
-- **SSH Key**: *(volgt nog)*
+- **Email**: m.aarts@leiden.nl
+- **SSH Key**: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMzUcyzhayfLkePjagZSpC4Uwl+e3tC+z17QgCGXh7ui`
 - **Aangemaakt**: 2026-02-16
 - **Shell**: `/bin/bash`
 - **Groepen**: `users`, `docker`, `ims`, `sudo (NOPASSWD)`
