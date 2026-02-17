@@ -73,6 +73,7 @@ curl -s -X POST -H "Authorization: Bearer $env:HETZNER_API_KEY" https://api.hetz
 | `ims` (admin) | `ssh ims-admin` | Volledige servertoegang (sudo) |
 | `vasilis` | `ssh -p 2222 vasilis@77.42.66.251` | Volledige servertoegang (sudo) |
 | `michael` | `ssh -p 2222 michael@77.42.66.251` | Volledige servertoegang (sudo) |
+| `liviq` | `ssh -p 2222 liviq@77.42.66.251` | Volledige servertoegang (sudo) |
 
 ### vasilis (Vasilis Theocharis)
 
@@ -97,6 +98,18 @@ ssh -p 2222 vasilis@77.42.66.251
 ```bash
 # Michael verbindt met:
 ssh -p 2222 michael@77.42.66.251
+```
+
+### liviq
+
+- **SSH Key**: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMkkT6J2c0wPua6Wk5c/FvfgMkNKfLLTa4Ci2ZmRhh1+ liviq-to-ims`
+- **Aangemaakt**: 2026-02-17
+- **Shell**: `/bin/bash`
+- **Groepen**: `users`, `docker`, `ims`, `sudo (NOPASSWD)`
+
+```bash
+# Liviq verbindt met:
+ssh -p 2222 liviq@77.42.66.251
 ```
 
 ---
