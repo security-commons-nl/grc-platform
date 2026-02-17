@@ -1440,28 +1440,34 @@ def _mindmap_node(
     key: str, label: str, icon: str,
     left: str, top: str, accent: str,
 ) -> rx.Component:
-    """A single mindmap branch node."""
-    S = IsmsImplementerState
-    is_active = S.mindmap_active == key
+    """A single mindmap branch node that scrolls to the matching beleid section."""
+    scroll_js = (
+        f"var el = document.getElementById('beleid-{key}');"
+        "if(el){"
+        "el.scrollIntoView({behavior:'smooth',block:'start'});"
+        "el.style.transition='background-color 0.4s ease';"
+        f"el.style.backgroundColor='var(--{accent}-a4)';"
+        "setTimeout(function(){el.style.backgroundColor='';},2000);"
+        "}"
+    )
     return rx.box(
         rx.vstack(
             rx.box(
                 rx.icon(icon, size=18, color="white"),
                 width="44px",
                 height="44px",
-                background=rx.cond(is_active, f"var(--{accent}-9)", f"var(--{accent}-a7)"),
+                background=f"var(--{accent}-a8)",
                 border_radius="50%",
                 display="flex",
                 align_items="center",
                 justify_content="center",
                 transition="all 0.3s ease",
-                box_shadow=rx.cond(is_active, f"0 0 20px var(--{accent}-a6)", "none"),
             ),
             rx.text(
                 label,
                 size="1",
-                weight=rx.cond(is_active, "bold", "medium"),
-                color=rx.cond(is_active, f"var(--{accent}-11)", "var(--gray-11)"),
+                weight="medium",
+                color="var(--gray-11)",
                 text_align="center",
                 white_space="pre-wrap",
             ),
@@ -1476,7 +1482,7 @@ def _mindmap_node(
         z_index="2",
         _hover={"transform": "translate(-50%, -50%) scale(1.12)"},
         transition="transform 0.2s ease",
-        on_click=S.toggle_mindmap_node(key),
+        on_click=rx.call_script(scroll_js),
     )
 
 
@@ -1621,53 +1627,6 @@ def beleid_mindmap() -> rx.Component:
         min_height="420px",
     )
 
-    # Expanded content area (shown when a node is clicked)
-    expanded_content = rx.cond(
-        S.mindmap_active != "",
-        rx.box(
-            rx.vstack(
-                rx.hstack(
-                    rx.match(
-                        S.mindmap_active,
-                        ("inleiding", rx.hstack(rx.icon("book-open", size=16, color="var(--indigo-9)"), rx.text("Inleiding & Context", size="3", weight="bold"), spacing="2", align="center")),
-                        ("reikwijdte", rx.hstack(rx.icon("scan", size=16, color="var(--blue-9)"), rx.text("Reikwijdte", size="3", weight="bold"), spacing="2", align="center")),
-                        ("strategie", rx.hstack(rx.icon("target", size=16, color="var(--violet-9)"), rx.text("Strategie & Doelen", size="3", weight="bold"), spacing="2", align="center")),
-                        ("risicomanagement", rx.hstack(rx.icon("shield-alert", size=16, color="var(--red-9)"), rx.text("Risicomanagement", size="3", weight="bold"), spacing="2", align="center")),
-                        ("rollen", rx.hstack(rx.icon("users", size=16, color="var(--amber-9)"), rx.text("Rollen & Verantwoordelijkheden", size="3", weight="bold"), spacing="2", align="center")),
-                        ("naleving", rx.hstack(rx.icon("clipboard-check", size=16, color="var(--green-9)"), rx.text("Naleving", size="3", weight="bold"), spacing="2", align="center")),
-                        rx.fragment(),
-                    ),
-                    rx.spacer(),
-                    rx.icon_button(
-                        rx.icon("x", size=14),
-                        variant="ghost",
-                        color_scheme="gray",
-                        size="1",
-                        on_click=S.close_mindmap_node,
-                    ),
-                    width="100%",
-                    align="center",
-                ),
-                rx.divider(),
-                rx.match(
-                    S.mindmap_active,
-                    ("inleiding", _mindmap_text_content(S.beleid_inleiding, "inleiding")),
-                    ("reikwijdte", _mindmap_text_content(S.beleid_reikwijdte, "reikwijdte")),
-                    ("strategie", _mindmap_text_content(S.beleid_strategie, "strategie")),
-                    ("risicomanagement", _mindmap_text_content(S.beleid_risicomanagement, "risicomanagement")),
-                    ("rollen", _mindmap_roles_content()),
-                    ("naleving", _mindmap_text_content(S.beleid_naleving, "naleving")),
-                    rx.fragment(),
-                ),
-                spacing="3",
-                width="100%",
-            ),
-            padding="20px",
-            background="var(--gray-a2)",
-            border_top="1px solid var(--gray-a4)",
-        ),
-    )
-
     return rx.box(
         rx.vstack(
             rx.box(
@@ -1686,7 +1645,7 @@ def beleid_mindmap() -> rx.Component:
                     ),
                     rx.text("Mindmap Informatiebeveiligingsbeleid", size="3", weight="bold"),
                     rx.spacer(),
-                    rx.text("Klik op een onderdeel om de inhoud te bekijken", size="1", color="var(--gray-9)"),
+                    rx.text("Klik op een onderdeel om ernaartoe te scrollen", size="1", color="var(--gray-9)"),
                     width="100%",
                     align="center",
                     spacing="3",
@@ -1697,7 +1656,6 @@ def beleid_mindmap() -> rx.Component:
                 width="100%",
                 padding="20px",
             ),
-            expanded_content,
             spacing="0",
             width="100%",
         ),
@@ -1801,26 +1759,26 @@ def step_3_content() -> rx.Component:
                     rx.divider(),
 
                     # Hoofdstuk 1: Inleiding
-                    rx.text("Hoofdstuk 1 — Inleiding", size="2", weight="bold", color="var(--indigo-11)"),
+                    rx.text("Hoofdstuk 1 — Inleiding", size="2", weight="bold", color="var(--indigo-11)", id="beleid-inleiding", scroll_margin_top="20px"),
                     _beleid_section("book-open", "Inleiding & Context", S.beleid_inleiding, "inleiding"),
-                    _beleid_section("scan", "Reikwijdte", S.beleid_reikwijdte, "reikwijdte"),
+                    rx.box(_beleid_section("scan", "Reikwijdte", S.beleid_reikwijdte, "reikwijdte"), id="beleid-reikwijdte", scroll_margin_top="20px", width="100%"),
 
                     rx.divider(),
 
                     # Hoofdstuk 2: Strategie & Doelen
-                    rx.text("Hoofdstuk 2 — Strategie & Doelen", size="2", weight="bold", color="var(--indigo-11)"),
+                    rx.text("Hoofdstuk 2 — Strategie & Doelen", size="2", weight="bold", color="var(--indigo-11)", id="beleid-strategie", scroll_margin_top="20px"),
                     _beleid_section("target", "Doelstellingen informatiebeveiliging", S.beleid_strategie, "strategie"),
 
                     rx.divider(),
 
                     # Hoofdstuk 3: Risicomanagement
-                    rx.text("Hoofdstuk 3 — Risicomanagement", size="2", weight="bold", color="var(--indigo-11)"),
+                    rx.text("Hoofdstuk 3 — Risicomanagement", size="2", weight="bold", color="var(--indigo-11)", id="beleid-risicomanagement", scroll_margin_top="20px"),
                     _beleid_section("shield-alert", "Risicobeheer", S.beleid_risicomanagement, "risicomanagement"),
 
                     rx.divider(),
 
                     # Hoofdstuk 4: Rollen & Verantwoordelijkheden
-                    rx.text("Hoofdstuk 4 — Rollen & Verantwoordelijkheden", size="2", weight="bold", color="var(--indigo-11)"),
+                    rx.text("Hoofdstuk 4 — Rollen & Verantwoordelijkheden", size="2", weight="bold", color="var(--indigo-11)", id="beleid-rollen", scroll_margin_top="20px"),
                     rx.hstack(
                         rx.badge("Lijn 1", color_scheme="blue", variant="soft", size="1"),
                         rx.text("Uitvoering", size="1", color="var(--gray-10)"),
@@ -1848,7 +1806,7 @@ def step_3_content() -> rx.Component:
                     rx.divider(),
 
                     # Hoofdstuk 5: Naleving
-                    rx.text("Hoofdstuk 5 — Naleving", size="2", weight="bold", color="var(--indigo-11)"),
+                    rx.text("Hoofdstuk 5 — Naleving", size="2", weight="bold", color="var(--indigo-11)", id="beleid-naleving", scroll_margin_top="20px"),
                     _beleid_section("clipboard-check", "Borging, controle & handhaving", S.beleid_naleving, "naleving"),
 
                     spacing="4",
