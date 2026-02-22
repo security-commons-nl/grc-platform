@@ -1,0 +1,13 @@
+# GitHub
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile /home/coder/.ssh/id_ed25519
+    StrictHostKeyChecking accept-new
+
+# webhostiq VPS (for deployments)
+Host webhostiq
+    HostName 46.225.18.83
+    User webhostiq
+    IdentityFile /home/coder/.ssh/id_ed25519
+    StrictHostKeyChecking accept-new

@@ -1,0 +1,55 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: agent-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - code-server
+    networks:
+      - agent-net
+
+  code-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.code-server
+    container_name: agent-code-server
+    environment:
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Claude Code}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-claude@agentportal.nl}
+      - GIT_COMMITTER_NAME=${GIT_AUTHOR_NAME:-Claude Code}
+      - GIT_COMMITTER_EMAIL=${GIT_AUTHOR_EMAIL:-claude@agentportal.nl}
+    volumes:
+      # Project files (host directory)
+      - /home/ims/projects:/home/coder/projects
+      # Persistent config
+      - cs-config:/home/coder/.config
+      - cs-extensions:/home/coder/.local/share/code-server
+      - claude-config:/home/coder/.claude
+      # SSH keys (read-only)
+      - /home/ims/.ssh/id_github_deploy:/home/coder/.ssh/id_ed25519:ro
+      - ./ssh-config:/home/coder/.ssh/config:ro
+      # VS Code settings
+      - ./settings.json:/home/coder/.local/share/code-server/User/settings.json:ro
+    restart: unless-stopped
+    networks:
+      - agent-net
+
+networks:
+  agent-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  cs-config:
+  cs-extensions:
+  claude-config:
