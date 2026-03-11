@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     # CRITICAL: All configured providers are EU-based or local.
     # Mistral AI (France), Scaleway (France), Ollama (local).
 
-    # Provider priority (comma-separated): mistral, scaleway, ollama
-    AI_PROVIDER_PRIORITY: str = "mistral,scaleway,ollama"
+    # Provider priority (comma-separated): mistral, scaleway
+    AI_PROVIDER_PRIORITY: str = "mistral,scaleway"
 
     # Mistral AI (French, GDPR compliant) - https://mistral.ai
     MISTRAL_API_KEY: Optional[str] = None
@@ -42,16 +42,8 @@ class Settings(BaseSettings):
     SCALEWAY_MODEL: str = "mistral-nemo-instruct-2407"
     SCALEWAY_API_BASE: str = "https://api.scaleway.ai/v1"
 
-    # Local Ollama (offline fallback)
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "mistral"
-
     # Request timeout in seconds
     AI_TIMEOUT: int = 120
-
-    # Legacy settings (kept for backwards compatibility)
-    AI_API_BASE: str = "http://localhost:11434"
-    AI_MODEL_NAME: str = "mistral"
 
     # ==========================================================================
     # External Integrations

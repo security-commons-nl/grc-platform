@@ -2,9 +2,9 @@
 AI Gateway Service
 
 Multi-provider AI gateway with automatic failover.
-Supports: Mistral AI (France), Scaleway (France), Ollama (local).
+Supports: Mistral AI (France), Scaleway (France).
 
-All providers are EU-based or local to ensure GDPR compliance.
+All providers are EU-based to ensure GDPR compliance.
 """
 
 import logging
@@ -17,7 +17,6 @@ from langchain_core.tools import BaseTool
 # Providers
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
 
 from app.core.config import settings
 
@@ -86,19 +85,6 @@ class AIGateway:
                 logger.info("✅ Scaleway provider initialized")
             except Exception as e:
                 logger.error(f"❌ Failed to initialize Scaleway: {e}")
-
-        # 3. Local Ollama (Fallback only — not required if Mistral/Scaleway is available)
-        try:
-            self.providers["ollama"] = ChatOllama(
-                base_url=settings.OLLAMA_BASE_URL,
-                model=settings.OLLAMA_MODEL,
-                temperature=0.2,
-                timeout=settings.AI_TIMEOUT,
-                callbacks=callbacks,
-            )
-            logger.info(f"✅ Local Ollama provider registered (backup at {settings.OLLAMA_BASE_URL})")
-        except Exception as e:
-            logger.warning(f"⚠️ Ollama backup not available: {e}")
 
         # Summary
         if self.providers:

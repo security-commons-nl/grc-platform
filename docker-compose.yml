@@ -17,20 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ims-ollama
-    restart: always
-    ports:
-      - "127.0.0.1:11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: [ "CMD", "ollama", "list" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   api:
     build:
       context: ./backend
@@ -50,9 +36,7 @@ services:
       MISTRAL_MODEL: ${MISTRAL_MODEL:-mistral-small-latest}
       SCALEWAY_API_KEY: ${SCALEWAY_API_KEY}
       SCALEWAY_MODEL: ${SCALEWAY_MODEL:-mistral-nemo-instruct-2407}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-mistral}
-      AI_PROVIDER_PRIORITY: ${AI_PROVIDER_PRIORITY:-mistral,scaleway,ollama}
+      AI_PROVIDER_PRIORITY: ${AI_PROVIDER_PRIORITY:-mistral,scaleway}
       AI_TIMEOUT: ${AI_TIMEOUT:-120}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-changeme}
       # Non-superuser for RLS enforcement (if not set, falls back to POSTGRES_USER)
@@ -63,8 +47,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      ollama:
-        condition: service_started
 
   frontend:
     build:
@@ -95,4 +77,3 @@ services:
 
 volumes:
   postgres_data:
-  ollama_data:

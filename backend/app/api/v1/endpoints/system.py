@@ -6,10 +6,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func
-import httpx
 
 from app.core.db import get_session
-from app.core.config import settings
 from app.core.rbac import get_tenant_id
 from app.models.core_models import User, AuditLog
 
@@ -20,12 +18,11 @@ router = APIRouter()
 async def system_health(
     session: AsyncSession = Depends(get_session),
 ):
-    """System health check: DB, Ollama, API version."""
+    """System health check: DB and API version."""
     health = {
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
         "database": {"status": "unknown"},
-        "ollama": {"status": "unknown"},
     }
 
     # DB check
@@ -35,22 +32,6 @@ async def system_health(
         health["database"] = {"status": "ok", "user_count": count}
     except Exception as e:
         health["database"] = {"status": "error", "detail": str(e)}
-
-    # Ollama check
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.get(f"{settings.OLLAMA_BASE_URL}/api/tags")
-            if resp.status_code == 200:
-                models = resp.json().get("models", [])
-                health["ollama"] = {
-                    "status": "ok",
-                    "models": len(models),
-                    "url": settings.OLLAMA_BASE_URL,
-                }
-            else:
-                health["ollama"] = {"status": "error", "detail": f"HTTP {resp.status_code}"}
-    except Exception:
-        health["ollama"] = {"status": "offline", "url": settings.OLLAMA_BASE_URL}
 
     return health
 
