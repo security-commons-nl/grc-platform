@@ -15,6 +15,8 @@ from sqlmodel import SQLModel
 
 from app.main import app
 from app.core.db import get_session
+from app.core.rbac import get_current_user, get_tenant_id, get_scope_access, require_editor, require_admin, require_coordinator_or_admin, require_configurer, require_oversight
+from app.models.core_models import User
 
 
 # Test database URL (SQLite in-memory for speed)
@@ -66,11 +68,43 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     Create an async HTTP client for API testing.
 
     Overrides the database session dependency to use the test database.
+    Auth dependencies are bypassed with a fake superuser (tenant_id=1).
     """
     async def override_get_session():
         yield db_session
 
+    # Fake superuser for all tests — bypasses JWT and DB user lookup
+    _fake_user = User(
+        id=1,
+        email="test@ims.local",
+        hashed_password="x",
+        is_active=True,
+        is_superuser=True,
+        full_name="Test User",
+        tenant_id=1,
+    )
+
+    async def override_get_current_user():
+        return _fake_user
+
+    async def override_get_tenant_id():
+        return 1
+
+    async def override_get_scope_access():
+        return None  # superuser: no restriction
+
+    async def override_require_role():
+        return _fake_user
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_tenant_id] = override_get_tenant_id
+    app.dependency_overrides[get_scope_access] = override_get_scope_access
+    app.dependency_overrides[require_editor] = override_require_role
+    app.dependency_overrides[require_admin] = override_require_role
+    app.dependency_overrides[require_coordinator_or_admin] = override_require_role
+    app.dependency_overrides[require_configurer] = override_require_role
+    app.dependency_overrides[require_oversight] = override_require_role
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

@@ -414,14 +414,14 @@ async def get_corrective_actions_summary(
     result = await session.execute(query)
     actions = result.scalars().all()
 
-    open_actions = sum(1 for a in actions if a.status in [Status.DRAFT, Status.ACTIVE])
-    closed_actions = sum(1 for a in actions if a.status == Status.CLOSED)
+    open_actions = sum(1 for a in actions if not a.completed)
+    closed_actions = sum(1 for a in actions if a.completed)
 
-    # Overdue actions (due_date in the past and not closed)
+    # Overdue actions (due_date in the past and not completed)
     now = datetime.utcnow()
     overdue = sum(
         1 for a in actions
-        if a.due_date and a.due_date < now and a.status != Status.CLOSED
+        if a.due_date and a.due_date < now and not a.completed
     )
 
     return {

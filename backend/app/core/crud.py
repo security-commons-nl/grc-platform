@@ -269,11 +269,13 @@ class TenantCRUDBase(CRUDBase[ModelType]):
         # connection to the pool and refresh() gets a new one without the setting.
         # Without it the RLS policy ((current_setting('app.current_tenant'))::integer)
         # fails with "invalid input syntax for type integer: """.
+        # set_config is PostgreSQL-only; skip for SQLite (used in tests).
         from sqlalchemy import text
-        await session.execute(
-            text("SELECT set_config('app.current_tenant', :tid, false)"),
-            {"tid": str(tenant_id)}
-        )
+        if session.bind is None or "postgresql" in str(session.bind.url):
+            await session.execute(
+                text("SELECT set_config('app.current_tenant', :tid, false)"),
+                {"tid": str(tenant_id)}
+            )
         await session.refresh(obj_in)
         return obj_in
 
@@ -308,11 +310,13 @@ class TenantCRUDBase(CRUDBase[ModelType]):
             detail = _integrity_error_detail(e)
             raise HTTPException(status_code=400, detail=detail)
         # Re-set app.current_tenant before refresh (same pool-recycle reason as create).
+        # set_config is PostgreSQL-only; skip for SQLite (used in tests).
         from sqlalchemy import text
-        await session.execute(
-            text("SELECT set_config('app.current_tenant', :tid, false)"),
-            {"tid": str(tenant_id)}
-        )
+        if session.bind is None or "postgresql" in str(session.bind.url):
+            await session.execute(
+                text("SELECT set_config('app.current_tenant', :tid, false)"),
+                {"tid": str(tenant_id)}
+            )
         await session.refresh(db_obj)
         return db_obj
 
