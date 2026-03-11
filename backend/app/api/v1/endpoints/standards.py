@@ -20,8 +20,9 @@ async def read_standards(skip: int = 0, limit: int = 100, _tid: int = Depends(ge
     return result.scalars().all()
 
 @router.post("/", response_model=Standard)
-async def create_standard(standard: Standard, session: AsyncSession = Depends(get_session)):
+async def create_standard(standard: Standard, tenant_id: int = Depends(get_tenant_id), session: AsyncSession = Depends(get_session)):
     """Create a new standard/framework. Also indexes in knowledge base for AI RAG."""
+    standard.tenant_id = tenant_id
     session.add(standard)
     await session.commit()
     await session.refresh(standard)
@@ -52,7 +53,7 @@ async def read_standard(standard_id: int, _tid: int = Depends(get_tenant_id), se
 # --- Requirements (Controls within Frameworks) ---
 
 @router.post("/{standard_id}/requirements/", response_model=Requirement)
-async def create_requirement(standard_id: int, requirement: Requirement, session: AsyncSession = Depends(get_session)):
+async def create_requirement(standard_id: int, requirement: Requirement, _tid: int = Depends(get_tenant_id), session: AsyncSession = Depends(get_session)):
     """Create a new requirement/control. Also indexes in knowledge base for AI RAG."""
     # Verify standard exists
     result = await session.execute(select(Standard).where(Standard.id == standard_id))
@@ -81,6 +82,6 @@ async def create_requirement(standard_id: int, requirement: Requirement, session
     return requirement
 
 @router.get("/{standard_id}/requirements/", response_model=List[Requirement])
-async def read_requirements_for_standard(standard_id: int, session: AsyncSession = Depends(get_session)):
+async def read_requirements_for_standard(standard_id: int, _tid: int = Depends(get_tenant_id), session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Requirement).where(Requirement.standard_id == standard_id))
     return result.scalars().all()
