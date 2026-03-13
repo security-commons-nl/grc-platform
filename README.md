@@ -1,3 +1,6 @@
+> **GEARCHIVEERD** — Dit project is niet meer actief. GRC-functionaliteit is verwerkt in de `beleid` module van `X:\LIVIQ\platform\`.
+> Niet meer ontwikkelen in deze directory.
+
 # IMS — Integrated Management System
 
 > **Model-gedreven GRC-platform voor ISMS, PIMS en BCMS — met lokale AI, PDCA-workflow en Nederlandse compliance.**
