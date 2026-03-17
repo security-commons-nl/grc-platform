@@ -148,7 +148,7 @@ def hero_banner() -> rx.Component:
                 spacing="3",
             ),
             rx.text(
-                "Het Geïntegreerd Managementsysteem van de gemeente Leiden — "
+                "Het Geïntegreerd Managementsysteem — "
                 "informatiebeveiliging, privacy, bedrijfscontinuïteit en AI-governance "
                 "in één samenhangend raamwerk.",
                 size="3",

@@ -164,6 +164,6 @@ Neem contact op met het ontwikkelteam. Welkom aan boord.
 
 Voor AI-gegenereerde afbeeldingen (banners, iconen, presentatievisuals) zijn uitgewerkte prompts beschikbaar in:
 
-`Gemeente Leiden > Integrated Management System - General > Afbeeldingen > IMS - Image Prompts.md`
+`docs/IMS - Image Prompts.md` (of de gedeelde map van jouw organisatie)
 
 7 prompts beschikbaar: Architectuur, Governance, De IMS-olifant, Dashboard UI, Hero Banner, Team & Bijdragers, Icoon/Logo.

@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -42,7 +43,7 @@ async def add_security_headers(request: Request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://i-m-s.nl",
+        os.getenv("CORS_ORIGIN", "http://localhost:3000"),
         "http://localhost:3000",
         "http://localhost:8002",
     ],

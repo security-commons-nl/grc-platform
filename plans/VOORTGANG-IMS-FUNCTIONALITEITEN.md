@@ -324,7 +324,7 @@ Nieuwe **risicotolerantie-engine** met 6 niveaus (Afkerig, Minimaal, Voorzichtig
 
 ## Status
 
-IMS is actief in ontwikkeling en draait op een Hetzner VPS. De kernfunctionaliteit (risicobeheer, assessments, compliance, incidenten, AI-agenten, PDCA-workflow) is operationeel. Recente ontwikkeling richtte zich op RiskScope-contextualisatie, dynamische risicotolerantie en navigatie-herstructurering. Lopende ontwikkeling richt zich op productie-hardening, security-audit en enterprise-readiness.
+IMS is actief in ontwikkeling. De kernfunctionaliteit (risicobeheer, assessments, compliance, incidenten, AI-agenten, PDCA-workflow) is operationeel. Het platform is platform-agnostisch en uitrolbaar op elke VPS of cloud-provider (Azure, AWS, Hetzner, DigitalOcean, on-premise). Recente ontwikkeling richtte zich op RiskScope-contextualisatie, dynamische risicotolerantie en navigatie-herstructurering. Lopende ontwikkeling richt zich op productie-hardening, security-audit en enterprise-readiness.
 
 ---
 

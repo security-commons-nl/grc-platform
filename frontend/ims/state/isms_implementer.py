@@ -533,16 +533,15 @@ class IsmsImplementerState(BaseState):
     beleid_versie: str = "1.0"
     beleid_datum: str = "08-07-2025"
     beleid_status: str = "Definitief"
-    beleid_gemeenten: str = "Gemeenten Leiden, Leiderdorp, Oegstgeest, Zoeterwoude, Holland Rijnland"
+    beleid_gemeenten: str = ""  # Wordt gevuld vanuit organisatieprofiel
 
     beleid_inleiding: str = (
-        "Binnen de gemeenten Leiden, Leiderdorp, Oegstgeest en Zoeterwoude (hierna: de gemeente), "
-        "gezamenlijk ook wel de Leidse regio genoemd, zijn wij toegewijd aan het waarborgen van de "
+        "Binnen onze organisatie zijn wij toegewijd aan het waarborgen van de "
         "vertrouwelijkheid, integriteit en beschikbaarheid van informatie die wordt gebruikt voor de "
-        "uitvoering van gemeentelijke processen. Dit geldt ongeacht of de informatie toebehoort aan "
-        "de gemeente zelf, haar medewerkers, partners, inwoners of leveranciers.\n\n"
+        "uitvoering van onze processen. Dit geldt ongeacht of de informatie toebehoort aan "
+        "de organisatie zelf, haar medewerkers, partners, klanten of leveranciers.\n\n"
         "Dit Informatiebeveiligingsbeleid vormt het kader voor de informatiebeveiligingsstrategie "
-        "van de gemeente. Het onderstreept de toewijding van het College van B&W om informatiebeveiliging "
+        "van de organisatie. Het onderstreept de toewijding van de directie om informatiebeveiliging "
         "binnen de organisatie te implementeren, onderhouden en continu te verbeteren."
     )
 
