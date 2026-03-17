@@ -32,6 +32,13 @@ async def init_db():
 
         # Grant permissions to app role if configured
         if settings.POSTGRES_APP_USER:
+            # Create role if it doesn't exist yet
+            await conn.execute(text(
+                f"DO $$ BEGIN "
+                f"IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{settings.POSTGRES_APP_USER}') THEN "
+                f"CREATE ROLE {settings.POSTGRES_APP_USER} LOGIN PASSWORD '{settings.POSTGRES_APP_PASSWORD}'; "
+                f"END IF; END $$"
+            ))
             await conn.execute(text(
                 f"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {settings.POSTGRES_APP_USER}"
             ))

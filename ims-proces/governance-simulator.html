@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Governance Simulator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0f1a;
+    --bg-surface: #111827;
+    --bg-elevated: #1f2937;
+    --bg-hover: #374151;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --accent-subtle: rgba(99, 102, 241, 0.1);
+    --accent-border: rgba(99, 102, 241, 0.3);
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --border: #374151;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --sims: #a78bfa;
+    --tims: #60a5fa;
+    --lijn: #34d399;
+    --sims-subtle: rgba(167, 139, 250, 0.1);
+    --sims-border: rgba(167, 139, 250, 0.3);
+    --tims-subtle: rgba(96, 165, 250, 0.1);
+    --tims-border: rgba(96, 165, 250, 0.3);
+    --lijn-subtle: rgba(52, 211, 153, 0.1);
+    --lijn-border: rgba(52, 211, 153, 0.3);
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    grid-column: 1 / -1;
+    padding: 14px 24px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 .badge {
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .header-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-stat .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    max-height: calc(100vh - 52px);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-section:last-child { border-bottom: none; }
+
+  .sidebar h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .preset-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+
+  .preset-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+  }
+
+  .preset-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+
+  .preset-btn small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ── Form controls ── */
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group:last-child { margin-bottom: 0; }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .form-select, .form-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  .form-select:hover, .form-input:hover {
+    border-color: var(--accent-border);
+  }
+
+  .form-select:focus-visible, .form-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 0;
+    border-color: var(--accent);
+  }
+
+  .form-select option {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .slider-container input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--bg-hover);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  .slider-container input[type="range"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  .slider-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 24px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+
+  .toggle-row label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--bg-hover);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: transform 0.2s, background-color 0.2s;
+  }
+
+  .toggle:checked {
+    background: var(--accent);
+  }
+
+  .toggle:checked::after {
+    transform: translateX(16px);
+    background: white;
+  }
+
+  .toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Decision flow selector */
+  .decision-card {
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+    font-size: 13px;
+  }
+
+  .decision-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+  }
+
+  .decision-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .decision-card.active {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+
+  .decision-card small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ── Main content ── */
+  .main {
+    overflow-y: auto;
+    max-height: calc(100vh - 52px);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-body {
+    padding: 20px;
+  }
+
+  /* ── Governance Swim Lanes ── */
+  .governance-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .swim-lane {
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    min-height: 100px;
+  }
+
+  .swim-lane.sims-lane {
+    background: var(--sims-subtle);
+    border: 1px solid var(--sims-border);
+  }
+
+  .swim-lane.tims-lane {
+    background: var(--tims-subtle);
+    border: 1px solid var(--tims-border);
+  }
+
+  .swim-lane.lijn-lane {
+    background: var(--lijn-subtle);
+    border: 1px solid var(--lijn-border);
+  }
+
+  .lane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .lane-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lane-title h3 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .lane-title .lane-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .lane-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .lane-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .sims-lane .lane-dot { background: var(--sims); }
+  .tims-lane .lane-dot { background: var(--tims); }
+  .lijn-lane .lane-dot { background: var(--lijn); }
+
+  .sims-lane .lane-badge { background: rgba(167,139,250,0.2); color: var(--sims); }
+  .tims-lane .lane-badge { background: rgba(96,165,250,0.2); color: var(--tims); }
+  .lijn-lane .lane-badge { background: rgba(52,211,153,0.2); color: var(--lijn); }
+
+  .role-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .role-card {
+    padding: 8px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    min-width: 110px;
+    transition: border-color 0.3s, box-shadow 0.3s, opacity 0.3s;
+  }
+
+  .role-card .role-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .role-card .role-title {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .role-card.inactive {
+    opacity: 0.35;
+    border-style: dashed;
+  }
+
+  .role-card.highlight-sims {
+    border-color: var(--sims);
+    box-shadow: 0 0 12px rgba(167,139,250,0.3);
+  }
+
+  .role-card.highlight-tims {
+    border-color: var(--tims);
+    box-shadow: 0 0 12px rgba(96,165,250,0.3);
+  }
+
+  .role-card.highlight-lijn {
+    border-color: var(--lijn);
+    box-shadow: 0 0 12px rgba(52,211,153,0.3);
+  }
+
+  @keyframes pulseHighlight {
+    0%, 100% { box-shadow: 0 0 8px rgba(99,102,241,0.2); }
+    50% { box-shadow: 0 0 20px rgba(99,102,241,0.5); }
+  }
+
+  .role-card.animate-pulse {
+    animation: pulseHighlight 1.5s ease-in-out infinite;
+  }
+
+  /* Reporting arrows between lanes */
+  .reporting-arrows {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0;
+    position: relative;
+  }
+
+  .arrow-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .arrow-line svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .arrow-line .arrow-label {
+    font-style: italic;
+  }
+
+  .arrow-animated svg path {
+    stroke-dasharray: 6;
+    animation: dashFlow 1s linear infinite;
+  }
+
+  @keyframes dashFlow {
+    to { stroke-dashoffset: -12; }
+  }
+
+  /* ── Decision Flow Timeline ── */
+  .flow-timeline {
+    padding: 16px 0;
+  }
+
+  .flow-empty {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 4px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .flow-step.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .flow-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 32px;
+  }
+
+  .flow-step-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    border: 2px solid var(--border);
+    transition: background-color 0.3s, border-color 0.3s;
+    z-index: 1;
+  }
+
+  .flow-step-dot.sims { border-color: var(--sims); background: var(--sims); }
+  .flow-step-dot.tims { border-color: var(--tims); background: var(--tims); }
+  .flow-step-dot.lijn { border-color: var(--lijn); background: var(--lijn); }
+  .flow-step-dot.extern { border-color: var(--warning); background: var(--warning); }
+
+  .flow-step-line {
+    width: 2px;
+    flex: 1;
+    background: var(--border);
+    min-height: 24px;
+  }
+
+  .flow-step:last-child .flow-step-line { display: none; }
+
+  .flow-step-content {
+    flex: 1;
+    padding-bottom: 16px;
+  }
+
+  .flow-step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .flow-step-layer {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .flow-step-layer.sims { background: rgba(167,139,250,0.2); color: var(--sims); }
+  .flow-step-layer.tims { background: rgba(96,165,250,0.2); color: var(--tims); }
+  .flow-step-layer.lijn { background: rgba(52,211,153,0.2); color: var(--lijn); }
+  .flow-step-layer.extern { background: rgba(245,158,11,0.2); color: var(--warning); }
+
+  .flow-step-title {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .flow-step-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .flow-step-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .flow-total {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: var(--accent-subtle);
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+
+  .flow-total-value {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  /* ── Health Indicators ── */
+  .health-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .health-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .health-card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .health-value {
+    font-size: 28px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .health-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Progress ring */
+  .progress-ring {
+    display: inline-block;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 8px;
+  }
+
+  .progress-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 4;
+  }
+
+  .progress-ring-fill {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s;
+  }
+
+  .progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Bar chart */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .bar-label {
+    width: 70px;
+    text-align: right;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s;
+  }
+
+  .bar-val {
+    width: 30px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+
+  /* ── Bottom panel (prompt) ── */
+  .bottom-panel {
+    grid-column: 1 / -1;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bottom-panel .panel-header {
+    flex-shrink: 0;
+  }
+
+  .bottom-panel .panel-body {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .prompt-output {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    font-family: inherit;
+  }
+
+  .copy-btn {
+    padding: 4px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+
+  .copy-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+  }
+
+  .copy-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Status colors */
+  .text-success { color: var(--success); }
+  .text-warning { color: var(--warning); }
+  .text-danger { color: var(--danger); }
+  .text-accent { color: var(--accent); }
+  .text-sims { color: var(--sims); }
+  .text-tims { color: var(--tims); }
+  .text-lijn { color: var(--lijn); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <h1>IMS Governance Simulator <span class="badge">Playground</span></h1>
+    <div class="header-meta">
+      <div class="header-stat">
+        <div class="dot" style="background:var(--sims)"></div>
+        <span>SIMS</span>
+      </div>
+      <div class="header-stat">
+        <div class="dot" style="background:var(--tims)"></div>
+        <span>TIMS</span>
+      </div>
+      <div class="header-stat">
+        <div class="dot" style="background:var(--lijn)"></div>
+        <span>Lijnmanagement</span>
+      </div>
+      <span id="headerActiveDomains" style="color:var(--accent);font-weight:600">3 domeinen</span>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <!-- Presets -->
+    <div class="sidebar-section">
+      <h2>Presets</h2>
+      <button class="preset-btn active" data-preset="standaard" onclick="applyPreset('standaard')">
+        Standaard (ISO-aanbeveling)
+        <small>Alle rollen, kwartaal SIMS, maandelijks TIMS, 3 domeinen, 8 afdelingen</small>
+      </button>
+      <button class="preset-btn" data-preset="klein" onclick="applyPreset('klein')">
+        Kleine gemeente
+        <small>Dubbelrollen, 2-maandelijks TIMS, ISMS+PIMS, 4 afdelingen</small>
+      </button>
+      <button class="preset-btn" data-preset="groot" onclick="applyPreset('groot')">
+        Grote gemeente (G40)
+        <small>Volledige bezetting, 2-wekelijks TIMS, alle domeinen, 15 afdelingen</small>
+      </button>
+      <button class="preset-btn" data-preset="opstart" onclick="applyPreset('opstart')">
+        Opstartfase
+        <small>Minimale governance, alleen ISMS, geen lijnmanagement</small>
+      </button>
+    </div>
+
+    <!-- Configuration -->
+    <div class="sidebar-section">
+      <h2>Governance Configuratie</h2>
+
+      <div class="form-group">
+        <label class="form-label">Actieve domeinen</label>
+        <select class="form-select" id="cfgDomains" onchange="updateAll()">
+          <option value="1">Alleen ISMS</option>
+          <option value="2">ISMS + PIMS</option>
+          <option value="3" selected>ISMS + PIMS + BCMS</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">SIMS frequentie</label>
+        <select class="form-select" id="cfgSimsFreq" onchange="updateAll()">
+          <option value="12">Wekelijks</option>
+          <option value="6">2-wekelijks</option>
+          <option value="3">Maandelijks</option>
+          <option value="1" selected>Kwartaal</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">SIMS duur (uur)</label>
+        <div class="slider-container">
+          <input type="range" id="cfgSimsDur" min="0.5" max="3" step="0.5" value="1.5" onchange="updateAll()" oninput="this.nextElementSibling.textContent=this.value">
+          <span class="slider-value">1.5</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">TIMS frequentie</label>
+        <select class="form-select" id="cfgTimsFreq" onchange="updateAll()">
+          <option value="12">Wekelijks</option>
+          <option value="6">2-wekelijks</option>
+          <option value="3" selected>Maandelijks</option>
+          <option value="1.5">2-maandelijks</option>
+          <option value="1">Kwartaal</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">TIMS duur (uur)</label>
+        <div class="slider-container">
+          <input type="range" id="cfgTimsDur" min="0.5" max="3" step="0.5" value="2" onchange="updateAll()" oninput="this.nextElementSibling.textContent=this.value">
+          <span class="slider-value">2</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Aantal afdelingen</label>
+        <div class="slider-container">
+          <input type="range" id="cfgDepts" min="1" max="25" step="1" value="8" onchange="updateAll()" oninput="this.nextElementSibling.textContent=this.value">
+          <span class="slider-value">8</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="toggle-row">
+          <label for="cfgProcessOwners">Proceseigenaren actief</label>
+          <input type="checkbox" class="toggle" id="cfgProcessOwners" onchange="updateAll()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="toggle-row">
+          <label for="cfgLijnActive">Lijnmanagement operationeel</label>
+          <input type="checkbox" class="toggle" id="cfgLijnActive" checked onchange="updateAll()">
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMS roles -->
+    <div class="sidebar-section">
+      <h2>SIMS Rollen</h2>
+      <div class="toggle-row"><label for="rolDTlid">DT-lid (voorzitter)</label><input type="checkbox" class="toggle" id="rolDTlid" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolController">Concerncontroller</label><input type="checkbox" class="toggle" id="rolController" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolCISO">CISO</label><input type="checkbox" class="toggle" id="rolCISO" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolCFO">CFO</label><input type="checkbox" class="toggle" id="rolCFO" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolCIO">CIO</label><input type="checkbox" class="toggle" id="rolCIO" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolCARM">CARM</label><input type="checkbox" class="toggle" id="rolCARM" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolBCMmgr">BCM Manager</label><input type="checkbox" class="toggle" id="rolBCMmgr" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolIBPmgr">IB&amp;P Manager</label><input type="checkbox" class="toggle" id="rolIBPmgr" checked onchange="updateAll()"></div>
+    </div>
+
+    <!-- TIMS roles -->
+    <div class="sidebar-section">
+      <h2>TIMS Rollen</h2>
+      <div class="toggle-row"><label for="rolTimsController">Concerncontroller (voorz.)</label><input type="checkbox" class="toggle" id="rolTimsController" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolISMSowner">ISMS discipline-eigenaar</label><input type="checkbox" class="toggle" id="rolISMSowner" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolPIMSowner">PIMS discipline-eigenaar</label><input type="checkbox" class="toggle" id="rolPIMSowner" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolBCMSowner">BCMS discipline-eigenaar</label><input type="checkbox" class="toggle" id="rolBCMSowner" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolProjectSupport">Projectondersteuning</label><input type="checkbox" class="toggle" id="rolProjectSupport" checked onchange="updateAll()"></div>
+      <div class="toggle-row"><label for="rolSecretariaat">Secretariaat</label><input type="checkbox" class="toggle" id="rolSecretariaat" checked onchange="updateAll()"></div>
+    </div>
+
+    <!-- Decision Flow -->
+    <div class="sidebar-section">
+      <h2>Besluitflow Simulatie</h2>
+      <button class="decision-card" data-flow="none" onclick="selectFlow('none')" tabindex="0">
+        Geen selectie
+        <small>Klik op een scenario hieronder</small>
+      </button>
+      <button class="decision-card" data-flow="scope" onclick="selectFlow('scope')" tabindex="0">
+        Scope wijziging
+        <small>Lijn signaleert &rarr; TIMS evalueert &rarr; SIMS besluit</small>
+      </button>
+      <button class="decision-card" data-flow="risico" onclick="selectFlow('risico')" tabindex="0">
+        Nieuw risico ge&iuml;dentificeerd
+        <small>Lijn identificeert &rarr; TIMS beoordeelt &rarr; SIMS bij kritiek</small>
+      </button>
+      <button class="decision-card" data-flow="control" onclick="selectFlow('control')" tabindex="0">
+        Control falen
+        <small>Monitoring &rarr; TIMS non-conformiteit &rarr; correctieve actie</small>
+      </button>
+      <button class="decision-card" data-flow="datalek" onclick="selectFlow('datalek')" tabindex="0">
+        Datalek gemeld
+        <small>FG notificatie &rarr; TIMS co&ouml;rdineert &rarr; SIMS bij major &rarr; AP</small>
+      </button>
+      <button class="decision-card" data-flow="verwerking" onclick="selectFlow('verwerking')" tabindex="0">
+        Nieuwe verwerking
+        <small>Lijn aanvraag &rarr; FG/TIMS DPIA &rarr; SIMS bij hoog risico</small>
+      </button>
+      <button class="decision-card" data-flow="audit" onclick="selectFlow('audit')" tabindex="0">
+        Audit bevinding
+        <small>Auditor rapporteert &rarr; TIMS correctieve actie &rarr; SIMS review</small>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Governance Structure -->
+    <div class="panel">
+      <div class="panel-header">Governance Structuur</div>
+      <div class="panel-body">
+        <div class="governance-diagram" id="govDiagram">
+          <!-- SIMS Lane -->
+          <div class="swim-lane sims-lane">
+            <div class="lane-header">
+              <div class="lane-title">
+                <div class="lane-dot"></div>
+                <h3>SIMS — Strategisch IMS-overleg</h3>
+              </div>
+              <div class="lane-badges">
+                <span class="lane-badge" id="simsBadgeFreq">Kwartaal</span>
+                <span class="lane-badge" id="simsBadgeDur">1,5 uur</span>
+              </div>
+            </div>
+            <div class="role-cards" id="simsRoles"></div>
+          </div>
+
+          <!-- Arrow SIMS → TIMS -->
+          <div class="reporting-arrows" id="arrowSimsTims">
+            <div class="arrow-line">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 4 L10 16 M6 12 L10 16 L14 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="arrow-label">Kwartaalrapportage</span>
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 16 L10 4 M6 8 L10 4 L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="arrow-label">Escalatie</span>
+            </div>
+          </div>
+
+          <!-- TIMS Lane -->
+          <div class="swim-lane tims-lane">
+            <div class="lane-header">
+              <div class="lane-title">
+                <div class="lane-dot"></div>
+                <h3>TIMS — Tactisch IMS-overleg</h3>
+              </div>
+              <div class="lane-badges">
+                <span class="lane-badge" id="timsBadgeFreq">Maandelijks</span>
+                <span class="lane-badge" id="timsBadgeDur">2 uur</span>
+              </div>
+            </div>
+            <div class="role-cards" id="timsRoles"></div>
+          </div>
+
+          <!-- Arrow TIMS → Lijn -->
+          <div class="reporting-arrows" id="arrowTimsLijn">
+            <div class="arrow-line">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 4 L10 16 M6 12 L10 16 L14 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="arrow-label">Maandrapportage</span>
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 16 L10 4 M6 8 L10 4 L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="arrow-label">Discipline-eigenaren</span>
+            </div>
+          </div>
+
+          <!-- Lijn Lane -->
+          <div class="swim-lane lijn-lane" id="lijnLane">
+            <div class="lane-header">
+              <div class="lane-title">
+                <div class="lane-dot"></div>
+                <h3>Lijnmanagement</h3>
+              </div>
+              <div class="lane-badges">
+                <span class="lane-badge" id="lijnBadgeModel">Afdelingshoofden</span>
+                <span class="lane-badge" id="lijnBadgeDepts">8 afdelingen</span>
+              </div>
+            </div>
+            <div class="role-cards" id="lijnRoles"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Flow Animation -->
+    <div class="panel" id="flowPanel">
+      <div class="panel-header">
+        Besluitflow
+        <span id="flowTitle" style="color:var(--accent);text-transform:none;letter-spacing:0;font-weight:500"></span>
+      </div>
+      <div class="panel-body">
+        <div class="flow-timeline" id="flowTimeline">
+          <div class="flow-empty">Selecteer een besluitscenario in het zijpaneel om de flow te simuleren.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Indicators -->
+    <div class="panel">
+      <div class="panel-header">Governance Gezondheid</div>
+      <div class="panel-body">
+        <div class="health-grid">
+          <!-- Dekking -->
+          <div class="health-card" id="healthCoverage">
+            <div class="health-card-title">Dekking</div>
+            <div class="progress-ring">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle class="progress-ring-bg" cx="32" cy="32" r="28"/>
+                <circle class="progress-ring-fill" cx="32" cy="32" r="28" id="coverageRing"
+                  stroke="var(--success)" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+              </svg>
+              <div class="progress-ring-text text-success" id="coveragePct">100%</div>
+            </div>
+            <div class="health-sub" id="coverageSub">14/14 rollen bezet</div>
+          </div>
+
+          <!-- Vergaderlast -->
+          <div class="health-card" id="healthMeetingLoad">
+            <div class="health-card-title">Vergaderlast</div>
+            <div class="health-value" id="meetingLoadValue" style="color:var(--tims)">3,5</div>
+            <div class="health-sub">uur/maand max</div>
+            <div class="bar-chart" id="meetingBars"></div>
+          </div>
+
+          <!-- Besluitsnelheid -->
+          <div class="health-card" id="healthSpeed">
+            <div class="health-card-title">Besluitsnelheid</div>
+            <div class="health-value" id="speedValue" style="color:var(--accent)">45</div>
+            <div class="health-sub" id="speedSub">dagen gemiddelde doorlooptijd</div>
+          </div>
+
+          <!-- Span of control -->
+          <div class="health-card" id="healthSpan">
+            <div class="health-card-title">Span of Control</div>
+            <div class="health-value" id="spanValue" style="color:var(--lijn)">2,7</div>
+            <div class="health-sub" id="spanSub">afdelingen per discipline-eigenaar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Panel -->
+  <div class="bottom-panel">
+    <div class="panel-header">
+      Governance Assessment
+      <button class="copy-btn" onclick="copyPrompt()">Kopieer</button>
+    </div>
+    <div class="panel-body">
+      <div class="prompt-output" id="promptOutput">Pas de configuratie aan om een governance beoordeling te genereren.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+const state = {
+  activePreset: 'standaard',
+  activeFlow: 'none'
+};
+
+// ── Presets ──
+const presets = {
+  standaard: {
+    domains: 3, simsFreq: 1, simsDur: 1.5, timsFreq: 3, timsDur: 2, depts: 8,
+    processOwners: false, lijnActive: true,
+    simsRoles: { DTlid:true, Controller:true, CISO:true, CFO:true, CIO:true, CARM:true, BCMmgr:true, IBPmgr:true },
+    timsRoles: { TimsController:true, ISMSowner:true, PIMSowner:true, BCMSowner:true, ProjectSupport:true, Secretariaat:true }
+  },
+  klein: {
+    domains: 2, simsFreq: 1, simsDur: 1, timsFreq: 1.5, timsDur: 1.5, depts: 4,
+    processOwners: false, lijnActive: true,
+    simsRoles: { DTlid:true, Controller:true, CISO:true, CFO:false, CIO:false, CARM:false, BCMmgr:false, IBPmgr:true },
+    timsRoles: { TimsController:true, ISMSowner:true, PIMSowner:true, BCMSowner:false, ProjectSupport:false, Secretariaat:true }
+  },
+  groot: {
+    domains: 3, simsFreq: 1, simsDur: 2, timsFreq: 6, timsDur: 1.5, depts: 15,
+    processOwners: true, lijnActive: true,
+    simsRoles: { DTlid:true, Controller:true, CISO:true, CFO:true, CIO:true, CARM:true, BCMmgr:true, IBPmgr:true },
+    timsRoles: { TimsController:true, ISMSowner:true, PIMSowner:true, BCMSowner:true, ProjectSupport:true, Secretariaat:true }
+  },
+  opstart: {
+    domains: 1, simsFreq: 1, simsDur: 1, timsFreq: 3, timsDur: 1, depts: 8,
+    processOwners: false, lijnActive: false,
+    simsRoles: { DTlid:true, Controller:true, CISO:true, CFO:false, CIO:true, CARM:false, BCMmgr:false, IBPmgr:false },
+    timsRoles: { TimsController:true, ISMSowner:true, PIMSowner:false, BCMSowner:false, ProjectSupport:true, Secretariaat:false }
+  }
+};
+
+// ── SIMS role definitions ──
+const simsRoleDefs = [
+  { id:'DTlid', name:'DT-lid', title:'Voorzitter' },
+  { id:'Controller', name:'Concerncontroller', title:'Lid' },
+  { id:'CISO', name:'CISO', title:'Informatiebeveiliging' },
+  { id:'CFO', name:'CFO', title:'Financieel' },
+  { id:'CIO', name:'CIO', title:'Informatie' },
+  { id:'CARM', name:'CARM', title:'Risicomanagement' },
+  { id:'BCMmgr', name:'BCM Manager', title:'Continuiteit' },
+  { id:'IBPmgr', name:'IB&P Manager', title:'Privacy' }
+];
+
+// ── TIMS role definitions ──
+const timsRoleDefs = [
+  { id:'TimsController', name:'Concerncontroller', title:'Voorzitter' },
+  { id:'ISMSowner', name:'ISMS-eigenaar', title:'Informatiebeveiliging' },
+  { id:'PIMSowner', name:'PIMS-eigenaar', title:'Privacy (FG)' },
+  { id:'BCMSowner', name:'BCMS-eigenaar', title:'Continuiteit' },
+  { id:'ProjectSupport', name:'Projectondersteuning', title:'Uitvoering' },
+  { id:'Secretariaat', name:'Secretariaat', title:'Notulen & planning' }
+];
+
+// ── Decision flows ──
+const decisionFlows = {
+  scope: {
+    title: 'Scope wijziging',
+    steps: [
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Signaleert behoefte aan scope wijziging vanuit de praktijk', waitFor:'tims' },
+      { layer:'tims', role:'TIMS', desc:'Evalueert impact op context, stakeholders en risicoregister (stap 2a, 4)', waitFor:'sims' },
+      { layer:'sims', role:'SIMS', desc:'Neemt scope besluit (stap 2b), past beleidskader aan indien nodig', waitFor:null },
+      { layer:'tims', role:'TIMS', desc:'Implementeert gewijzigde scope, werkt documenten bij', waitFor:null }
+    ]
+  },
+  risico: {
+    title: 'Nieuw risico geidentificeerd',
+    steps: [
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Identificeert nieuw risico in dagelijkse operatie', waitFor:'tims' },
+      { layer:'tims', role:'Discipline-eigenaar', desc:'Beoordeelt risico, voert risicoanalyse uit (stap 5, 10)', waitFor:null },
+      { layer:'tims', role:'TIMS', desc:'Bepaalt behandelstrategie, wijst eigenaar toe', waitFor:'sims_if_critical' },
+      { layer:'sims', role:'SIMS', desc:'Geinformeerd bij kritiek risico, alloceert budget indien nodig', waitFor:null }
+    ]
+  },
+  control: {
+    title: 'Control falen',
+    steps: [
+      { layer:'tims', role:'Monitoring', desc:'Detecteert afwijking via continue monitoring (stap 12)', waitFor:null },
+      { layer:'tims', role:'TIMS', desc:'Registreert non-conformiteit, start correctieve actie (stap 15)', waitFor:'lijn' },
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Voert correctieve maatregel uit in de lijn', waitFor:'tims' },
+      { layer:'tims', role:'TIMS', desc:'Verifieert effectiviteit, sluit non-conformiteit af', waitFor:'sims_if_systemic' },
+      { layer:'sims', role:'SIMS', desc:'Review bij systemisch falen, past beleid aan indien nodig', waitFor:null }
+    ]
+  },
+  datalek: {
+    title: 'Datalek gemeld',
+    steps: [
+      { layer:'lijn', role:'Medewerker', desc:'Meldt (vermoedelijk) datalek bij de FG', waitFor:'tims' },
+      { layer:'tims', role:'FG / PIMS-eigenaar', desc:'Beoordeelt ernst, registreert in datalekregister', waitFor:null },
+      { layer:'tims', role:'TIMS', desc:'Coordineert respons, bepaalt meldplicht', waitFor:'sims_if_major' },
+      { layer:'sims', role:'SIMS', desc:'Geinformeerd bij major datalek, mandateert communicatie', waitFor:null },
+      { layer:'extern', role:'Autoriteit Persoonsgegevens', desc:'Melding binnen 72 uur indien vereist', waitFor:null }
+    ]
+  },
+  verwerking: {
+    title: 'Nieuwe verwerking',
+    steps: [
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Dient verzoek in voor nieuwe gegevensverwerking', waitFor:'tims' },
+      { layer:'tims', role:'FG / PIMS-eigenaar', desc:'Toetst noodzaak DPIA, voert pre-scan uit', waitFor:null },
+      { layer:'tims', role:'TIMS', desc:'Voert DPIA uit bij hoog risico, stelt maatregelen voor', waitFor:'sims_if_high_risk' },
+      { layer:'sims', role:'SIMS', desc:'Accordeert verwerking bij hoog risico, AP voorafgaande raadpleging', waitFor:null },
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Implementeert verwerking conform DPIA-maatregelen', waitFor:null }
+    ]
+  },
+  audit: {
+    title: 'Audit bevinding',
+    steps: [
+      { layer:'extern', role:'Interne auditor', desc:'Rapporteert bevinding uit interne audit (stap 13)', waitFor:'tims' },
+      { layer:'tims', role:'TIMS', desc:'Analyseert bevinding, stelt correctieve actie op', waitFor:'lijn' },
+      { layer:'lijn', role:'Afdelingshoofd', desc:'Voert correctieve actie uit, levert bewijs (stap 16)', waitFor:'tims' },
+      { layer:'tims', role:'TIMS', desc:'Verifieert implementatie, rapporteert aan SIMS', waitFor:'sims' },
+      { layer:'sims', role:'SIMS', desc:'Review in management review (stap 14), bijsturing indien nodig', waitFor:null }
+    ]
+  }
+};
+
+// ── Frequency labels ──
+function freqLabel(perQuarter) {
+  const f = parseFloat(perQuarter);
+  if (f >= 12) return 'Wekelijks';
+  if (f >= 6) return '2-wekelijks';
+  if (f >= 3) return 'Maandelijks';
+  if (f >= 1.5) return '2-maandelijks';
+  return 'Kwartaal';
+}
+
+function freqPerMonth(perQuarter) {
+  return parseFloat(perQuarter) / 3;
+}
+
+function daysPerMeeting(perQuarter) {
+  const f = parseFloat(perQuarter);
+  if (f >= 12) return 7;
+  if (f >= 6) return 14;
+  if (f >= 3) return 30;
+  if (f >= 1.5) return 60;
+  return 90;
+}
+
+// ── Read config from controls ──
+function readConfig() {
+  return {
+    domains: parseInt(document.getElementById('cfgDomains').value),
+    simsFreq: parseFloat(document.getElementById('cfgSimsFreq').value),
+    simsDur: parseFloat(document.getElementById('cfgSimsDur').value),
+    timsFreq: parseFloat(document.getElementById('cfgTimsFreq').value),
+    timsDur: parseFloat(document.getElementById('cfgTimsDur').value),
+    depts: parseInt(document.getElementById('cfgDepts').value),
+    processOwners: document.getElementById('cfgProcessOwners').checked,
+    lijnActive: document.getElementById('cfgLijnActive').checked,
+    simsRoles: {
+      DTlid: document.getElementById('rolDTlid').checked,
+      Controller: document.getElementById('rolController').checked,
+      CISO: document.getElementById('rolCISO').checked,
+      CFO: document.getElementById('rolCFO').checked,
+      CIO: document.getElementById('rolCIO').checked,
+      CARM: document.getElementById('rolCARM').checked,
+      BCMmgr: document.getElementById('rolBCMmgr').checked,
+      IBPmgr: document.getElementById('rolIBPmgr').checked
+    },
+    timsRoles: {
+      TimsController: document.getElementById('rolTimsController').checked,
+      ISMSowner: document.getElementById('rolISMSowner').checked,
+      PIMSowner: document.getElementById('rolPIMSowner').checked,
+      BCMSowner: document.getElementById('rolBCMSowner').checked,
+      ProjectSupport: document.getElementById('rolProjectSupport').checked,
+      Secretariaat: document.getElementById('rolSecretariaat').checked
+    }
+  };
+}
+
+// ── Apply preset ──
+function applyPreset(name) {
+  const p = presets[name];
+  if (!p) return;
+
+  state.activePreset = name;
+
+  document.getElementById('cfgDomains').value = p.domains;
+  document.getElementById('cfgSimsFreq').value = p.simsFreq;
+  document.getElementById('cfgSimsDur').value = p.simsDur;
+  document.getElementById('cfgSimsDur').nextElementSibling.textContent = p.simsDur;
+  document.getElementById('cfgTimsFreq').value = p.timsFreq;
+  document.getElementById('cfgTimsDur').value = p.timsDur;
+  document.getElementById('cfgTimsDur').nextElementSibling.textContent = p.timsDur;
+  document.getElementById('cfgDepts').value = p.depts;
+  document.getElementById('cfgDepts').nextElementSibling.textContent = p.depts;
+  document.getElementById('cfgProcessOwners').checked = p.processOwners;
+  document.getElementById('cfgLijnActive').checked = p.lijnActive;
+
+  for (const [k,v] of Object.entries(p.simsRoles)) {
+    document.getElementById('rol' + k).checked = v;
+  }
+  for (const [k,v] of Object.entries(p.timsRoles)) {
+    document.getElementById('rol' + k).checked = v;
+  }
+
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.preset === name);
+  });
+
+  updateAll();
+}
+
+// ── Select decision flow ──
+function selectFlow(name) {
+  state.activeFlow = name;
+  document.querySelectorAll('.decision-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.flow === name);
+  });
+  updateAll();
+}
+
+// ── Update all ──
+function updateAll() {
+  const cfg = readConfig();
+
+  // Clear preset highlight if user changed values
+  // (Keep it if it still matches)
+
+  updateHeader(cfg);
+  updateGovDiagram(cfg);
+  updateFlowTimeline(cfg);
+  updateHealth(cfg);
+  updatePrompt(cfg);
+}
+
+function updateHeader(cfg) {
+  const domainLabels = ['1 domein (ISMS)', '2 domeinen (ISMS+PIMS)', '3 domeinen (ISMS+PIMS+BCMS)'];
+  document.getElementById('headerActiveDomains').textContent = domainLabels[cfg.domains - 1];
+}
+
+// ── Governance Diagram ──
+function updateGovDiagram(cfg) {
+  // SIMS badges
+  document.getElementById('simsBadgeFreq').textContent = freqLabel(cfg.simsFreq);
+  document.getElementById('simsBadgeDur').textContent = cfg.simsDur.toLocaleString('nl-NL') + ' uur';
+
+  // TIMS badges
+  document.getElementById('timsBadgeFreq').textContent = freqLabel(cfg.timsFreq);
+  document.getElementById('timsBadgeDur').textContent = cfg.timsDur.toLocaleString('nl-NL') + ' uur';
+
+  // Lijn badges
+  document.getElementById('lijnBadgeModel').textContent = cfg.processOwners ? 'Afdelingshoofden + Proceseigenaren' : 'Afdelingshoofden';
+  document.getElementById('lijnBadgeDepts').textContent = cfg.depts + ' afdeling' + (cfg.depts !== 1 ? 'en' : '');
+
+  // Lijn lane visibility
+  const lijnLane = document.getElementById('lijnLane');
+  const arrowTimsLijn = document.getElementById('arrowTimsLijn');
+  lijnLane.style.opacity = cfg.lijnActive ? '1' : '0.4';
+  arrowTimsLijn.style.opacity = cfg.lijnActive ? '1' : '0.4';
+
+  // SIMS roles
+  const simsContainer = document.getElementById('simsRoles');
+  simsContainer.innerHTML = simsRoleDefs.map(r => {
+    const active = cfg.simsRoles[r.id];
+    return `<div class="role-card ${active ? '' : 'inactive'}" data-role="${r.id}" data-layer="sims">
+      <div class="role-name">${r.name}</div>
+      <div class="role-title">${r.title}</div>
+    </div>`;
+  }).join('');
+
+  // TIMS roles — filter by active domains
+  const timsFiltered = timsRoleDefs.filter(r => {
+    if (r.id === 'PIMSowner' && cfg.domains < 2) return false;
+    if (r.id === 'BCMSowner' && cfg.domains < 3) return false;
+    return true;
+  });
+
+  const timsContainer = document.getElementById('timsRoles');
+  timsContainer.innerHTML = timsFiltered.map(r => {
+    const active = cfg.timsRoles[r.id];
+    return `<div class="role-card ${active ? '' : 'inactive'}" data-role="${r.id}" data-layer="tims">
+      <div class="role-name">${r.name}</div>
+      <div class="role-title">${r.title}</div>
+    </div>`;
+  }).join('');
+
+  // Lijn roles
+  const lijnContainer = document.getElementById('lijnRoles');
+  if (!cfg.lijnActive) {
+    lijnContainer.innerHTML = '<div style="color:var(--text-muted);font-size:12px;font-style:italic;padding:8px 0">Lijnmanagement nog niet operationeel (opstartfase)</div>';
+  } else {
+    let lijnCards = '';
+    const showCount = Math.min(cfg.depts, 6);
+    for (let i = 0; i < showCount; i++) {
+      lijnCards += `<div class="role-card" data-layer="lijn">
+        <div class="role-name">Afd. ${i + 1}</div>
+        <div class="role-title">Afdelingshoofd</div>
+      </div>`;
+    }
+    if (cfg.depts > 6) {
+      lijnCards += `<div class="role-card" style="border-style:dashed;text-align:center" data-layer="lijn">
+        <div class="role-name">+${cfg.depts - 6}</div>
+        <div class="role-title">afdelingen</div>
+      </div>`;
+    }
+    if (cfg.processOwners) {
+      lijnCards += `<div class="role-card" style="border-color:var(--lijn-border)" data-layer="lijn">
+        <div class="role-name">Proceseigenaren</div>
+        <div class="role-title">Risicoanalyse per proces</div>
+      </div>`;
+    }
+    lijnContainer.innerHTML = lijnCards;
+  }
+}
+
+// ── Decision Flow Timeline ──
+function updateFlowTimeline(cfg) {
+  const container = document.getElementById('flowTimeline');
+  const titleEl = document.getElementById('flowTitle');
+
+  // Clear highlights
+  document.querySelectorAll('.role-card').forEach(c => {
+    c.classList.remove('highlight-sims', 'highlight-tims', 'highlight-lijn', 'animate-pulse');
+  });
+
+  // Clear animated arrows
+  document.querySelectorAll('.reporting-arrows').forEach(a => {
+    a.classList.remove('arrow-animated');
+  });
+
+  if (state.activeFlow === 'none' || !decisionFlows[state.activeFlow]) {
+    container.innerHTML = '<div class="flow-empty">Selecteer een besluitscenario in het zijpaneel om de flow te simuleren.</div>';
+    titleEl.textContent = '';
+    return;
+  }
+
+  const flow = decisionFlows[state.activeFlow];
+  titleEl.textContent = '— ' + flow.title;
+
+  // Calculate wait times
+  const simsDays = daysPerMeeting(cfg.simsFreq);
+  const timsDays = daysPerMeeting(cfg.timsFreq);
+
+  let totalDays = 0;
+  const stepTimes = flow.steps.map(s => {
+    let wait = 0;
+    if (s.waitFor === 'tims') wait = timsDays;
+    else if (s.waitFor === 'sims') wait = simsDays;
+    else if (s.waitFor === 'sims_if_critical' || s.waitFor === 'sims_if_systemic' || s.waitFor === 'sims_if_major' || s.waitFor === 'sims_if_high_risk') wait = simsDays;
+    else if (s.waitFor === 'lijn') wait = 14; // 2 weeks for line to execute
+    else wait = 0;
+    totalDays += wait;
+    return wait;
+  });
+
+  let html = '';
+  flow.steps.forEach((s, i) => {
+    const waitDays = stepTimes[i];
+    html += `<div class="flow-step" data-layer="${s.layer}" style="transition-delay:${i * 150}ms">
+      <div class="flow-step-indicator">
+        <div class="flow-step-dot ${s.layer}"></div>
+        ${i < flow.steps.length - 1 ? '<div class="flow-step-line"></div>' : ''}
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-header">
+          <span class="flow-step-layer ${s.layer}">${s.layer === 'extern' ? 'Extern' : s.layer.toUpperCase()}</span>
+          <span class="flow-step-title">${s.role}</span>
+        </div>
+        <div class="flow-step-desc">${s.desc}</div>
+        ${waitDays > 0 ? `<div class="flow-step-time">Wachttijd tot volgende stap: ~${waitDays} dagen</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="flow-total">
+    <span>Geschatte totale doorlooptijd</span>
+    <span class="flow-total-value">${totalDays} dagen</span>
+  </div>`;
+
+  container.innerHTML = html;
+
+  // Animate steps appearing
+  requestAnimationFrame(() => {
+    container.querySelectorAll('.flow-step').forEach(el => {
+      el.classList.add('visible');
+    });
+  });
+
+  // Highlight roles in governance diagram
+  highlightFlowRoles(flow, cfg);
+}
+
+function highlightFlowRoles(flow, cfg) {
+  const layers = new Set(flow.steps.map(s => s.layer));
+
+  if (layers.has('sims')) {
+    document.querySelectorAll('.role-card[data-layer="sims"]:not(.inactive)').forEach(c => {
+      c.classList.add('highlight-sims');
+    });
+  }
+  if (layers.has('tims')) {
+    document.querySelectorAll('.role-card[data-layer="tims"]:not(.inactive)').forEach(c => {
+      c.classList.add('highlight-tims');
+    });
+  }
+  if (layers.has('lijn') && cfg.lijnActive) {
+    document.querySelectorAll('.role-card[data-layer="lijn"]').forEach(c => {
+      c.classList.add('highlight-lijn');
+    });
+  }
+
+  // Animate arrows between involved layers
+  if (layers.has('sims') && layers.has('tims')) {
+    document.getElementById('arrowSimsTims').classList.add('arrow-animated');
+  }
+  if (layers.has('tims') && (layers.has('lijn') || layers.has('extern'))) {
+    document.getElementById('arrowTimsLijn').classList.add('arrow-animated');
+  }
+
+  // Pulse animation on first step's layer
+  const firstLayer = flow.steps[0].layer;
+  if (firstLayer !== 'extern') {
+    const firstCards = document.querySelectorAll(`.role-card[data-layer="${firstLayer}"]:not(.inactive)`);
+    firstCards.forEach(c => c.classList.add('animate-pulse'));
+  }
+}
+
+// ── Health Indicators ──
+function updateHealth(cfg) {
+  // 1. Coverage
+  const totalSimsRoles = simsRoleDefs.length;
+  const activeSimsRoles = Object.values(cfg.simsRoles).filter(Boolean).length;
+
+  const timsRelevant = timsRoleDefs.filter(r => {
+    if (r.id === 'PIMSowner' && cfg.domains < 2) return false;
+    if (r.id === 'BCMSowner' && cfg.domains < 3) return false;
+    return true;
+  });
+  const totalTimsRoles = timsRelevant.length;
+  const activeTimsRoles = timsRelevant.filter(r => cfg.timsRoles[r.id]).length;
+
+  const totalRoles = totalSimsRoles + totalTimsRoles;
+  const filledRoles = activeSimsRoles + activeTimsRoles;
+  const coveragePct = Math.round((filledRoles / totalRoles) * 100);
+
+  const circumference = 2 * Math.PI * 28;
+  const offset = circumference * (1 - coveragePct / 100);
+  const ring = document.getElementById('coverageRing');
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = offset;
+
+  const pctEl = document.getElementById('coveragePct');
+  pctEl.textContent = coveragePct + '%';
+  pctEl.className = 'progress-ring-text ' + (coveragePct >= 80 ? 'text-success' : coveragePct >= 50 ? 'text-warning' : 'text-danger');
+  ring.style.stroke = coveragePct >= 80 ? 'var(--success)' : coveragePct >= 50 ? 'var(--warning)' : 'var(--danger)';
+
+  document.getElementById('coverageSub').textContent = filledRoles + '/' + totalRoles + ' rollen bezet';
+
+  // 2. Meeting load per role
+  const simsHoursPerMonth = freqPerMonth(cfg.simsFreq) * cfg.simsDur;
+  const timsHoursPerMonth = freqPerMonth(cfg.timsFreq) * cfg.timsDur;
+
+  const roleLoads = {};
+  // SIMS members
+  simsRoleDefs.forEach(r => {
+    if (cfg.simsRoles[r.id]) {
+      roleLoads[r.name] = (roleLoads[r.name] || 0) + simsHoursPerMonth;
+    }
+  });
+  // TIMS members
+  timsRoleDefs.forEach(r => {
+    if (cfg.timsRoles[r.id]) {
+      const name = r.id === 'TimsController' ? 'Concerncontroller' : r.name;
+      roleLoads[name] = (roleLoads[name] || 0) + timsHoursPerMonth;
+    }
+  });
+
+  const sortedLoads = Object.entries(roleLoads).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const maxLoad = sortedLoads.length ? sortedLoads[0][1] : 0;
+
+  document.getElementById('meetingLoadValue').textContent = maxLoad.toLocaleString('nl-NL', {maximumFractionDigits:1});
+
+  const barColors = ['var(--accent)', 'var(--tims)', 'var(--sims)', 'var(--lijn)', 'var(--warning)'];
+  document.getElementById('meetingBars').innerHTML = sortedLoads.map(([name, hours], i) => {
+    const pct = maxLoad > 0 ? (hours / maxLoad * 100) : 0;
+    return `<div class="bar-row">
+      <span class="bar-label">${name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColors[i]}"></div></div>
+      <span class="bar-val">${hours.toLocaleString('nl-NL', {maximumFractionDigits:1})}u</span>
+    </div>`;
+  }).join('');
+
+  // 3. Decision speed
+  const avgWait = Math.round((daysPerMeeting(cfg.simsFreq) + daysPerMeeting(cfg.timsFreq)) / 2);
+  const speedEl = document.getElementById('speedValue');
+  speedEl.textContent = avgWait;
+  speedEl.style.color = avgWait <= 30 ? 'var(--success)' : avgWait <= 60 ? 'var(--warning)' : 'var(--danger)';
+  document.getElementById('speedSub').textContent = 'dagen gemiddelde doorlooptijd';
+
+  // 4. Span of control
+  const activeDisciplineOwners = [
+    cfg.timsRoles.ISMSowner,
+    cfg.domains >= 2 && cfg.timsRoles.PIMSowner,
+    cfg.domains >= 3 && cfg.timsRoles.BCMSowner
+  ].filter(Boolean).length;
+
+  const span = activeDisciplineOwners > 0 ? cfg.depts / activeDisciplineOwners : cfg.depts;
+  const spanEl = document.getElementById('spanValue');
+  spanEl.textContent = span.toLocaleString('nl-NL', {maximumFractionDigits:1});
+  spanEl.style.color = span <= 5 ? 'var(--success)' : span <= 10 ? 'var(--warning)' : 'var(--danger)';
+  document.getElementById('spanSub').textContent = `afdelingen per discipline-eigenaar (${activeDisciplineOwners} eigenaren)`;
+}
+
+// ── Prompt output ──
+function updatePrompt(cfg) {
+  const lines = [];
+
+  // Structure summary
+  const domainNames = ['ISMS', 'ISMS en PIMS', 'ISMS, PIMS en BCMS'];
+  lines.push(`Governance-structuur voor een IMS met ${domainNames[cfg.domains - 1]} (${cfg.depts} afdelingen).`);
+  lines.push('');
+
+  // SIMS
+  const activeSimsNames = simsRoleDefs.filter(r => cfg.simsRoles[r.id]).map(r => r.name);
+  const inactiveSimsNames = simsRoleDefs.filter(r => !cfg.simsRoles[r.id]).map(r => r.name);
+  lines.push(`SIMS (Strategisch IMS-overleg): ${freqLabel(cfg.simsFreq).toLowerCase()}, ${cfg.simsDur.toLocaleString('nl-NL')} uur per sessie.`);
+  lines.push(`  Leden (${activeSimsNames.length}): ${activeSimsNames.join(', ')}.`);
+  if (inactiveSimsNames.length > 0) {
+    lines.push(`  Niet bezet: ${inactiveSimsNames.join(', ')}.`);
+  }
+  lines.push('');
+
+  // TIMS
+  const timsRelevant = timsRoleDefs.filter(r => {
+    if (r.id === 'PIMSowner' && cfg.domains < 2) return false;
+    if (r.id === 'BCMSowner' && cfg.domains < 3) return false;
+    return true;
+  });
+  const activeTimsNames = timsRelevant.filter(r => cfg.timsRoles[r.id]).map(r => r.name);
+  const inactiveTimsNames = timsRelevant.filter(r => !cfg.timsRoles[r.id]).map(r => r.name);
+  lines.push(`TIMS (Tactisch IMS-overleg): ${freqLabel(cfg.timsFreq).toLowerCase()}, ${cfg.timsDur.toLocaleString('nl-NL')} uur per sessie.`);
+  lines.push(`  Leden (${activeTimsNames.length}): ${activeTimsNames.join(', ')}.`);
+  if (inactiveTimsNames.length > 0) {
+    lines.push(`  Niet bezet: ${inactiveTimsNames.join(', ')}.`);
+  }
+  lines.push('');
+
+  // Lijn
+  if (cfg.lijnActive) {
+    lines.push(`Lijnmanagement: ${cfg.depts} afdelingen, ${cfg.processOwners ? 'met proceseigenaren (mature model)' : 'zonder proceseigenaren (basismodel)'}.`);
+  } else {
+    lines.push('Lijnmanagement: niet operationeel (opstartfase).');
+  }
+  lines.push('');
+
+  // Health assessment
+  lines.push('--- Gezondheidsbeoordeling ---');
+  lines.push('');
+
+  // Coverage
+  const totalRoles = simsRoleDefs.length + timsRelevant.length;
+  const filledRoles = simsRoleDefs.filter(r => cfg.simsRoles[r.id]).length + timsRelevant.filter(r => cfg.timsRoles[r.id]).length;
+  const coveragePct = Math.round((filledRoles / totalRoles) * 100);
+
+  if (coveragePct === 100) {
+    lines.push('Dekking: Alle rollen zijn bezet. Uitstekend.');
+  } else if (coveragePct >= 80) {
+    lines.push(`Dekking: ${filledRoles}/${totalRoles} rollen bezet (${coveragePct}%). Acceptabel, maar vul ontbrekende rollen aan.`);
+  } else {
+    lines.push(`Dekking: ${filledRoles}/${totalRoles} rollen bezet (${coveragePct}%). AANDACHTSPUNT: onvoldoende bezetting.`);
+  }
+
+  // Coverage gaps
+  if (inactiveSimsNames.length > 0) {
+    lines.push(`  SIMS-vacatures: ${inactiveSimsNames.join(', ')}. Dit kan leiden tot onvoldoende strategisch mandaat.`);
+  }
+  if (inactiveTimsNames.length > 0) {
+    lines.push(`  TIMS-vacatures: ${inactiveTimsNames.join(', ')}. Dit belemmert de tactische coordinatie.`);
+  }
+
+  // Meeting load
+  const simsHours = freqPerMonth(cfg.simsFreq) * cfg.simsDur;
+  const timsHours = freqPerMonth(cfg.timsFreq) * cfg.timsDur;
+  const controllerHours = (cfg.simsRoles.Controller ? simsHours : 0) + (cfg.timsRoles.TimsController ? timsHours : 0);
+
+  if (controllerHours > 6) {
+    lines.push(`\nVergaderlast: De Concerncontroller heeft ${controllerHours.toLocaleString('nl-NL', {maximumFractionDigits:1})} uur/maand vergaderlast. Overweeg delegatie.`);
+  } else if (controllerHours > 4) {
+    lines.push(`\nVergaderlast: De Concerncontroller vergadert ${controllerHours.toLocaleString('nl-NL', {maximumFractionDigits:1})} uur/maand voor IMS. Hanteerbaar.`);
+  }
+
+  // Decision speed
+  const avgWait = Math.round((daysPerMeeting(cfg.simsFreq) + daysPerMeeting(cfg.timsFreq)) / 2);
+  if (avgWait > 60) {
+    lines.push(`\nBesluitsnelheid: Gemiddeld ${avgWait} dagen doorlooptijd. RISICO: te trage besluitvorming voor incidenten. Overweeg ad-hoc mandaten.`);
+  } else if (avgWait > 30) {
+    lines.push(`\nBesluitsnelheid: Gemiddeld ${avgWait} dagen doorlooptijd. Acceptabel voor reguliere besluitvorming, maar borg spoedprocedures.`);
+  } else {
+    lines.push(`\nBesluitsnelheid: Gemiddeld ${avgWait} dagen doorlooptijd. Goede reactietijd.`);
+  }
+
+  // Span of control
+  const activeDO = [cfg.timsRoles.ISMSowner, cfg.domains >= 2 && cfg.timsRoles.PIMSowner, cfg.domains >= 3 && cfg.timsRoles.BCMSowner].filter(Boolean).length;
+  const span = activeDO > 0 ? cfg.depts / activeDO : cfg.depts;
+  if (span > 10) {
+    lines.push(`\nSpan of control: ${span.toLocaleString('nl-NL', {maximumFractionDigits:1})} afdelingen per discipline-eigenaar. TE HOOG: niet behapbaar. Wijs extra eigenaren aan.`);
+  } else if (span > 5) {
+    lines.push(`\nSpan of control: ${span.toLocaleString('nl-NL', {maximumFractionDigits:1})} afdelingen per discipline-eigenaar. Aandachtspunt bij verdere groei.`);
+  } else {
+    lines.push(`\nSpan of control: ${span.toLocaleString('nl-NL', {maximumFractionDigits:1})} afdelingen per discipline-eigenaar. Goed behapbaar.`);
+  }
+
+  // Lijn warnings
+  if (!cfg.lijnActive) {
+    lines.push('\nLijnmanagement: Niet actief. Dit is acceptabel in de opstartfase (Fase 0), maar onboarding (stap 7) is noodzakelijk voor Fase 1.');
+  }
+
+  if (!cfg.simsRoles.DTlid) {
+    lines.push('\nKRITIEK: Geen DT-lid als SIMS-voorzitter. Zonder bestuurlijk mandaat mist het IMS besluitkracht.');
+  }
+
+  if (cfg.domains >= 2 && !cfg.timsRoles.PIMSowner) {
+    lines.push('\nWAARSCHUWING: PIMS is actief maar de PIMS discipline-eigenaar (FG) ontbreekt in TIMS. Dit is een AVG-risico.');
+  }
+
+  if (cfg.domains >= 3 && !cfg.timsRoles.BCMSowner) {
+    lines.push('\nWAARSCHUWING: BCMS is actief maar de BCMS discipline-eigenaar ontbreekt in TIMS. Continuiteitsrisico.');
+  }
+
+  // Flow description
+  if (state.activeFlow !== 'none' && decisionFlows[state.activeFlow]) {
+    const flow = decisionFlows[state.activeFlow];
+    lines.push('');
+    lines.push('--- Besluitflow: ' + flow.title + ' ---');
+    lines.push('');
+
+    const simsDays = daysPerMeeting(cfg.simsFreq);
+    const timsDays = daysPerMeeting(cfg.timsFreq);
+    let totalDays = 0;
+
+    flow.steps.forEach((s, i) => {
+      let wait = 0;
+      if (s.waitFor === 'tims') wait = timsDays;
+      else if (s.waitFor === 'sims') wait = simsDays;
+      else if (s.waitFor && s.waitFor.startsWith('sims_if_')) wait = simsDays;
+      else if (s.waitFor === 'lijn') wait = 14;
+      totalDays += wait;
+
+      const layerName = s.layer === 'extern' ? 'Extern' : s.layer.toUpperCase();
+      lines.push(`${i + 1}. [${layerName}] ${s.role}: ${s.desc}${wait > 0 ? ` (wachttijd: ~${wait} dagen)` : ''}`);
+    });
+
+    lines.push('');
+    lines.push(`Geschatte totale doorlooptijd: ${totalDays} dagen.`);
+
+    if (totalDays > 90) {
+      lines.push('AANDACHT: Doorlooptijd is langer dan 3 maanden. Overweeg hogere vergaderfrequentie of mandaatdelegatie voor dit type besluit.');
+    }
+
+    if (state.activeFlow === 'datalek' && daysPerMeeting(cfg.timsFreq) > 3) {
+      lines.push('LET OP: Bij datalekken geldt een meldplicht van 72 uur bij de AP. De huidige TIMS-frequentie vereist ad-hoc bijeenroepen of een mandaat voor de FG.');
+    }
+  }
+
+  // Recommendations
+  lines.push('');
+  lines.push('--- Aanbevelingen ---');
+  lines.push('');
+
+  const recommendations = [];
+
+  if (coveragePct < 100) {
+    recommendations.push('Vul alle openstaande rollen in om governance-lacunes te voorkomen.');
+  }
+  if (!cfg.lijnActive && cfg.depts > 0) {
+    recommendations.push('Start met onboarding van lijnmanagement (stap 7) om risicoanalyse per afdeling mogelijk te maken.');
+  }
+  if (cfg.depts >= 10 && !cfg.processOwners) {
+    recommendations.push('Overweeg proceseigenaren in te zetten bij ' + cfg.depts + ' afdelingen voor betere verdeling van risicoanalyse.');
+  }
+  if (span > 8) {
+    recommendations.push('Wijs extra discipline-eigenaren aan om de span of control te verlagen.');
+  }
+  if (avgWait > 45) {
+    recommendations.push('Verhoog de vergaderfrequentie van SIMS of TIMS, of stel mandaten in voor spoedbesluiten.');
+  }
+  if (controllerHours > 5) {
+    recommendations.push('De Concerncontroller is zwaar belast. Overweeg TIMS-voorzitterschap te delegeren.');
+  }
+  if (cfg.domains < 3) {
+    recommendations.push('Overweeg uitbreiding naar alle drie IMS-domeinen (ISMS, PIMS, BCMS) voor een volledig geintegreerd managementsysteem.');
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push('De huidige governance-structuur voldoet aan de ISO-aanbevelingen. Borg continue verbetering via de PDCA-cyclus (stap 17).');
+  }
+
+  recommendations.forEach((r, i) => {
+    lines.push(`${i + 1}. ${r}`);
+  });
+
+  document.getElementById('promptOutput').textContent = lines.join('\n');
+}
+
+// ── Copy prompt ──
+function copyPrompt() {
+  const text = document.getElementById('promptOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Gekopieerd!';
+    setTimeout(() => { btn.textContent = 'Kopieer'; }, 2000);
+  });
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  applyPreset('standaard');
+});
+</script>
+</body>
+</html>

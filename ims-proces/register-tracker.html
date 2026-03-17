@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Register Completeness Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0f1a;
+    --bg-surface: #111827;
+    --bg-elevated: #1f2937;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --border: #374151;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --color-generiek: #6366f1;
+    --color-isms: #60a5fa;
+    --color-pims: #a78bfa;
+    --color-bcms: #34d399;
+  }
+
+  html { font-size: 14px; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ---- Layout ---- */
+  .app-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .app-header .subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+  .header-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: 1fr auto;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    padding: 1.25rem;
+    overflow-y: auto;
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-section h3 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .preset-btn {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    margin-bottom: 0.4rem;
+  }
+  .preset-btn:hover { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+  .preset-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.12);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .preset-btn .preset-desc {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 0.15rem;
+  }
+
+  .filter-group { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .filter-chip {
+    padding: 0.35rem 0.65rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .filter-chip:hover { border-color: var(--accent-hover); color: var(--text-primary); }
+  .filter-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .filter-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Donut */
+  .donut-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .donut-wrapper {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+  .donut-wrapper svg { transform: rotate(-90deg); }
+  .donut-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .donut-pct {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .donut-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .domain-bars { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; }
+  .domain-bar-row { display: flex; flex-direction: column; gap: 0.25rem; }
+  .domain-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+  .domain-bar-header .pct { color: var(--text-muted); font-weight: 600; }
+  .domain-bar-track {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .domain-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* Status legend */
+  .legend { display: flex; flex-direction: column; gap: 0.35rem; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ---- Main content ---- */
+  .main-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  .domain-group { margin-bottom: 2rem; }
+  .domain-group-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .domain-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .domain-group-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .domain-group-header .domain-count {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-left: auto;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .register-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    border-left: 3px solid var(--border);
+    padding: 1rem 1.1rem;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: default;
+  }
+  .register-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    background: rgba(17,24,39,0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .register-card.dimmed {
+    opacity: 0.25;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .card-badges {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+  .badge {
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.3rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-v {
+    background: rgba(239,68,68,0.15);
+    color: var(--danger);
+  }
+  .badge-a {
+    background: rgba(245,158,11,0.15);
+    color: var(--warning);
+  }
+  .badge-fase {
+    background: rgba(99,102,241,0.12);
+    color: var(--accent-hover);
+  }
+
+  .card-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.65rem;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .card-owner {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .card-owner svg {
+    width: 13px;
+    height: 13px;
+    opacity: 0.5;
+  }
+  .card-iso {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Status toggle button */
+  .status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 0.75rem;
+    width: 100%;
+    justify-content: center;
+  }
+  .status-toggle:hover { border-color: var(--accent-hover); }
+  .status-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .status-toggle[data-status="niet_aanwezig"] {
+    border-color: rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.08);
+    color: var(--danger);
+  }
+  .status-toggle[data-status="gedeeltelijk"] {
+    border-color: rgba(245,158,11,0.3);
+    background: rgba(245,158,11,0.08);
+    color: var(--warning);
+  }
+  .status-toggle[data-status="compleet"] {
+    border-color: rgba(34,197,94,0.3);
+    background: rgba(34,197,94,0.08);
+    color: var(--success);
+  }
+  .status-toggle[data-status="actualisatie"] {
+    border-color: rgba(96,165,250,0.3);
+    background: rgba(96,165,250,0.08);
+    color: #60a5fa;
+  }
+
+  /* ---- Bottom prompt panel ---- */
+  .prompt-panel {
+    grid-column: 2;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .prompt-header h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 0.4rem;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .copy-btn:hover { background: var(--accent-hover); }
+  .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-btn.copied {
+    background: var(--success);
+  }
+  .copy-btn svg { width: 14px; height: 14px; }
+
+  .prompt-output {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      grid-row: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .prompt-panel { grid-column: 1; }
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1"/><path d="M8 14h12M14 8v12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+  <div>
+    <h1>IMS Register Completeness Tracker</h1>
+    <span class="subtitle">Geintegreerd Managementsysteem &mdash; ISMS / PIMS / BCMS</span>
+  </div>
+  <span class="header-badge">GRC Tool</span>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <h3>Presets</h3>
+      <button class="preset-btn" data-preset="blanco" onclick="applyPreset('blanco')">
+        Blanco start
+        <span class="preset-desc">Alle registers op "Niet aanwezig"</span>
+      </button>
+      <button class="preset-btn" data-preset="avg_basis" onclick="applyPreset('avg_basis')">
+        Gemeente met AVG-basis
+        <span class="preset-desc">RoPA compleet, FG-registers gedeeltelijk</span>
+      </button>
+      <button class="preset-btn" data-preset="na_fase0" onclick="applyPreset('na_fase0')">
+        Na Fase 0
+        <span class="preset-desc">Fase 0 compleet, Fase 1/2 nog open</span>
+      </button>
+      <button class="preset-btn" data-preset="operationeel" onclick="applyPreset('operationeel')">
+        Operationeel IMS
+        <span class="preset-desc">Meeste registers compleet</span>
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Domeinfilter</h3>
+      <div class="filter-group" id="domainFilters">
+        <button class="filter-chip active" data-domain="alle" onclick="setDomainFilter('alle')">Alle</button>
+        <button class="filter-chip" data-domain="generiek" onclick="setDomainFilter('generiek')">Generiek</button>
+        <button class="filter-chip" data-domain="isms" onclick="setDomainFilter('isms')">ISMS</button>
+        <button class="filter-chip" data-domain="pims" onclick="setDomainFilter('pims')">PIMS</button>
+        <button class="filter-chip" data-domain="bcms" onclick="setDomainFilter('bcms')">BCMS</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Fasefilter</h3>
+      <div class="filter-group" id="faseFilters">
+        <button class="filter-chip active" data-fase="alle" onclick="setFaseFilter('alle')">Alle</button>
+        <button class="filter-chip" data-fase="0" onclick="setFaseFilter('0')">Fase 0</button>
+        <button class="filter-chip" data-fase="1" onclick="setFaseFilter('1')">Fase 1</button>
+        <button class="filter-chip" data-fase="2" onclick="setFaseFilter('2')">Fase 2</button>
+        <button class="filter-chip" data-fase="3" onclick="setFaseFilter('3')">Fase 3</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Totale Compleetheid</h3>
+      <div class="donut-container">
+        <div class="donut-wrapper">
+          <svg viewBox="0 0 120 120" width="140" height="140">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-primary)" stroke-width="10"/>
+            <circle id="donutComplete" cx="60" cy="60" r="50" fill="none" stroke="var(--success)" stroke-width="10" stroke-dasharray="0 314.16" stroke-linecap="round"/>
+            <circle id="donutPartial" cx="60" cy="60" r="50" fill="none" stroke="var(--warning)" stroke-width="10" stroke-dasharray="0 314.16" stroke-linecap="round"/>
+            <circle id="donutUpdate" cx="60" cy="60" r="50" fill="none" stroke="#60a5fa" stroke-width="10" stroke-dasharray="0 314.16" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-label">
+            <span class="donut-pct" id="totalPct">0%</span>
+            <span class="donut-sub">compleet</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Per Domein</h3>
+      <div class="domain-bars" id="domainBars"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Legenda</h3>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--danger)"></span>Niet aanwezig</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--warning)"></span>Gedeeltelijk</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--success)"></span>Compleet</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span>Actualisatie nodig</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content" id="mainContent"></main>
+
+  <!-- Prompt output -->
+  <div class="prompt-panel">
+    <div class="prompt-header">
+      <h3>Completeness Rapport</h3>
+      <button class="copy-btn" id="copyBtn" onclick="copyReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="copyBtnText">Kopieer rapport</span>
+      </button>
+    </div>
+    <div class="prompt-output" id="promptOutput"></div>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+
+const STATUSES = [
+  { id: 'niet_aanwezig', label: 'Niet aanwezig', icon: '\u274C', weight: 0 },
+  { id: 'gedeeltelijk', label: 'Gedeeltelijk', icon: '\uD83D\uDFE1', weight: 0.5 },
+  { id: 'compleet', label: 'Compleet', icon: '\u2705', weight: 1 },
+  { id: 'actualisatie', label: 'Actualisatie nodig', icon: '\uD83D\uDD04', weight: 0.6 },
+];
+
+const DOMAINS = [
+  { id: 'generiek', label: 'Generiek', sublabel: 'Cross-domain', color: '#6366f1' },
+  { id: 'isms', label: 'ISMS', sublabel: 'Informatiebeveiliging', color: '#60a5fa' },
+  { id: 'pims', label: 'PIMS', sublabel: 'Privacy', color: '#a78bfa' },
+  { id: 'bcms', label: 'BCMS', sublabel: 'Bedrijfscontinu\u00efteit', color: '#34d399' },
+];
+
+const REGISTERS = [
+  // Generiek
+  { id: 1, name: 'Besluitlog', desc: 'Alle formele IMS-besluiten', domain: 'generiek', priority: 'V', owner: 'Concerncontroller', fase: 0 },
+  { id: 2, name: 'IMS Handboek', desc: 'Organisatiecontext, governance, PDCA', domain: 'generiek', priority: 'V', owner: 'CISO', fase: 0 },
+  { id: 3, name: 'Stakeholderregister', desc: 'Interne/externe belanghebbenden', domain: 'generiek', priority: 'V', owner: 'Concerncontroller', fase: 0, iso: 'ISO 4.2' },
+  { id: 18, name: 'Risicobeoordelingsmethodiek', desc: 'Criteria, acceptatieniveaus en methodiek', domain: 'generiek', priority: 'V', owner: 'Concerncontroller', fase: 0, iso: 'ISO 6.1.2' },
+  { id: 19, name: 'Ge\u00efntegreerd register', desc: 'Koppeling proces \u2192 systeem \u2192 verwerking', domain: 'generiek', priority: 'V', owner: 'Concerncontroller', fase: 1 },
+  { id: 20, name: 'Normenkader', desc: 'Toepasselijk normenkader (BIO 2.0, domeinen)', domain: 'generiek', priority: 'V', owner: 'CISO', fase: 0 },
+  // ISMS
+  { id: 4, name: 'Applicatie-/systeemregister (CMDB)', desc: 'Alle IT-systemen en applicaties', domain: 'isms', priority: 'V', owner: 'CIO', fase: 0 },
+  { id: 5, name: 'Leveranciersregister', desc: 'Externe leveranciers met IB-eisen', domain: 'isms', priority: 'V', owner: 'CISO', fase: 0 },
+  { id: 6, name: 'Toegangsbeheerregister', desc: 'Wie heeft toegang tot wat', domain: 'isms', priority: 'V', owner: 'CIO', fase: 1 },
+  { id: 7, name: 'Risicoregister IB', desc: 'Informatiebeveiliging risico\u2019s', domain: 'isms', priority: 'V', owner: 'CISO', fase: 1, iso: 'ISO 6.1.2' },
+  { id: 8, name: 'Statement of Applicability (SoA)', desc: 'Controls van toepassing incl. 27701 Annex A/B', domain: 'isms', priority: 'V', owner: 'CISO', fase: 1, iso: 'ISO 6.1.3d, 27701' },
+  { id: 9, name: 'Non-conformiteitenregister', desc: 'Afwijkingen en correctieve acties', domain: 'isms', priority: 'V', owner: 'CISO', fase: 2, iso: 'ISO 10.1' },
+  // PIMS
+  { id: 10, name: 'Register van Verwerkingen (RoPA)', desc: 'Alle verwerkingen van persoonsgegevens', domain: 'pims', priority: 'V', owner: 'FG', fase: 0, iso: 'AVG Art. 30' },
+  { id: 11, name: 'DPIA-register', desc: 'Uitgevoerde en geplande DPIA\u2019s', domain: 'pims', priority: 'V', owner: 'FG', fase: 1, iso: 'AVG Art. 35' },
+  { id: 12, name: 'Algoritmeregister', desc: 'Algoritmes en AI-systemen', domain: 'pims', priority: 'V', owner: 'FG', fase: 1, iso: 'Transparantie' },
+  { id: 21, name: 'PII-doorgifte-inventarisatie', desc: 'Doorgifte aan derden, verwerkers, grensoverschrijdend', domain: 'pims', priority: 'V', owner: 'FG', fase: 1, iso: 'ISO 27701 7.5/8.5' },
+  { id: 13, name: 'Datalekregister', desc: 'Gemelde en afgehandelde datalekken', domain: 'pims', priority: 'V', owner: 'FG', fase: 2, iso: 'AVG Art. 33' },
+  // BCMS
+  { id: 14, name: 'Lijst kritische processen', desc: 'Processen met hoge continu\u00efteits\u00adeis', domain: 'bcms', priority: 'V', owner: 'BCM Manager', fase: 0 },
+  { id: 15, name: 'Business Impact Analyse (BIA)', desc: 'Impact per kritisch proces (MTPD, RTO, RPO)', domain: 'bcms', priority: 'V', owner: 'BCM Manager', fase: 1, iso: 'ISO 22301 8.2.2' },
+  { id: 16, name: 'Continu\u00efteitsplannen', desc: 'BCPs met activatiecriteria, rollen, communicatie, herstel', domain: 'bcms', priority: 'V', owner: 'BCM Manager', fase: 1, iso: 'ISO 22301 8.4' },
+  { id: 17, name: 'Oefenregister', desc: 'Uitgevoerde en geplande oefeningen', domain: 'bcms', priority: 'V', owner: 'BCM Manager', fase: 2, iso: 'ISO 22301 8.5' },
+];
+
+// ========== STATE ==========
+
+let state = {};
+let activeDomainFilter = 'alle';
+let activeFaseFilter = 'alle';
+let activePreset = null;
+
+function initState() {
+  REGISTERS.forEach(r => { state[r.id] = 'niet_aanwezig'; });
+}
+
+// ========== PRESETS ==========
+
+const PRESETS = {
+  blanco: () => {
+    REGISTERS.forEach(r => { state[r.id] = 'niet_aanwezig'; });
+  },
+  avg_basis: () => {
+    REGISTERS.forEach(r => { state[r.id] = 'niet_aanwezig'; });
+    state[10] = 'compleet';      // RoPA
+    state[11] = 'gedeeltelijk';  // DPIA-register
+    state[12] = 'gedeeltelijk';  // Algoritmeregister
+    state[13] = 'gedeeltelijk';  // Datalekregister
+    state[21] = 'gedeeltelijk';  // PII-doorgifte
+  },
+  na_fase0: () => {
+    REGISTERS.forEach(r => {
+      if (r.fase === 0) state[r.id] = 'compleet';
+      else if (r.fase === 1) state[r.id] = 'gedeeltelijk';
+      else state[r.id] = 'niet_aanwezig';
+    });
+  },
+  operationeel: () => {
+    REGISTERS.forEach(r => {
+      if (r.fase <= 1) state[r.id] = 'compleet';
+      else state[r.id] = 'gedeeltelijk';
+    });
+    state[9] = 'compleet';       // Non-conformiteiten
+    state[17] = 'gedeeltelijk';  // Oefenregister
+  },
+};
+
+function applyPreset(key) {
+  PRESETS[key]();
+  activePreset = key;
+  saveState();
+  render();
+}
+
+// ========== PERSISTENCE ==========
+
+function saveState() {
+  try {
+    localStorage.setItem('ims_register_state', JSON.stringify(state));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const saved = localStorage.getItem('ims_register_state');
+    if (saved) {
+      state = JSON.parse(saved);
+      // Validate all registers exist
+      REGISTERS.forEach(r => {
+        if (!state[r.id]) state[r.id] = 'niet_aanwezig';
+      });
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+// ========== FILTERS ==========
+
+function setDomainFilter(domain) {
+  activeDomainFilter = domain;
+  document.querySelectorAll('#domainFilters .filter-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.domain === domain);
+  });
+  renderCards();
+}
+
+function setFaseFilter(fase) {
+  activeFaseFilter = fase;
+  document.querySelectorAll('#faseFilters .filter-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.fase === fase);
+  });
+  renderCards();
+}
+
+function isVisible(reg) {
+  if (activeDomainFilter !== 'alle' && reg.domain !== activeDomainFilter) return false;
+  if (activeFaseFilter !== 'alle' && String(reg.fase) !== activeFaseFilter) return false;
+  return true;
+}
+
+// ========== STATUS CYCLE ==========
+
+function cycleStatus(regId) {
+  const order = ['niet_aanwezig', 'gedeeltelijk', 'compleet', 'actualisatie'];
+  const cur = state[regId] || 'niet_aanwezig';
+  const idx = order.indexOf(cur);
+  state[regId] = order[(idx + 1) % order.length];
+  activePreset = null;
+  saveState();
+  render();
+}
+
+// ========== CALCULATIONS ==========
+
+function getStatusObj(statusId) {
+  return STATUSES.find(s => s.id === statusId);
+}
+
+function calcDomainPct(domainId) {
+  const regs = REGISTERS.filter(r => r.domain === domainId);
+  if (regs.length === 0) return 0;
+  const total = regs.reduce((acc, r) => acc + getStatusObj(state[r.id]).weight, 0);
+  return Math.round((total / regs.length) * 100);
+}
+
+function calcOverall() {
+  const total = REGISTERS.reduce((acc, r) => acc + getStatusObj(state[r.id]).weight, 0);
+  return Math.round((total / REGISTERS.length) * 100);
+}
+
+function countByStatus(statusId, domainId) {
+  let regs = REGISTERS;
+  if (domainId) regs = regs.filter(r => r.domain === domainId);
+  return regs.filter(r => state[r.id] === statusId).length;
+}
+
+// ========== RENDERING ==========
+
+function renderCards() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+
+  DOMAINS.forEach(domain => {
+    const regs = REGISTERS.filter(r => r.domain === domain.id);
+    const group = document.createElement('div');
+    group.className = 'domain-group';
+
+    const visible = regs.filter(r => isVisible(r));
+    const completePct = calcDomainPct(domain.id);
+
+    group.innerHTML = `
+      <div class="domain-group-header">
+        <span class="domain-dot" style="background:${domain.color}"></span>
+        <h2>${domain.label}</h2>
+        <span style="font-size:0.78rem;color:var(--text-muted)">${domain.sublabel}</span>
+        <span class="domain-count">${completePct}% compleet</span>
+      </div>
+      <div class="cards-grid"></div>
+    `;
+
+    const grid = group.querySelector('.cards-grid');
+    regs.forEach(reg => {
+      const vis = isVisible(reg);
+      const statusObj = getStatusObj(state[reg.id]);
+      const card = document.createElement('div');
+      card.className = `register-card${vis ? '' : ' dimmed'}`;
+      card.style.borderLeftColor = domain.color;
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-title">${reg.name}</span>
+          <div class="card-badges">
+            <span class="badge ${reg.priority === 'V' ? 'badge-v' : 'badge-a'}">${reg.priority === 'V' ? 'Verplicht' : 'Aanbevolen'}</span>
+            <span class="badge badge-fase">Fase ${reg.fase}</span>
+          </div>
+        </div>
+        <div class="card-desc">${reg.desc}</div>
+        <div class="card-meta">
+          <span class="card-owner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-4.4 3-8 6.5-8s6.5 3.6 6.5 8"/></svg>
+            ${reg.owner}
+          </span>
+          ${reg.iso ? `<span class="card-iso">${reg.iso}</span>` : ''}
+        </div>
+        <button class="status-toggle" data-status="${statusObj.id}" onclick="cycleStatus(${reg.id})" title="Klik om status te wijzigen" aria-label="Status wijzigen voor ${reg.name}: huidige status ${statusObj.label}">
+          ${statusObj.icon} ${statusObj.label}
+        </button>
+      `;
+      grid.appendChild(card);
+    });
+
+    main.appendChild(group);
+  });
+}
+
+function renderDonut() {
+  const circumference = 2 * Math.PI * 50; // r=50
+  const completeCount = countByStatus('compleet');
+  const partialCount = countByStatus('gedeeltelijk');
+  const updateCount = countByStatus('actualisatie');
+  const total = REGISTERS.length;
+
+  const cPct = completeCount / total;
+  const pPct = partialCount / total;
+  const uPct = updateCount / total;
+
+  const cLen = cPct * circumference;
+  const pLen = pPct * circumference;
+  const uLen = uPct * circumference;
+
+  const donutComplete = document.getElementById('donutComplete');
+  const donutPartial = document.getElementById('donutPartial');
+  const donutUpdate = document.getElementById('donutUpdate');
+
+  donutComplete.style.strokeDasharray = `${cLen} ${circumference}`;
+  donutComplete.style.strokeDashoffset = '0';
+
+  donutPartial.style.strokeDasharray = `${pLen} ${circumference}`;
+  donutPartial.style.strokeDashoffset = `${-cLen}`;
+
+  donutUpdate.style.strokeDasharray = `${uLen} ${circumference}`;
+  donutUpdate.style.strokeDashoffset = `${-(cLen + pLen)}`;
+
+  document.getElementById('totalPct').textContent = calcOverall() + '%';
+}
+
+function renderDomainBars() {
+  const container = document.getElementById('domainBars');
+  container.innerHTML = '';
+  DOMAINS.forEach(d => {
+    const pct = calcDomainPct(d.id);
+    container.innerHTML += `
+      <div class="domain-bar-row">
+        <div class="domain-bar-header">
+          <span style="color:${d.color}">${d.label}</span>
+          <span class="pct">${pct}%</span>
+        </div>
+        <div class="domain-bar-track">
+          <div class="domain-bar-fill" style="width:${pct}%;background:${d.color}"></div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function renderPresetButtons() {
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === activePreset);
+  });
+}
+
+// ========== PROMPT REPORT ==========
+
+function generateReport() {
+  const overall = calcOverall();
+  const lines = [];
+  const date = new Date().toLocaleDateString('nl-NL', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  lines.push(`=== IMS REGISTER COMPLETENESS RAPPORT ===`);
+  lines.push(`Datum: ${date}`);
+  lines.push(`Totale compleetheid: ${overall}%`);
+  lines.push('');
+
+  // Per domain
+  lines.push('--- Compleetheid per domein ---');
+  DOMAINS.forEach(d => {
+    const pct = calcDomainPct(d.id);
+    const regs = REGISTERS.filter(r => r.domain === d.id);
+    const c = regs.filter(r => state[r.id] === 'compleet').length;
+    const p = regs.filter(r => state[r.id] === 'gedeeltelijk').length;
+    const a = regs.filter(r => state[r.id] === 'actualisatie').length;
+    const n = regs.filter(r => state[r.id] === 'niet_aanwezig').length;
+    lines.push(`${d.label} (${d.sublabel}): ${pct}% \u2014 ${c} compleet, ${p} gedeeltelijk, ${a} actualisatie nodig, ${n} niet aanwezig`);
+  });
+  lines.push('');
+
+  // Critical missing
+  const critMissing = REGISTERS.filter(r => state[r.id] === 'niet_aanwezig' && r.priority === 'V');
+  if (critMissing.length > 0) {
+    lines.push('--- KRITIEK: Ontbrekende verplichte registers ---');
+    critMissing.sort((a, b) => a.fase - b.fase);
+    critMissing.forEach(r => {
+      const dom = DOMAINS.find(d => d.id === r.domain);
+      lines.push(`  \u26A0 [Fase ${r.fase}] ${r.name} (${dom.label}) \u2014 ${r.desc} \u2014 Eigenaar: ${r.owner}`);
+    });
+    lines.push('');
+  }
+
+  // Needing attention
+  const needsAttn = REGISTERS.filter(r => state[r.id] === 'gedeeltelijk' || state[r.id] === 'actualisatie');
+  if (needsAttn.length > 0) {
+    lines.push('--- Registers die aandacht vereisen ---');
+    needsAttn.sort((a, b) => a.fase - b.fase);
+    needsAttn.forEach(r => {
+      const s = getStatusObj(state[r.id]);
+      const dom = DOMAINS.find(d => d.id === r.domain);
+      lines.push(`  ${s.icon} [Fase ${r.fase}] ${r.name} (${dom.label}) \u2014 Status: ${s.label} \u2014 Eigenaar: ${r.owner}`);
+    });
+    lines.push('');
+  }
+
+  // Action plan
+  const incomplete = REGISTERS.filter(r => state[r.id] !== 'compleet');
+  if (incomplete.length > 0) {
+    lines.push('--- Geprioriteerd actieplan ---');
+    incomplete.sort((a, b) => {
+      // Fase first, then priority V > A, then status weight asc
+      if (a.fase !== b.fase) return a.fase - b.fase;
+      if (a.priority !== b.priority) return a.priority === 'V' ? -1 : 1;
+      return getStatusObj(state[a.id]).weight - getStatusObj(state[b.id]).weight;
+    });
+    let num = 1;
+    incomplete.forEach(r => {
+      const s = getStatusObj(state[r.id]);
+      const dom = DOMAINS.find(d => d.id === r.domain);
+      let action = '';
+      if (s.id === 'niet_aanwezig') action = 'Opzetten en invullen';
+      else if (s.id === 'gedeeltelijk') action = 'Completeren en valideren';
+      else if (s.id === 'actualisatie') action = 'Actualiseren en hervalideren';
+      lines.push(`  ${num}. ${r.name} (${dom.label}, Fase ${r.fase}) \u2014 ${action} \u2014 Eigenaar: ${r.owner}`);
+      num++;
+    });
+    lines.push('');
+  }
+
+  // Next steps
+  lines.push('--- Aanbevolen vervolgstappen ---');
+  if (critMissing.length > 0) {
+    const fase0missing = critMissing.filter(r => r.fase === 0);
+    if (fase0missing.length > 0) {
+      lines.push(`1. Start direct met ${fase0missing.length} ontbrekende Fase 0 register(s): ${fase0missing.map(r => r.name).join(', ')}`);
+    }
+    const fase1missing = critMissing.filter(r => r.fase === 1);
+    if (fase1missing.length > 0) {
+      lines.push(`${fase0missing.length > 0 ? '2' : '1'}. Plan Fase 1 registers (${fase1missing.length}): ${fase1missing.map(r => r.name).join(', ')}`);
+    }
+  }
+  if (needsAttn.length > 0) {
+    lines.push(`${critMissing.length > 0 ? '3' : '1'}. Completeer/actualiseer ${needsAttn.length} register(s) met status "Gedeeltelijk" of "Actualisatie nodig"`);
+  }
+  if (overall >= 80) {
+    lines.push(`${critMissing.length + (needsAttn.length > 0 ? 1 : 0) + 1}. Overweeg een interne audit om de kwaliteit van de registers te borgen`);
+  }
+  if (overall < 50) {
+    lines.push(`Tip: Focus eerst op alle Fase 0 registers \u2014 deze vormen het fundament van uw IMS.`);
+  }
+  if (overall === 100) {
+    lines.push('Alle registers zijn compleet. Overweeg een externe audit/certificering.');
+  }
+  lines.push('');
+  lines.push(`--- Einde rapport (${REGISTERS.length} registers ge\u00EBvalueerd) ---`);
+
+  return lines.join('\n');
+}
+
+function renderPrompt() {
+  document.getElementById('promptOutput').textContent = generateReport();
+}
+
+// ========== COPY ==========
+
+function copyReport() {
+  const text = generateReport();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const txt = document.getElementById('copyBtnText');
+    btn.classList.add('copied');
+    txt.textContent = 'Gekopieerd!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      txt.textContent = 'Kopieer rapport';
+    }, 2000);
+  });
+}
+
+// ========== MASTER RENDER ==========
+
+function render() {
+  renderCards();
+  renderDonut();
+  renderDomainBars();
+  renderPresetButtons();
+  renderPrompt();
+}
+
+// ========== INIT ==========
+
+initState();
+if (!loadState()) {
+  // Default: blanco
+  PRESETS.blanco();
+  activePreset = 'blanco';
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Gap-analyse Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0f1a;
+    --bg-surface: #111827;
+    --bg-elevated: #1f2937;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --border: #374151;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --isms-color: #60a5fa;
+    --pims-color: #a78bfa;
+    --bcms-color: #34d399;
+    --sidebar-width: 420px;
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .app-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .app-header h1 .badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: var(--accent);
+    color: white;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  .overall-score-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+
+  .overall-score-header .score-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Layout ── */
+  .app-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding-bottom: 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .section-header:hover { background: var(--bg-elevated); }
+
+  .section-header:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    border-radius: 2px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: -0.01em;
+  }
+
+  .section-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section-score {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-score .avg {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .section-header[aria-expanded="false"] .chevron {
+    transform: rotate(-90deg);
+  }
+
+  .section-body {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .section-body.collapsed {
+    max-height: 0 !important;
+  }
+
+  .slider-group {
+    padding: 0.5rem 1.25rem 0.85rem;
+  }
+
+  .slider-item {
+    margin-bottom: 0.7rem;
+  }
+
+  .slider-item:last-child { margin-bottom: 0; }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.3rem;
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+
+  .slider-label .area-name {
+    color: var(--text-secondary);
+    flex: 1;
+    padding-right: 0.5rem;
+  }
+
+  .slider-label .area-ref {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .slider-label .area-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.5rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .level-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    min-width: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+
+  /* Custom range slider */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    background: var(--border);
+  }
+
+  input[type="range"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .isms-slider::-webkit-slider-thumb { background: var(--isms-color); }
+  .isms-slider::-moz-range-thumb { background: var(--isms-color); }
+  .pims-slider::-webkit-slider-thumb { background: var(--pims-color); }
+  .pims-slider::-moz-range-thumb { background: var(--pims-color); }
+  .bcms-slider::-webkit-slider-thumb { background: var(--bcms-color); }
+  .bcms-slider::-moz-range-thumb { background: var(--bcms-color); }
+
+  /* ── Presets ── */
+  .presets-section {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .presets-section h3 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+
+  .presets-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+
+  .preset-btn {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: inherit;
+    transition: all 0.15s;
+    text-align: left;
+    line-height: 1.3;
+  }
+
+  .preset-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .preset-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .preset-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Main Content ── */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  /* ── Radar Charts ── */
+  .radar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .radar-card {
+    text-align: center;
+  }
+
+  .radar-card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .radar-card canvas {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  /* ── Bar Charts ── */
+  .bar-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .bar-domain h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .bar-item {
+    margin-bottom: 0.5rem;
+  }
+
+  .bar-item:last-child { margin-bottom: 0; }
+
+  .bar-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .bar-label-row .name {
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    padding-right: 0.5rem;
+  }
+
+  .bar-label-row .value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .bar-target {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--text-muted);
+    opacity: 0.6;
+  }
+
+  /* ── Score Cards ── */
+  .scores-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .score-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+
+  .score-card .domain-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .score-card .score-big {
+    font-size: 2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .score-card .score-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .score-card .score-bar {
+    margin-top: 0.6rem;
+    height: 4px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-card .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* ── Prompt Output ── */
+  .prompt-output {
+    position: relative;
+  }
+
+  .prompt-output pre {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    z-index: 2;
+  }
+
+  .copy-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .copy-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .copy-btn.copied {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .legend-line {
+    width: 20px;
+    height: 2px;
+  }
+
+  .legend-line.dashed {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--text-muted) 0,
+      var(--text-muted) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .radar-grid { grid-template-columns: 1fr 1fr; }
+    .bar-charts-grid { grid-template-columns: 1fr 1fr; }
+    .scores-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 900px) {
+    .app-layout { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .radar-grid { grid-template-columns: 1fr; }
+    .bar-charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+  <h1>
+    IMS Gap-analyse Dashboard
+    <span class="badge">ISO 27001 / 27701 / 22301</span>
+  </h1>
+  <div class="header-meta">
+    <div class="overall-score-header">
+      Totaalscore: <span class="score-value" id="headerScore">0.0</span> / 4.0
+    </div>
+  </div>
+</header>
+
+<!-- ── Layout ── -->
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Presets -->
+    <div class="presets-section">
+      <h3>Presets</h3>
+      <div class="presets-grid">
+        <button class="preset-btn" data-preset="nulmeting" onclick="applyPreset('nulmeting')" aria-label="Preset: Nulmeting">Nulmeting (alles 0)</button>
+        <button class="preset-btn" data-preset="typisch" onclick="applyPreset('typisch')" aria-label="Preset: Typische gemeente">Typische gemeente (start)</button>
+        <button class="preset-btn" data-preset="fase0" onclick="applyPreset('fase0')" aria-label="Preset: Na fase 0">Na Fase 0 IMS-implementatie</button>
+        <button class="preset-btn" data-preset="volwassen" onclick="applyPreset('volwassen')" aria-label="Preset: Volwassen organisatie">Volwassen organisatie</button>
+      </div>
+    </div>
+
+    <!-- Domain sections are generated by JS -->
+    <div id="sidebarDomains"></div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main-content">
+
+    <!-- Score Cards -->
+    <div class="scores-row" id="scoreCards"></div>
+
+    <!-- Radar Charts -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Radar Analyse</h2>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-line" style="background: var(--accent);"></div>Huidig niveau</div>
+          <div class="legend-item"><div class="legend-line dashed"></div>Doelniveau (3)</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="radar-grid" id="radarGrid"></div>
+      </div>
+    </div>
+
+    <!-- Bar Charts -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Volwassenheidsniveaus per domein</h2>
+      </div>
+      <div class="card-body">
+        <div class="bar-charts-grid" id="barCharts"></div>
+      </div>
+    </div>
+
+    <!-- Prompt Output -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Gap-analyse Rapport</h2>
+      </div>
+      <div class="card-body prompt-output">
+        <button class="copy-btn" id="copyBtn" onclick="copyReport()" aria-label="Kopieer rapport naar klembord">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Kopieer
+        </button>
+        <pre id="reportOutput"></pre>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// Data model
+// ──────────────────────────────────────────────
+const DOMAINS = [
+  {
+    id: 'isms',
+    name: 'ISMS (Informatiebeveiliging)',
+    standard: 'ISO 27001 / BIO 2.0',
+    color: '#60a5fa',
+    areas: [
+      { id: 'isms_beleid', name: 'Beleid & governance', ref: 'ISO 5.1, 5.2, 5.3', desc: 'Is er IB-beleid? Governance ingericht?' },
+      { id: 'isms_risico', name: 'Risicobeoordeling', ref: 'ISO 6.1.2', desc: 'Worden risico\'s systematisch beoordeeld?' },
+      { id: 'isms_toegang', name: 'Toegangsbeheer', ref: 'Annex A.9', desc: 'Is toegangsbeheer geregeld?' },
+      { id: 'isms_incident', name: 'Incidentbeheer', ref: 'Annex A.16', desc: 'Is er een incident response proces?' },
+      { id: 'isms_leverancier', name: 'Leveranciersbeheer', ref: 'Annex A.15', desc: 'Worden leveranciers beoordeeld?' },
+      { id: 'isms_bewustzijn', name: 'Bewustzijn & training', ref: 'ISO 7.2, 7.3', desc: 'Awareness programma?' },
+      { id: 'isms_monitoring', name: 'Monitoring & logging', ref: 'ISO 9.1', desc: 'Wordt er gemonitord?' },
+    ]
+  },
+  {
+    id: 'pims',
+    name: 'PIMS (Privacy)',
+    standard: 'ISO 27701 / AVG',
+    color: '#a78bfa',
+    areas: [
+      { id: 'pims_register', name: 'Verwerkingsregister', ref: 'AVG Art. 30', desc: 'Is er een register van verwerkingen?' },
+      { id: 'pims_rechten', name: 'Rechten betrokkenen', ref: 'AVG Art. 15-22', desc: 'Procedure voor inzageverzoeken?' },
+      { id: 'pims_dpia', name: 'DPIA-procedure', ref: 'AVG Art. 35', desc: 'Worden DPIA\'s uitgevoerd?' },
+      { id: 'pims_verwerkers', name: 'Verwerkersovereenkomsten', ref: 'AVG Art. 28', desc: 'Alle verwerkers gecontracteerd?' },
+      { id: 'pims_pbd', name: 'Privacy by design', ref: 'AVG Art. 25', desc: 'Wordt privacy meegenomen in ontwerp?' },
+      { id: 'pims_datalek', name: 'Datalekprocedure', ref: 'AVG Art. 33-34', desc: 'Procedure voor melden datalekken?' },
+      { id: 'pims_fg', name: 'Functionaris gegevensbescherming', ref: 'AVG Art. 37', desc: 'FG aangesteld?' },
+    ]
+  },
+  {
+    id: 'bcms',
+    name: 'BCMS (Bedrijfscontinuiteit)',
+    standard: 'ISO 22301',
+    color: '#34d399',
+    areas: [
+      { id: 'bcms_bia', name: 'BIA uitgevoerd', ref: 'ISO 22301 8.2.2', desc: 'Business Impact Analyse gedaan?' },
+      { id: 'bcms_kritisch', name: 'Kritische processen', ref: '', desc: 'Welke processen zijn kritiek?' },
+      { id: 'bcms_plannen', name: 'Continuiteitsplannen', ref: 'ISO 22301 8.4', desc: 'Zijn er continuiteitsplannen?' },
+      { id: 'bcms_herstel', name: 'Herstelstrategieen', ref: 'ISO 22301 8.3', desc: 'Zijn herstelstrategieen bepaald?' },
+      { id: 'bcms_oefenen', name: 'Oefenprogramma', ref: 'ISO 22301 8.5', desc: 'Worden plannen geoefend?' },
+      { id: 'bcms_crisis', name: 'Crisisorganisatie', ref: '', desc: 'Is er een crisisteam ingericht?' },
+      { id: 'bcms_communicatie', name: 'Communicatieplan', ref: '', desc: 'Crisiscommunicatie procedure?' },
+    ]
+  }
+];
+
+const LEVELS = [
+  'Niet aanwezig',
+  'Initieel',
+  'Herhaalbaar',
+  'Gedefinieerd',
+  'Beheerst'
+];
+
+const PRESETS = {
+  nulmeting: {
+    isms: [0,0,0,0,0,0,0],
+    pims: [0,0,0,0,0,0,0],
+    bcms: [0,0,0,0,0,0,0]
+  },
+  typisch: {
+    isms: [1,1,2,1,1,1,1],
+    pims: [1,1,0,1,0,1,3],
+    bcms: [0,1,0,0,0,1,0]
+  },
+  fase0: {
+    isms: [3,2,2,2,2,2,2],
+    pims: [2,2,2,2,2,2,3],
+    bcms: [1,2,1,1,1,2,1]
+  },
+  volwassen: {
+    isms: [4,3,3,3,3,4,3],
+    pims: [4,3,3,4,3,3,4],
+    bcms: [3,3,3,3,3,4,3]
+  }
+};
+
+// State
+const state = {};
+DOMAINS.forEach(d => d.areas.forEach(a => { state[a.id] = 0; }));
+
+// ──────────────────────────────────────────────
+// Sidebar rendering
+// ──────────────────────────────────────────────
+function renderSidebar() {
+  const container = document.getElementById('sidebarDomains');
+  container.innerHTML = DOMAINS.map(domain => {
+    const sliderClass = domain.id + '-slider';
+    return `
+      <div class="sidebar-section" data-domain="${domain.id}">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true"
+             onclick="toggleSection(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSection(this)}">
+          <div class="section-title">
+            <span class="section-dot" style="background:${domain.color}"></span>
+            ${domain.name}
+          </div>
+          <div class="section-score">
+            <span class="avg" id="avg_${domain.id}">0.0</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div class="section-body" id="body_${domain.id}">
+          <div class="slider-group">
+            ${domain.areas.map((area, i) => `
+              <div class="slider-item">
+                <div class="slider-label">
+                  <span class="area-name">${area.name}</span>
+                  ${area.ref ? `<span class="area-ref">${area.ref}</span>` : ''}
+                  <span class="area-value" id="val_${area.id}" style="color:${domain.color}">0</span>
+                </div>
+                <div class="slider-row">
+                  <input type="range" min="0" max="4" step="1" value="0"
+                         class="${sliderClass}"
+                         id="slider_${area.id}"
+                         data-area="${area.id}"
+                         data-domain="${domain.id}"
+                         aria-label="${area.name}: ${area.desc}"
+                         oninput="onSliderChange(this)"
+                         style="accent-color:${domain.color}">
+                </div>
+                <div class="slider-row" style="justify-content:space-between;margin-top:0.15rem;">
+                  <span class="level-label" id="level_${area.id}" style="max-width:none;">Niet aanwezig</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleSection(header) {
+  const expanded = header.getAttribute('aria-expanded') === 'true';
+  header.setAttribute('aria-expanded', !expanded);
+  const body = header.nextElementSibling;
+  if (expanded) {
+    body.classList.add('collapsed');
+  } else {
+    body.classList.remove('collapsed');
+  }
+}
+
+function onSliderChange(slider) {
+  const areaId = slider.dataset.area;
+  const val = parseInt(slider.value);
+  state[areaId] = val;
+  document.getElementById('val_' + areaId).textContent = val;
+  document.getElementById('level_' + areaId).textContent = LEVELS[val];
+
+  // Clear active preset
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+
+  updateAll();
+}
+
+// ──────────────────────────────────────────────
+// Presets
+// ──────────────────────────────────────────────
+function applyPreset(name) {
+  const preset = PRESETS[name];
+  DOMAINS.forEach(domain => {
+    const values = preset[domain.id];
+    domain.areas.forEach((area, i) => {
+      state[area.id] = values[i];
+      const slider = document.getElementById('slider_' + area.id);
+      slider.value = values[i];
+      document.getElementById('val_' + area.id).textContent = values[i];
+      document.getElementById('level_' + area.id).textContent = LEVELS[values[i]];
+    });
+  });
+
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.preset === name);
+  });
+
+  updateAll();
+}
+
+// ──────────────────────────────────────────────
+// Score calculations
+// ──────────────────────────────────────────────
+function domainAvg(domain) {
+  const sum = domain.areas.reduce((s, a) => s + state[a.id], 0);
+  return sum / domain.areas.length;
+}
+
+function overallAvg() {
+  const total = DOMAINS.reduce((s, d) => s + domainAvg(d), 0);
+  return total / DOMAINS.length;
+}
+
+// ──────────────────────────────────────────────
+// Score cards
+// ──────────────────────────────────────────────
+function renderScoreCards() {
+  const container = document.getElementById('scoreCards');
+  const cards = DOMAINS.map(d => ({
+    label: d.id.toUpperCase(),
+    color: d.color,
+    getId: () => domainAvg(d)
+  }));
+  cards.push({ label: 'TOTAAL', color: 'var(--accent)', getId: overallAvg });
+
+  container.innerHTML = cards.map(c => `
+    <div class="score-card">
+      <div class="domain-label" style="color:${c.color}">${c.label}</div>
+      <div class="score-big" id="sc_${c.label}" style="color:${c.color}">0.0</div>
+      <div class="score-sub">van 4.0</div>
+      <div class="score-bar"><div class="score-bar-fill" id="sb_${c.label}" style="background:${c.color};width:0%"></div></div>
+    </div>
+  `).join('');
+}
+
+function updateScoreCards() {
+  DOMAINS.forEach(d => {
+    const avg = domainAvg(d);
+    const label = d.id.toUpperCase();
+    document.getElementById('sc_' + label).textContent = avg.toFixed(1);
+    document.getElementById('sb_' + label).style.width = (avg / 4 * 100) + '%';
+    document.getElementById('avg_' + d.id).textContent = avg.toFixed(1);
+  });
+  const oa = overallAvg();
+  document.getElementById('sc_TOTAAL').textContent = oa.toFixed(1);
+  document.getElementById('sb_TOTAAL').style.width = (oa / 4 * 100) + '%';
+  document.getElementById('headerScore').textContent = oa.toFixed(1);
+}
+
+// ──────────────────────────────────────────────
+// Radar Charts (Canvas)
+// ──────────────────────────────────────────────
+function renderRadarGrid() {
+  const container = document.getElementById('radarGrid');
+  container.innerHTML = DOMAINS.map(d => `
+    <div class="radar-card">
+      <h3><span class="section-dot" style="background:${d.color};width:8px;height:8px;display:inline-block;border-radius:50%;"></span> ${d.name}</h3>
+      <canvas id="radar_${d.id}" width="340" height="340"></canvas>
+    </div>
+  `).join('');
+}
+
+function drawRadar(domain) {
+  const canvas = document.getElementById('radar_' + domain.id);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  // Size
+  const displayW = canvas.clientWidth;
+  const displayH = canvas.clientHeight;
+  canvas.width = displayW * dpr;
+  canvas.height = displayH * dpr;
+  ctx.scale(dpr, dpr);
+
+  const cx = displayW / 2;
+  const cy = displayH / 2;
+  const maxR = Math.min(cx, cy) - 50;
+  const n = domain.areas.length;
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2;
+
+  ctx.clearRect(0, 0, displayW, displayH);
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = (ring / 4) * maxR;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(55, 65, 81, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Ring label
+    const labelAngle = startAngle;
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px Inter, system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(ring.toString(), cx + r * Math.cos(labelAngle), cy + r * Math.sin(labelAngle) - 6);
+  }
+
+  // Axis lines
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + maxR * Math.cos(angle), cy + maxR * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(55, 65, 81, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Target polygon (level 3)
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const angle = startAngle + (i % n) * angleStep;
+    const r = (3 / 4) * maxR;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(156, 163, 175, 0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 5]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Data polygon
+  const values = domain.areas.map(a => state[a.id]);
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const angle = startAngle + (i % n) * angleStep;
+    const val = values[i % n];
+    const r = (val / 4) * maxR;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+
+  // Fill
+  const color = domain.color;
+  ctx.fillStyle = hexToRgba(color, 0.15);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Data points
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const val = values[i];
+    const r = (val / 4) * maxR;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#0a0f1a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Axis labels
+  ctx.font = '11px Inter, system-ui';
+  ctx.fillStyle = '#9ca3af';
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const labelR = maxR + 24;
+    let x = cx + labelR * Math.cos(angle);
+    let y = cy + labelR * Math.sin(angle);
+
+    // Determine text alignment
+    const cos = Math.cos(angle);
+    if (cos > 0.3) ctx.textAlign = 'left';
+    else if (cos < -0.3) ctx.textAlign = 'right';
+    else ctx.textAlign = 'center';
+
+    const sin = Math.sin(angle);
+    if (sin > 0.3) y += 4;
+    else if (sin < -0.3) y -= 2;
+
+    // Truncate long names
+    let name = domain.areas[i].name;
+    if (name.length > 20) name = name.slice(0, 18) + '...';
+    ctx.fillText(name, x, y);
+  }
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ──────────────────────────────────────────────
+// Bar Charts
+// ──────────────────────────────────────────────
+function renderBarCharts() {
+  const container = document.getElementById('barCharts');
+  container.innerHTML = DOMAINS.map(d => `
+    <div class="bar-domain">
+      <h4><span class="section-dot" style="background:${d.color};width:8px;height:8px;display:inline-block;border-radius:50%;"></span> ${d.name}</h4>
+      ${d.areas.map(a => `
+        <div class="bar-item">
+          <div class="bar-label-row">
+            <span class="name">${a.name}</span>
+            <span class="value" id="bv_${a.id}" style="color:${d.color}">0/4</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="bf_${a.id}" style="background:${d.color};width:0%"></div>
+            <div class="bar-target" style="left:75%;" title="Doelniveau: 3"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function updateBarCharts() {
+  DOMAINS.forEach(d => {
+    d.areas.forEach(a => {
+      const val = state[a.id];
+      document.getElementById('bv_' + a.id).textContent = val + '/4';
+      document.getElementById('bf_' + a.id).style.width = (val / 4 * 100) + '%';
+    });
+  });
+}
+
+// ──────────────────────────────────────────────
+// Report generation
+// ──────────────────────────────────────────────
+function generateReport() {
+  const lines = [];
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push('  IMS GAP-ANALYSE RAPPORT');
+  lines.push('  Geintegreerd Managementsysteem — Gemeente');
+  lines.push('  Datum: ' + dateStr);
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push('');
+
+  // Overall scores
+  lines.push('── VOLWASSENHEIDSSCORES ──');
+  lines.push('');
+  DOMAINS.forEach(d => {
+    const avg = domainAvg(d);
+    const bar = scoreBar(avg);
+    lines.push(`  ${d.id.toUpperCase().padEnd(6)} ${bar}  ${avg.toFixed(1)} / 4.0  (${d.standard})`);
+  });
+  const oa = overallAvg();
+  lines.push('  ──────────────────────────────────────────');
+  lines.push(`  TOTAAL ${scoreBar(oa)}  ${oa.toFixed(1)} / 4.0`);
+  lines.push('');
+
+  // Maturity assessment
+  lines.push('── BEOORDELING ──');
+  lines.push('');
+  if (oa < 1) lines.push('  De organisatie bevindt zich in de beginfase. Er is nog geen');
+  else if (oa < 2) lines.push('  De organisatie heeft initieel aandacht voor IMS-onderwerpen, maar');
+  else if (oa < 3) lines.push('  De organisatie heeft basisprocessen ingericht. De volgende stap is');
+  else lines.push('  De organisatie heeft een volwassen IMS. Focus op continu verbeteren en');
+
+  if (oa < 1) lines.push('  structurele aandacht voor informatiebeveiliging, privacy of continuiteit.');
+  else if (oa < 2) lines.push('  processen zijn grotendeels ad hoc en niet gedocumenteerd.');
+  else if (oa < 3) lines.push('  formalisering en documentatie van alle processen.');
+  else lines.push('  borging van het behaalde niveau.');
+  lines.push('');
+
+  // Per domain detail
+  DOMAINS.forEach(d => {
+    const avg = domainAvg(d);
+    lines.push(`── ${d.name.toUpperCase()} (gem. ${avg.toFixed(1)}) ──`);
+    lines.push('');
+    d.areas.forEach(a => {
+      const val = state[a.id];
+      const icon = val <= 1 ? '[!]' : val >= 3 ? '[+]' : '[ ]';
+      lines.push(`  ${icon} ${a.name.padEnd(35)} ${val}/4  ${LEVELS[val]}`);
+      if (a.ref) lines.push(`      Ref: ${a.ref}`);
+    });
+    lines.push('');
+  });
+
+  // Critical gaps
+  const criticalGaps = [];
+  const strengths = [];
+  DOMAINS.forEach(d => {
+    d.areas.forEach(a => {
+      const val = state[a.id];
+      if (val <= 1) criticalGaps.push({ domain: d, area: a, val });
+      if (val >= 3) strengths.push({ domain: d, area: a, val });
+    });
+  });
+
+  lines.push('── KRITIEKE HIATEN (niveau 0-1) ──');
+  lines.push('');
+  if (criticalGaps.length === 0) {
+    lines.push('  Geen kritieke hiaten gevonden.');
+  } else {
+    criticalGaps.forEach(g => {
+      lines.push(`  [KRITIEK] ${g.domain.id.toUpperCase()} > ${g.area.name}: ${LEVELS[g.val]} (${g.val}/4)`);
+      lines.push(`           ${g.area.desc}`);
+    });
+  }
+  lines.push('');
+
+  lines.push('── STERKE PUNTEN (niveau 3-4) ──');
+  lines.push('');
+  if (strengths.length === 0) {
+    lines.push('  Geen sterke punten geidentificeerd op dit moment.');
+  } else {
+    strengths.forEach(s => {
+      lines.push(`  [STERK]  ${s.domain.id.toUpperCase()} > ${s.area.name}: ${LEVELS[s.val]} (${s.val}/4)`);
+    });
+  }
+  lines.push('');
+
+  // Priority actions
+  lines.push('── AANBEVOLEN PRIORITEITSACTIES ──');
+  lines.push('');
+
+  const priorities = [];
+
+  // Sort critical gaps by domain order
+  const domainOrder = { isms: 1, pims: 2, bcms: 3 };
+  const sortedGaps = [...criticalGaps].sort((a, b) => {
+    if (a.val !== b.val) return a.val - b.val;
+    return domainOrder[a.domain.id] - domainOrder[b.domain.id];
+  });
+
+  let prio = 1;
+  sortedGaps.forEach(g => {
+    let action = '';
+    // Generate contextual recommendations
+    if (g.area.id.includes('beleid')) action = 'Stel een IB-beleid op en richt governance in (CISO aanstellen, stuurgroep formeren).';
+    else if (g.area.id.includes('risico')) action = 'Voer een systematische risicobeoordeling uit volgens ISO 27005 of vergelijkbare methode.';
+    else if (g.area.id.includes('toegang')) action = 'Implementeer toegangsbeheerbeleid: least privilege, periodieke reviews, wachtwoordbeleid.';
+    else if (g.area.id.includes('incident')) action = 'Richt een incident response proces in met classificatie, escalatie en rapportage.';
+    else if (g.area.id.includes('leverancier')) action = 'Inventariseer leveranciers en beoordeel ze op beveiligingsrisico\'s. Stel SLA\'s op.';
+    else if (g.area.id.includes('bewustzijn')) action = 'Start een awareness-programma: phishing tests, e-learning, periodieke training.';
+    else if (g.area.id.includes('monitoring')) action = 'Implementeer logging en monitoring (SIEM). Stel detectieregels in voor kritieke events.';
+    else if (g.area.id.includes('register')) action = 'Stel een verwerkingsregister op conform AVG Art. 30. Inventariseer alle verwerkingen.';
+    else if (g.area.id.includes('rechten')) action = 'Richt een procedure in voor het afhandelen van verzoeken van betrokkenen (inzage, verwijdering).';
+    else if (g.area.id.includes('dpia')) action = 'Ontwikkel een DPIA-procedure en voer DPIA\'s uit voor hoog-risico verwerkingen.';
+    else if (g.area.id.includes('verwerkers')) action = 'Inventariseer alle verwerkers en sluit verwerkersovereenkomsten (AVG Art. 28).';
+    else if (g.area.id.includes('pbd')) action = 'Integreer privacy by design in projectmethodiek en inkoopprocessen.';
+    else if (g.area.id.includes('datalek')) action = 'Stel een datalekprocedure op met meldingsflow richting AP (72 uur) en betrokkenen.';
+    else if (g.area.id.includes('fg')) action = 'Stel een Functionaris Gegevensbescherming (FG) aan en registreer bij de AP.';
+    else if (g.area.id.includes('bia')) action = 'Voer een Business Impact Analyse uit: identificeer kritieke processen en afhankelijkheden.';
+    else if (g.area.id.includes('kritisch')) action = 'Identificeer en documenteer kritieke bedrijfsprocessen met RTO/RPO-waarden.';
+    else if (g.area.id.includes('plannen')) action = 'Ontwikkel continuiteitsplannen voor alle kritieke processen.';
+    else if (g.area.id.includes('herstel')) action = 'Bepaal herstelstrategieen per kritiek proces: uitwijk, workarounds, backups.';
+    else if (g.area.id.includes('oefenen')) action = 'Stel een oefenprogramma op: jaarlijks testen van continuiteitsplannen.';
+    else if (g.area.id.includes('crisis')) action = 'Richt een crisisorganisatie in: crisisteam, rollen, besluitvormingslijnen.';
+    else if (g.area.id.includes('communicatie')) action = 'Stel een crisiscommunicatieplan op: stakeholders, kanalen, templates.';
+    else action = 'Breng dit onderwerp naar minimaal niveau 2 (herhaalbaar).';
+
+    priorities.push(`  ${prio}. [${g.domain.id.toUpperCase()}] ${g.area.name}`);
+    priorities.push(`     ${action}`);
+    priorities.push('');
+    prio++;
+  });
+
+  if (priorities.length === 0) {
+    lines.push('  Geen directe acties nodig — focus op continu verbeteren.');
+  } else {
+    lines.push(...priorities);
+  }
+
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push('  Gegenereerd door IMS Gap-analyse Dashboard');
+  lines.push('  Dit rapport kan worden gebruikt als input voor');
+  lines.push('  verdere analyse met AI-assistenten.');
+  lines.push('═══════════════════════════════════════════════════════');
+
+  return lines.join('\n');
+}
+
+function scoreBar(val) {
+  const filled = Math.round(val / 4 * 20);
+  const empty = 20 - filled;
+  return '[' + '\u2588'.repeat(filled) + '\u2591'.repeat(empty) + ']';
+}
+
+function updateReport() {
+  document.getElementById('reportOutput').textContent = generateReport();
+}
+
+// ──────────────────────────────────────────────
+// Copy functionality
+// ──────────────────────────────────────────────
+function copyReport() {
+  const text = document.getElementById('reportOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Gekopieerd!
+    `;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Kopieer
+      `;
+    }, 2000);
+  });
+}
+
+// ──────────────────────────────────────────────
+// Master update
+// ──────────────────────────────────────────────
+function updateAll() {
+  updateScoreCards();
+  DOMAINS.forEach(d => drawRadar(d));
+  updateBarCharts();
+  updateReport();
+}
+
+// ──────────────────────────────────────────────
+// Init
+// ──────────────────────────────────────────────
+function init() {
+  renderSidebar();
+  renderScoreCards();
+  renderRadarGrid();
+  renderBarCharts();
+  updateAll();
+
+  // Redraw radars on resize
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      DOMAINS.forEach(d => drawRadar(d));
+    }, 150);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

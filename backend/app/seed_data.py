@@ -28,7 +28,7 @@ from app.models.core_models import (
     # Privacy
     ProcessingActivity, LegalBasis,
     # Continuity
-    ContinuityPlan, ContinuityTest, AuditResult,
+    ContinuityPlan, ContinuityTest, AuditResult, PlanType, TestType,
     # RBAC
     UserScopeRole, Role,
     # Workflow
@@ -149,9 +149,8 @@ async def seed_database():
                 tenant_id=tenant.id,
                 name=std_data["name"],
                 version=std_data["version"],
-                framework_type=std_data["framework_type"],
+                type=std_data["framework_type"],
                 description=std_data["description"],
-                is_active=True,
             )
             session.add(standard)
             await session.commit()
@@ -159,12 +158,11 @@ async def seed_database():
 
             for req_data in std_data["requirements"]:
                 req = Requirement(
-                    tenant_id=tenant.id,
                     standard_id=standard.id,
                     code=req_data["code"],
                     title=req_data["title"],
+                    description=req_data.get("description", req_data["title"]),
                     category=req_data["category"],
-                    is_mandatory=True,
                 )
                 session.add(req)
                 await session.commit()
@@ -212,10 +210,10 @@ async def seed_database():
 
         # Processes
         processes_data = [
-            {"name": "Identiteitenbeheer", "parent": clusters[0], "cia": ("CONFIDENTIAL", "HIGH", "HIGH")},
-            {"name": "Netwerkbeheer", "parent": clusters[0], "cia": ("INTERNAL", "HIGH", "HIGH")},
-            {"name": "Financiële Administratie", "parent": clusters[1], "cia": ("CONFIDENTIAL", "HIGH", "MEDIUM")},
-            {"name": "Vergunningverlening", "parent": clusters[2], "cia": ("INTERNAL", "HIGH", "MEDIUM")},
+            {"name": "Identiteitenbeheer", "parent": clusters[0], "cia": ("CONFIDENTIAL", "CONFIDENTIAL", "CONFIDENTIAL")},
+            {"name": "Netwerkbeheer", "parent": clusters[0], "cia": ("INTERNAL", "CONFIDENTIAL", "CONFIDENTIAL")},
+            {"name": "Financiële Administratie", "parent": clusters[1], "cia": ("CONFIDENTIAL", "CONFIDENTIAL", "INTERNAL")},
+            {"name": "Vergunningverlening", "parent": clusters[2], "cia": ("INTERNAL", "CONFIDENTIAL", "INTERNAL")},
         ]
 
         processes = []
@@ -552,10 +550,9 @@ async def seed_database():
                 name=pa_data["name"],
                 purpose=pa_data["purpose"],
                 legal_basis=pa_data["legal_basis"],
-                data_categories="Naam, Adres, BSN",
-                retention_period_months=60,
-                status=Status.ACTIVE,
-                owner_id=users[2].id,  # FG
+                data_subject_categories="Burgers, Medewerkers",
+                personal_data_categories="Naam, Adres, BSN",
+                retention_period="5 jaar",
             )
             session.add(pa)
         await session.commit()
@@ -568,15 +565,14 @@ async def seed_database():
             tenant_id=tenant.id,
             scope_id=processes[0].id,
             title="Business Continuity Plan - ICT",
-            plan_type="BCP",
+            plan_type=PlanType.BCP,
             content="Uitgebreid plan voor continuïteit van ICT diensten",
             rto_hours=4,
             rpo_hours=1,
             mtpd_hours=24,
             version=1,
-            status=Status.ACTIVE,
+            status=PolicyState.APPROVED,
             owner_id=users[1].id,
-            review_date=datetime.utcnow() + timedelta(days=180),
         )
         session.add(bcp)
         await session.commit()
@@ -587,9 +583,9 @@ async def seed_database():
             tenant_id=tenant.id,
             plan_id=bcp.id,
             title="Tabletop Oefening Q1",
-            test_type="Tabletop",
+            test_type=TestType.TABLETOP,
             scheduled_date=datetime.utcnow() + timedelta(days=30),
-            status=Status.DRAFT,
+            scenario="Test herstel van kritieke ICT-systemen na uitval",
         )
         session.add(test)
         await session.commit()
@@ -671,7 +667,7 @@ async def seed_database():
             tenant_id=tenant.id,
             name="Policy Approval",
             description="Standard policy approval workflow",
-            entity_type="Policy",
+            applicable_entity_types='["Policy"]',
             is_active=True,
         )
         session.add(policy_workflow)
