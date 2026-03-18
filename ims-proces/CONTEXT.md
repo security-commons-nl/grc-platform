@@ -878,6 +878,31 @@ Drie statussen: **concept** → **in review** → **vastgesteld**. Alleen vastge
 
 Het handboek hoeft niet elk jaar opnieuw — alleen bij governance-/scope-/beleidswijziging.
 
+### K6. Bestaande documenten uploaden + gap-analyse (vastgesteld 18 maart 2026)
+
+**Bestandsformaten:** PDF, Word (.docx), Markdown.
+
+**Agent-architectuur: twee aparte agents**
+
+```
+Gebruiker uploadt document
+    ↓
+[Gap-analyse agent]  — platform-breed herbruikbaar
+Leest document, vergelijkt met normvereisten voor deze stap
+Output: gestructureerde lijst gaps
+    ↓
+Gebruiker ziet gaps, klikt "vul aan"
+    ↓
+[Domein-agent voor deze stap]  — stap-specifiek, kent de norm al
+Input: origineel document + gap-rapport + normvereisten
+Output: ontbrekende secties bijgeschreven
+    ↓
+Gebruiker reviewt → accordering
+```
+
+Gap-analyse agent = platform-breed, bij elke stap inzetbaar waar een bestaand document wordt geüpload.
+Domein-agent = stap-specifiek, verantwoordelijk voor het genereren van content.
+
 ### K5. Hergebruik in Fase 2 — cyclus-jaar koppeling (vastgesteld 18 maart 2026)
 
 Elke stap-uitvoering in Fase 2 krijgt een `cyclus_id`. De jaarplanning uit stap 17 triggert de nieuwe cyclus.
