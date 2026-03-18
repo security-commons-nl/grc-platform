@@ -991,6 +991,19 @@ Accordering:
 
 Accordering door een gebruiker zonder de vereiste rol → geblokkeerd (type B), niet slechts waarschuwing.
 
+### K14. "Simpel voor de gebruiker" — drie UI-principes (vastgesteld 18 maart 2026)
+
+Het platform heeft inherente complexiteit (22 stappen, twee modi, RBAC, agents, cyclus_id). Die complexiteit wordt **verborgen**, niet vereenvoudigd. Drie harde principes:
+
+**1. Role-aware UI**
+Elke view filtert op `user.role + user.scope`. Een procesverantwoordelijke ziet nooit de RBAC-configuratie. De TIMS-voorzitter ziet nooit de agent-logs. Geen "alles-scherm" voor welke rol dan ook.
+
+**2. Step-aware UI**
+De actieve stap staat centraal. Toekomstige stappen zijn dimmed of vergrendeld. De gebruiker ziet altijd: waar ben ik, wat moet ik nu doen, wat komt daarna. Niet het hele 22-stappenproces tegelijk.
+
+**3. Complexity ceiling per wizard**
+Als een invoerwizard meer dan 5 vragen heeft → opsplitsen in meerdere schermen of de volgorde herzien. Elke vraag heeft een "waarom vraag je dit?"-tooltip. AI-gegenereerde concepten worden altijd gepresenteerd als concept, nooit als definitief.
+
 ### K13. Twee modi, vier fasen (vastgesteld 18 maart 2026)
 
 **Technisch kent het platform twee modi:**
