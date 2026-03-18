@@ -76,6 +76,44 @@ Regionaal dashboard filtert:
   → toont data van alle gemeenten, maar nooit privé-data
 ```
 
+## RBAC — twee soorten gebruikers
+
+Sommige functies werken regionaal (CISO, FG, privacy officers). Het RBAC-model kent daarom twee lagen:
+
+```
+Lokale gebruiker:    gebruiker → rol → tenant
+Regionale gebruiker: gebruiker → rol → tenant  (eigen gemeente)
+                   + gebruiker → regionale rol → regio
+```
+
+### Lokale vs. regionale rollen
+
+| Gebruiker | Lokale rol | Regionale rol |
+|-----------|-----------|---------------|
+| Luuk | TIMS-voorzitter Gemeente Leiden | — |
+| Bas | CISO Gemeente Leiden (3e lijn) | Regionaal toezichthouder |
+| Robert (FG) | FG Gemeente Leiden (3e lijn) | Regionaal FG |
+| Leiderdorp TIMS | TIMS-voorzitter Leiderdorp | — |
+
+### Wat een regionale rol geeft
+
+- ✅ Compliance-scores van alle gemeenten zien
+- ✅ Gedeeld normenkader en beleid lezen
+- ✅ Cross-gemeente rapportages draaien
+- ✅ Regionaal dashboard volledig
+- ❌ Operationele data van andere gemeenten (verwerkingen, risico's) — nooit
+
+Zelfs de regionale CISO ziet geen Leiderdorpse verwerkingen. Zijn toezichtrol gaat over het *systeem* (werkt het IMS?), niet over de *inhoud* van individuele verwerkingen.
+
+### Technisch: één extra tabel
+
+```
+UserRegionRole:
+  user_id
+  region_id
+  role: regionaal_toezichthouder | regionaal_coordinator | regionaal_viewer
+```
+
 ## Groeipad
 
 ```
