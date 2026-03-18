@@ -878,6 +878,18 @@ Drie statussen: **concept** → **in review** → **vastgesteld**. Alleen vastge
 
 Het handboek hoeft niet elk jaar opnieuw — alleen bij governance-/scope-/beleidswijziging.
 
+### K5. Hergebruik in Fase 2 — cyclus-jaar koppeling (vastgesteld 18 maart 2026)
+
+Elke stap-uitvoering in Fase 2 krijgt een `cyclus_id`. De jaarplanning uit stap 17 triggert de nieuwe cyclus.
+
+```
+Stap 13 — uitvoering 1 (2026):  cyclus_id: 2026, status: afgerond
+Stap 13 — uitvoering 2 (2027):  cyclus_id: 2027, vorige_cyclus: 2026
+Stap 13 — uitvoering 3 (2028):  cyclus_id: 2028, vorige_cyclus: 2027
+```
+
+Voordelen: trends zichtbaar over cycli, vorige cyclus raadpleegbaar, agents gebruiken vorige cyclus als context bij genereren.
+
 ### K4. Stap-ontgrendeling (vastgesteld 18 maart 2026)
 
 Drie zichtbare staten per stap:
