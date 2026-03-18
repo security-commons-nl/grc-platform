@@ -728,15 +728,23 @@ Fase 0 → 1 → 2               →   Fase 2 loopt over in beheermodus
 
 Data stroomt één richting. Geen synchronisatie. Één waarheid. De architectuur en het datamodel worden apart uitgewerkt met als kernprincipe: simpel voor de gebruiker.
 
-### 3. Verplicht (V) vs. stappen overslaan (moet overleggen)
-Tegenstrijdigheid oplossen: CONTEXT.md zegt "stappen zijn niet hard geblokkeerd", maar Fase 0 is 100% V (verplicht door ISO).
+### 3. Verplicht (V) vs. stappen overslaan (vastgesteld 18 maart 2026)
 
-Te beslissen:
-- Kan een V-output overslaan? Zo ja: is dat een bewuste ISO-non-compliance keuze die in het besluitlog komt?
-- Of is V echt blokkerend in het platform (stap weigert door te gaan zonder output)?
-- Verschil tussen "output is V" en "stap is blokkered voor volgende stap"?
+V (ISO-verplicht), B (technisch blokkerend) en W (waarschuwing) zijn drie verschillende begrippen:
 
-**Deliverable:** beslissing vastleggen als ontwerpbeslissing in CONTEXT.md.
+| Begrip | Betekenis |
+|--------|-----------|
+| **V** | De ISO-norm eist dit. Verantwoordelijkheid van de organisatie. |
+| **B** | Het platform laat je technisch niet verder zonder dit (zie dataflow punt 2). |
+| **W** | Het platform laat je verder, maar waarschuwt en legt vast. |
+
+**V ≠ automatisch B.** Het platform dwingt geen ISO-compliance af — dat is de verantwoordelijkheid van de organisatie. Wat het platform doet bij het overslaan van een V-output:
+
+1. Expliciete waarschuwing: *"Dit is een ISO-vereiste (clause X.X). Overslaan betekent bewuste non-compliance."*
+2. Automatische vastlegging in het besluitlog: wie, wanneer, waarom, welke ISO-clause
+3. Oranje vlag op vervolgstappen die van deze output afhangen: *"Gebaseerd op onvolledige input"*
+
+B is gereserveerd voor technische onmogelijkheden — inputs die een agent echt niet kan missen om zijn werk te doen (zie dataflow-tabellen punt 2).
 
 ### 4. Implementatiecoördinator / projectleidersrol (moet overleggen)
 Het proces definieert agents en gremia, maar niet wie het implementatietraject aanstuurt. Feedback noemt Bas als TIMS-voorzitter, maar CONTEXT.md definieert geen projectleidersrol.
