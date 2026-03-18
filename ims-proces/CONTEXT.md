@@ -991,6 +991,26 @@ Accordering:
 
 Accordering door een gebruiker zonder de vereiste rol → geblokkeerd (type B), niet slechts waarschuwing.
 
+### K11. Visibility-layer — centrumregelingmodel (vastgesteld 18 maart 2026)
+
+**Centrumregelingmodel:** de andere gemeenten nemen bedrijfsvoering (IT, IV, security, privacy, BCM) af van de centrumgemeente (Leiden). Leiden bepaalt het normenkader voor de hele regio. Geen afwijkingen door andere gemeenten, geen regionaal akkoord nodig bij updates.
+
+**Gevolgen voor de architectuur:**
+
+- Regionaal publiceren is één richting: Leiden publiceert → anderen consumeren
+- Geen peer-to-peer deling tussen gemeenten onderling
+- `norm_eigenaar` per regio = centrumgemeente, vastgelegd in regio-configuratie (stap 0)
+- Alleen de centrumgemeente kan entiteiten de visibility `regionaal` geven
+
+**Edge case a — visibility-downgrade:**
+Leiden trekt een regionaal gedeeld document terug. Andere gemeenten zien een tombstone: "Dit document is niet meer gedeeld door Gemeente Leiden (ingetrokken op [datum])." Geen stille verwijdering. Data die andere gemeenten al in hun eigen registers hadden overgenomen blijft intact — dat is hún data.
+
+**Edge case b — norm-eigenaarschap:**
+Opgelost door het centrumregelingmodel. Eén normenkader, eigendom van Leiden. Andere gemeenten kunnen geen normenkaders als `regionaal` publiceren. Lokale uitbreidingen zijn niet mogelijk — Leiden neemt nieuwe controls op voor de hele regio.
+
+**Edge case c — audit trail regionale toegang:**
+Raadplegingen van regionaal-zichtbare data worden gelogd (wie, wat, wanneer). Log is alleen zichtbaar voor de platformbeheerder — niet voor de raadplegende gemeente en niet voor de gemeente wiens data is bekeken. Beschikbaar bij formele audit of incident. Reden: regionaal delen moet laagdrempelig blijven; zichtbare audit trails creëren weerstand.
+
 ### K10. Database is altijd leidend — documenten zijn gegenereerde views (vastgesteld 18 maart 2026)
 
 Documenten (handboek, risicoregister, SoA, auditrapportages) zijn **gegenereerde views** van structurele data in de database. Nooit omgekeerd.
