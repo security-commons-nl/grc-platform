@@ -654,7 +654,13 @@ De nadere uitwerking (impactschalen, kansschalen, risicomatrix) is opgenomen in 
 
 Er is een set van beheersmaatregelen gedefinieerd. Maatregelen omvatten documentatie, implementatie en effectiviteitsindicatoren. Alle maatregelen worden, indien mogelijk, centraal beheerd in de GRC-tool.
 
-De uitwerking per domein:
+De domeinspecifieke beleidskaders zijn vastgelegd in:
+
+- ISMS: {{VERWIJZING_IB_BELEID}}
+- PIMS: {{VERWIJZING_PRIVACY_BELEID}}
+- BCMS: {{VERWIJZING_BCM_BELEID}}
+
+De uitwerking van beheersmaatregelen per domein:
 
 - ISMS: {{VERWIJZING_BIO_IMPLEMENTATIEPLAN}}
 - PIMS: {{VERWIJZING_AVG_PROCEDURES}}

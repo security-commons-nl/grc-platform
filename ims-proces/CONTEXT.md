@@ -821,15 +821,28 @@ Wat het platform wél doet rond incidenten:
 
 Dit is een **platform-breed principe**: het platform beheert governance en compliance, niet de dagelijkse operatie.
 
-### 7. IMS-beleid als apart document (moet overleggen)
-Stap 3 produceert "IMS-beleid" als output. In het blueprint-handboek is het beleid verweven in §5 (governance). Maar ISO 5.2 vereist een vastgesteld beleidsdocument.
+### 7. IMS-beleid als apart document (vastgesteld 18 maart 2026)
 
-Te beslissen:
-- Is het IMS-beleid een apart document (dat de agent genereert)?
-- Of is het een sectie van het handboek die formeel wordt vastgesteld?
-- Hoe verhoudt zich dat tot het blueprint-model (placeholder in handboek vs. apart template)?
+Het IMS-beleid (ISO 5.2) is **een sectie van het handboek**, niet een apart document. §5 (governance) + §6.2 (doelstellingen) samen vormen het vastgestelde beleid.
 
-**Deliverable:** beslissing + eventueel apart beleid-template.
+Stap 3b accordeert §5+§6 van het handboek. Er is geen apart beleidsdocument nodig.
+
+Bestaande domeinbeleidsplannen zijn **niveau 2-documenten** die het handboek via verwijzingen insluit:
+
+```
+IMS Handboek §5+§6          — overkoepelend IMS-beleid (ISO 5.2)
+      ↓ verwijst naar
+Strategisch IB-beleid       — niveau 2, ISMS-domein (Leidse Regio, bestaat)
+Strategisch Privacy-beleid  — niveau 2, PIMS-domein (Leidse Regio, bestaat)
+BCM-beleid                  — niveau 2, BCMS-domein
+```
+
+Bestaande domeinbeleidsplannen worden in stap 3 gereviewed en via het handboek gepositioneerd als domeinspoor. Ze worden onderdeel ván het IMS, niet vervangen.
+
+**Blueprint-placeholders toegevoegd:**
+- `{{VERWIJZING_IB_BELEID}}` — verwijzing naar domein IB-beleid
+- `{{VERWIJZING_PRIVACY_BELEID}}` — verwijzing naar domein privacy-beleid
+- `{{VERWIJZING_BCM_BELEID}}` — verwijzing naar domein BCM-beleid
 
 ---
 
