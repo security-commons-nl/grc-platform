@@ -594,17 +594,64 @@ Alle procesontwerp-vragen zijn vastgesteld (12 maart 2026). Volledige ISO-toetsi
 
 *Het procesontwerp (WAT en WAAROM) staat. Onderstaande punten moeten worden uitgewerkt voordat de bouwfase kan starten. Elk punt vereist sparring en expliciete keuzes.*
 
-### 1. Stap → handboek mapping (moet verbeteren)
-Expliciete mapping maken: welke processtap vult welke sectie(s) van het blueprint-handboek. Zonder dit weet een agent niet waar zijn output terechtkomt.
+### 1. Stap → handboek mapping (vastgesteld 18 maart 2026)
 
-Voorbeelden die uitgewerkt moeten worden:
-- Stap 2a → §4.1 (context), §4.2 (stakeholders)
-- Stap 3a/3b → §5 (governance), IMS-beleid
-- Stap 5 → bijlage 3 (risicomethodiek)
-- Stap 6 → §8.4 (risicobehandeling), VvT
-- etc. — voor alle 22 stappen
+#### Het handboek is een bestuurlijk kader, geen operationeel werkdocument
 
-**Deliverable:** volledige mappingtabel in CONTEXT.md.
+Het IMS Handboek staat op **niveau 1** van de documentenpyramide:
+
+```
+Niveau 1: IMS Handboek          — bestuurlijk kader, governance, scope, PDCA-structuur
+Niveau 2: Domeinplannen         — BIO-implementatieplan, AVG-procedures, BCP's (eigenaar per domein)
+Niveau 3: Procedures/werkinstr. — concrete werkwijzen, checklists, templates
+Niveau 4: Registraties/bewijs   — risicoregister, SoA, auditlogboeken, GRC-tool
+```
+
+Het handboek **verwijst** naar niveau 2-documenten via placeholders (`{{VERWIJZING_BIO_IMPLEMENTATIEPLAN}}` etc.) — het absorbeert ze niet. Domeinsporen (BIO-plan, AVG-procedures, BCP's) zijn subdocumenten die als apart document onder het IMS hangen, met een domein-eigenaar.
+
+De agents vullen niveau 1 in. Niveau 2 wordt door domein-agents ondersteund als aparte documenten. Niveau 3 en 4 landen in de GRC-tool.
+
+#### §4.3 heeft twee niveaus: overkoepelende scope + domein-specifieke scopes
+
+§4.3 wordt niet ingevuld door één placeholder, maar per scope-niveau:
+
+| Placeholder | Inhoud | Gevuld door stap | Scope-logica |
+|-------------|--------|------------------|--------------|
+| `{{IMS_SCOPE_ORGANISATIE}}` | Welke entiteiten (Leiden, regio, BVO?) | 2b | Bestuurlijk besluit |
+| `{{ISMS_SCOPE}}` | Alle gevoelige informatie(systemen) | 2b + ISMS-track | Nader bepaald per domein |
+| `{{PIMS_SCOPE}}` | Alle verwerkingen persoonsgegevens (AVG dwingt — weinig keuze) | 2b + PIMS-track | Nader bepaald per domein |
+| `{{BCMS_SCOPE}}` | Kritische processen (volgt uit BIA) | 9 (BCMS-track) | Nader bepaald per domein |
+
+De overkoepelende IMS-scope (welke organisatieonderdelen) wordt in stap 2b vastgesteld door SIMS. De domein-specifieke scopes worden door de respectievelijke discipline-eigenaren uitgewerkt en zijn onderdeel van de domeinplannen (niveau 2).
+
+#### Volledige stap → handboek mappingtabel
+
+| Stap | Output | Handboek-sectie | Placeholder |
+|------|--------|-----------------|-------------|
+| 2a | Organisatiecontextdocument | §4.1 | `{{CONTEXT_BESCHRIJVING}}`, `{{AMBITIES_BESCHRIJVING}}` |
+| 2a | Organisatiecontextdocument | §4.1.6 | `{{VISIE}}`, `{{MISSIE}}`, `{{STRATEGIE}}`, `{{SWOT_ANALYSE}}` |
+| 2a | Stakeholderregister | §4.2 + Bijlage 1 | `{{BELANGHEBBENDEN_ANALYSE}}` |
+| 2b | Scopebesluit | §4.3 | `{{IMS_SCOPE_ORGANISATIE}}`, `{{ISMS_SCOPE}}`, `{{PIMS_SCOPE}}` |
+| 3a/3b | Governance-document | §5.3.1 | `{{SIMS_SAMENSTELLING}}` |
+| 3a/3b | Governance-document | §5.3.2 | `{{TIMS_SAMENSTELLING}}` |
+| 3a/3b | Governance-document | §5.3.3 | `{{DISCIPLINE_EIGENAREN_TOEWIJZING}}` |
+| 3a/3b | Communicatiematrix | §5.5 | `{{RAPPORTAGE_TABEL}}` |
+| 3b | IMS-beleid | §6.2 | (apart document op niveau 2 — handboek verwijst ernaar) |
+| 5 | Eerste risicobeeld | §8.2 | `{{STRATEGISCHE_RISICOANALYSE_BESCHRIJVING}}`, `{{OPERATIONELE_RISICOANALYSE_BESCHRIJVING}}` |
+| 5 | Risicobeoordelingsmethodiek | Bijlage 3 | `{{IMPACTSCHALEN_TABEL}}`, `{{KANSSCHALEN_TABEL}}`, `{{RISICOMATRIX}}` |
+| 6 | Normenkader | §2 | (vaste tekst, aangevuld met actieve normen per organisatie) |
+| 9 | BIA (BCMS-track) | §4.3 | `{{BCMS_SCOPE}}` (pas beschikbaar na Fase 1) |
+
+**Stappen die niet in het handboek landen — aparte documenten (niveau 2+):**
+
+| Stap | Output | Waar |
+|------|--------|------|
+| 1 | Besluitmemo + besluitlog | Besluitlog (apart register) |
+| 2a | PII-rol bepaling | Niveau 2 — PIMS-track document |
+| 4 | Nulmeting per domein | Gap-analyse document (apart) |
+| 5 | Registerinventarisatie | Domeinregisters (apart) |
+| 6 | Minimale werkset kerncontrols | VvT / normenkader-document (niveau 2) |
+| 7–12 | Fase 1-outputs | GRC-tool (risicoregister, SoA, etc.) |
 
 ### 2. Dataflow tussen stappen (moet vastleggen)
 Expliciet documenteren welke data-objecten elke stap produceert en welke vervolgstappen die consumeren. Nu is dit impliciet — agents kunnen niet gebouwd worden zonder deze kennis.
