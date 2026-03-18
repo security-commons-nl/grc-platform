@@ -878,6 +878,29 @@ Drie statussen: **concept** → **in review** → **vastgesteld**. Alleen vastge
 
 Het handboek hoeft niet elk jaar opnieuw — alleen bij governance-/scope-/beleidswijziging.
 
+### K8. Agent-kwaliteit, feedback en AI-model (vastgesteld 18 maart 2026)
+
+**Feedback op agent-output:** simpele 👍/👎 + optioneel commentaar per gegenereerd document. Gelogd, handmatig te analyseren voor prompt-verbetering. Geen automatisch leren in versie 1 — te vroeg, te complex.
+
+**AI-model:**
+- **Standaard:** Mistral via Scaleway (FR) — EU-gehost, geen data naar VS
+- **Fallback:** Ollama (lokaal) — mogelijkheid ingebouwd, nog niet actief in v1
+- **Configureerbaar per tenant** — elke gemeente kiest zelf
+- **Model-agnostisch** via AI-gateway laag — agents werken met elke provider
+
+**Platformconfiguratie-wizard (stap 0 — vóór de 22 IMS-stappen):**
+
+Eenmalige configuratie bij eerste gebruik, toegankelijk voor beheerder/implementatiecoördinator:
+
+```
+1. Organisatietype: enkele gemeente | centrumregeling (wie is host?)
+2. AI-model: Mistral (EU-cloud) | Ollama (lokaal) + API-sleutel/endpoint
+3. Integraties: TopDesk | ServiceNow | geen
+4. Exportvoorkeur: PDF | Word | beide
+```
+
+Dit is platformbeheer, geen IMS-processtap. Dezelfde wizard-logica als de 22 stappen, maar los daarvan.
+
 ### K6. Bestaande documenten uploaden + gap-analyse (vastgesteld 18 maart 2026)
 
 **Bestandsformaten:** PDF, Word (.docx), Markdown.
