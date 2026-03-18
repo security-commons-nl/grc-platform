@@ -135,6 +135,7 @@ De gemeente heeft te maken met een uitgebreid en dynamisch wettelijk kader. De v
 - De Wet open overheid (Woo)
 - De Archiefwet 1995
 - De Wet beveiliging netwerk- en informatiesystemen (Wbni) — voor zover van toepassing
+- De Wet weerbaarheid kritieke entiteiten (Wwke) — voor zover de organisatie wordt aangewezen als kritieke entiteit
 - Gemeentelijke regelgeving, sectorale normen (zoals BIO) en relevante Europese regelgeving
 
 Wijzigingen in wet- en regelgeving, toezichtkaders en jurisprudentie vormen een continue bron van compliance- en reputatierisico's. Het IMS borgt dat relevante ontwikkelingen structureel worden gevolgd en vertaald naar beleid en maatregelen.
