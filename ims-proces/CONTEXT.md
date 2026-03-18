@@ -991,6 +991,25 @@ Accordering:
 
 Accordering door een gebruiker zonder de vereiste rol → geblokkeerd (type B), niet slechts waarschuwing.
 
+### K10. Database is altijd leidend — documenten zijn gegenereerde views (vastgesteld 18 maart 2026)
+
+Documenten (handboek, risicoregister, SoA, auditrapportages) zijn **gegenereerde views** van structurele data in de database. Nooit omgekeerd.
+
+```
+❌ Niet zo:
+   Handboek opgeslagen als bestand op schijf (PDF/Word)
+   Scope wijzigt in GRC-tool → bestand is verouderd, niemand weet het
+
+✅ Zo:
+   Handboek = gegenereerde weergave van DB-data
+   Scope wijzigt → volgende export bevat automatisch de actuele scope
+   Export (PDF/Word) = momentopname met tijdstempel — bewijs, niet bron
+```
+
+**Vastgestelde documenten:** een vastgesteld handboek is een immutable export op dat moment — het is het formele bewijs van wat op die datum gold. De levende data in de database blijft actueel en ontwikkelt zich. De twee zijn niet in conflict: de export is archief, de database is waarheid.
+
+**Gevolg voor de bouw:** geen bestandsopslag voor documentinhoud. Alle inhoud leeft in de database. Exportfunctie genereert altijd on-demand vanuit actuele data.
+
 ### K9. Normversioning (vastgesteld 18 maart 2026)
 
 **Aanleiding:** BIO 2.0 → BIO 3.0 en ISO-revisies zullen komen. Zonder versioning raken RequirementMappings en SoA-scores los van de norm waarop ze zijn gebaseerd.
