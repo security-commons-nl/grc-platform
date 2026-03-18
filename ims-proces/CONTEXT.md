@@ -653,15 +653,80 @@ De overkoepelende IMS-scope (welke organisatieonderdelen) wordt in stap 2b vastg
 | 6 | Minimale werkset kerncontrols | VvT / normenkader-document (niveau 2) |
 | 7–12 | Fase 1-outputs | GRC-tool (risicoregister, SoA, etc.) |
 
-### 2. Dataflow tussen stappen (moet vastleggen)
-Expliciet documenteren welke data-objecten elke stap produceert en welke vervolgstappen die consumeren. Nu is dit impliciet — agents kunnen niet gebouwd worden zonder deze kennis.
+### 2. Dataflow tussen stappen (vastgesteld 18 maart 2026)
 
-Uit te werken:
-- Per stap: exacte input-objecten en output-objecten
-- Het **volwassenheidsprofiel** als concreet data-object definiëren: wat bevat het, waar leeft het, hoe bouwt het zich op over stappen 4, 5, 7, 8, 9?
-- Afhankelijkheidsgrafiek: welke stappen zijn echt blokkerend voor welke vervolgstappen (vs. "nice to have" input)
+#### Blokkade-principe (vastgesteld 18 maart 2026)
 
-**Deliverable:** dataflow-tabel of -diagram per fase in CONTEXT.md.
+Twee soorten afhankelijkheden:
+- **Blokkerend (B):** stap kan technisch niet starten zonder deze input
+- **Waarschuwing (W):** stap mag starten, platform waarschuwt dat output minder nauwkeurig kan zijn
+
+Stap 7 (onboarding lijnmanagement) is **W** voor stap 9: lijnmanagement mag instromen maar platform waarschuwt als awareness nog niet is afgerond.
+Stap 8 (geïntegreerd register) is **W** voor stap 9: risicoanalyse mag starten zonder volledig register, iteratief aanvullen is toegestaan (optie C).
+
+#### Volwassenheidsprofiel (vastgesteld 18 maart 2026)
+
+Het volwassenheidsprofiel is een **database-tabel in het platform**. Het groeit tijdens de inrichtingsmodus (stappen 4/5/7/8/9) en blijft daarna beschikbaar als organisatieprofiel in de beheermodus.
+
+```
+VolwassenheidsProfiel {
+  domein: ISMS | PIMS | BCMS
+  bestaande_registers: aanwezig | gedeeltelijk | afwezig
+  bestaande_analyses: aanwezig | gedeeltelijk | afwezig
+  capaciteit_coordinatie: hoog | gemiddeld | laag
+  lijnmanagement_structuur: formeel | informeel
+  → keuze: optie_B | optie_C
+}
+```
+
+#### Dataflow per stap — Fase 0
+
+| Stap | Input | Output | Blokkeert |
+|------|-------|--------|-----------|
+| 1 | — | Besluitmemo, Besluitlog #001 | 2a (B) |
+| 2a | Besluitlog #001 | Organisatiecontextdocument, Stakeholderregister, PII-rol | 2b (B), 3a (B) |
+| 2b | Organisatiecontextdocument | Scopebesluit | 3a (B), 4 (B) |
+| 3a | Contextdocument + Scopebesluit | Concept governance, Concept IMS-beleid, Communicatiematrix | 3b (B) |
+| 3b | Concepten uit 3a | Governance-besluit, IMS-beleid (definitief) | 4 (B), 7 (B) |
+| 4 | Scopebesluit + Governance-besluit | Nulmeting per domein, **Volwassenheidsprofiel v1** | 5 (B), 6 (B) |
+| 5 | Nulmeting + Volwassenheidsprofiel v1 | Registerinventarisatie, Eerste risicobeeld, Risicobeoordelingsmethodiek, **Volwassenheidsprofiel v2** | 6 (B), 8 (W), 9 (W) |
+| 6 | Nulmeting + Eerste risicobeeld | Normenkader, Kerncontrols | 7 (B), 9 (B), 10 (B) |
+
+#### Dataflow per stap — Fase 1
+
+| Stap | Input | Output | Blokkeert |
+|------|-------|--------|-----------|
+| 7 | Governance-besluit + Normenkader | Awareness-materiaal, Competentiebeoordeling, Documentbeheerprocedure, **Volwassenheidsprofiel v3** | 9 (W) |
+| 8 | Registerinventarisatie (stap 5) + Scopebesluit | Geïntegreerd register, PII-doorgifte-inventarisatie, PbD-procedure, **Volwassenheidsprofiel v4** | 9 (W) |
+| 9 | Geïntegreerd register (W) + Risicobeoordelingsmethodiek (B) + Normenkader (B) + Volwassenheidsprofiel v4 | Risicoregister per afdeling/proces, BIA | 10 (B) |
+| 10 | Risicoregister + BIA + Normenkader/controls | Risicobehandelplan, Controls met eigenaren, Implementatieplan, BCPs, PII-doorgifte-waarborgen | 11 (B), 16 (B) |
+| 11 | Risicoregister + Controls + Risicobehandelplan | SoA | 13 (B), 16 (B) |
+| 12 | Governance (stap 3) + Doelstellingen | Rapportagelijnen, KPI's, Dashboards | 13 (W), 14 (W) |
+
+#### Dataflow per stap — Fase 2 (cyclisch)
+
+| Stap | Input | Output | Triggert |
+|------|-------|--------|---------|
+| 13 | SoA + Controls + Rapportagelijnen | Auditprogramma, Auditrapportages, BC-oefenrapportage | 14, 15 |
+| 14 | Auditresultaten + Risicoregister + KPI's | Review-rapportage, Verbeterbeslissingen | 17 |
+| 15 | Auditresultaten + Incidenten | Non-conformiteitenregister, Correctieve acties | 14, 16 |
+| 16 | Controls + SoA + Correctieve acties | Bewijs per control, Privacy-procedures | 14 |
+| 17 | Review-rapportage + Verbeterbeslissingen | Jaarplanning, Risicoherbeoordeling, Communicatieprocedures | → 13 (nieuwe cyclus) |
+
+#### Platform-architectuur (vastgesteld 18 maart 2026)
+
+Het IMS-platform is één geïntegreerde applicatie met twee modi:
+
+```
+INRICHTINGSMODUS (IMS-proces)     BEHEERMODUS (IMS-tooling)
+22 stappen, 18 agents         →   Risico's, controls, PDCA
+Document wizard                    Assessments, evidence
+Handboek generatie                 Rapportages, dashboards
+Volwassenheidsprofiel groeit   →   Blijft als organisatieprofiel
+Fase 0 → 1 → 2               →   Fase 2 loopt over in beheermodus
+```
+
+Data stroomt één richting. Geen synchronisatie. Één waarheid. De architectuur en het datamodel worden apart uitgewerkt met als kernprincipe: simpel voor de gebruiker.
 
 ### 3. Verplicht (V) vs. stappen overslaan (moet overleggen)
 Tegenstrijdigheid oplossen: CONTEXT.md zegt "stappen zijn niet hard geblokkeerd", maar Fase 0 is 100% V (verplicht door ISO).
