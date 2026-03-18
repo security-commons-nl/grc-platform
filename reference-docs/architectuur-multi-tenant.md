@@ -90,7 +90,7 @@ Regionale gebruiker: gebruiker → rol → tenant  (eigen gemeente)
 
 | Gebruiker | Lokale rol | Regionale rol |
 |-----------|-----------|---------------|
-| Luuk | TIMS-voorzitter Gemeente Leiden | — |
+| Luuk de Leede | TIMS-voorzitter Gemeente Leiden | — |
 | Bas | CISO Gemeente Leiden (3e lijn) | Regionaal toezichthouder |
 | Robert (FG) | FG Gemeente Leiden (3e lijn) | Regionaal FG |
 | Leiderdorp TIMS | TIMS-voorzitter Leiderdorp | — |

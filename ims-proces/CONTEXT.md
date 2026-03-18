@@ -752,7 +752,7 @@ Twee afzonderlijke rollen, beide in het generieke model:
 
 | Rol | Karakter | Eindigt | Leiden-invulling |
 |-----|----------|---------|-----------------|
-| **TIMS-voorzitter** | Permanent, governance | Nooit | Luuk |
+| **TIMS-voorzitter** | Permanent, governance | Nooit | Luuk de Leede |
 | **Implementatiecoördinator / Projectleider** | Tijdelijk, operationele regie over de 22 stappen | Bij go/no-go Fase 2 → overdracht aan discipline-eigenaren | Bas Stevens (projectleider-hoed, niet CISO-hoed) |
 
 De CISO (Bas) heeft een 3e-lijn toezichtrol en staat buiten SIMS en TIMS. Als projectleider heeft hij een aparte, tijdelijke operationele rol. Het platform en de documentatie maken dit onderscheid expliciet.
