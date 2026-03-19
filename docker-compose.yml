@@ -1,0 +1,32 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 100
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file: .env
+    depends_on:
+      - db
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 100
+
+volumes:
+  postgres_data:
