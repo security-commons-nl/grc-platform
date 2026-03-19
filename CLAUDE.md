@@ -14,13 +14,16 @@ IMS (Integrated Management System) is a Governance, Risk, and Compliance (GRC) p
 docker-compose up -d
 
 # Access points:
-# - API Docs (Swagger): http://localhost:8000/docs
-# - PGAdmin: http://localhost:5050 (admin@ims.local / admin)
+# - API Docs (Swagger): http://localhost:8000/docs (development only)
+# - Health check: http://localhost:8000/api/v1/health
+
+# Run database migrations
+docker-compose exec api alembic upgrade head
 ```
 
 ### Local Backend Development
 ```bash
-cd IMS/backend
+cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
@@ -34,29 +37,36 @@ git add <files> && git commit -m "..." && git push origin main
 ```
 
 - `origin` = GitHub — **altijd automatisch pushen na wijzigingen**
-- Local dev: `cd frontend && python -m reflex run` on http://localhost:3000
 
 ## Architecture
 
 ### 4-Layer Strict Separation
 
-1. **Layer 1 (Model)**: SQLModel definitions in `backend/app/models/core_models.py` - single source of truth
-2. **Layer 2 (API)**: FastAPI in `backend/app/api/` - gatekeeper enforcing RBAC and validation
-3. **Layer 3 (Tools)**: Frontend (planned React/Vue) - "dumb" glass pane with no business logic
-4. **Layer 4 (AI)**: Local-first Ollama/Mistral - no cloud data leakage by default
+1. **Layer 1 (Model)**: SQLAlchemy 2.0 models in `backend/app/models/core_models.py` — single source of truth
+2. **Layer 2 (API)**: FastAPI in `backend/app/api/` — gatekeeper enforcing RBAC and validation
+3. **Layer 3 (Tools)**: Frontend (Next.js — planned) — geen business logic
+4. **Layer 4 (AI)**: Mistral via Scaleway (EU) of lokaal Ollama
 
 ### Key Backend Structure
 ```
-IMS/backend/app/
-├── main.py           # FastAPI app initialization with lifespan
-├── core/
-│   ├── config.py     # Settings (DB, AI config via pydantic-settings)
-│   └── db.py         # Database session management
-├── api/v1/
-│   ├── api.py        # Router configuration
-│   └── endpoints/    # CRUD endpoints
-└── models/
-    └── core_models.py  # All SQLModel entities
+backend/
+├── Dockerfile
+├── requirements.txt
+├── alembic.ini
+├── alembic/
+│   ├── env.py
+│   └── versions/001_initial_schema.py   ← 32 tabellen, 67 indexen
+└── app/
+    ├── main.py           # FastAPI app + CORS + lifespan
+    ├── core/
+    │   ├── config.py     # pydantic-settings (DB, AI, JWT via .env)
+    │   └── db.py         # async engine + AsyncSessionLocal + get_db
+    ├── api/v1/
+    │   ├── api.py        # Router
+    │   └── endpoints/
+    │       └── health.py # GET /api/v1/health
+    └── models/
+        └── core_models.py  # 32 SQLAlchemy 2.0 models, 6 domeinen
 ```
 
 ### Data Model Domains (in core_models.py)

@@ -626,6 +626,12 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("likelihood", sa.Integer(), nullable=False),
         sa.Column("impact", sa.Integer(), nullable=False),
+        sa.Column(
+            "risk_score",
+            sa.Integer(),
+            sa.Computed("likelihood * impact", persisted=True),
+            nullable=False,
+        ),
         sa.Column("financial_impact_eur", sa.Numeric(15, 2), nullable=True),
         sa.Column("risk_level", sa.String(10), nullable=False),
         sa.Column("status", sa.String(20), nullable=False),
@@ -1135,6 +1141,7 @@ def upgrade() -> None:
     op.create_index("ix_ims_risks_tenant_id", "ims_risks", ["tenant_id"])
     op.create_index("ix_ims_risks_scope_id", "ims_risks", ["scope_id"])
     op.create_index("ix_ims_risks_status", "ims_risks", ["status"])
+    op.create_index("ix_ims_risks_risk_score", "ims_risks", ["risk_score"])
     op.create_index("ix_ims_risks_owner_user_id", "ims_risks", ["owner_user_id"])
     op.create_index("ix_ims_controls_tenant_id", "ims_controls", ["tenant_id"])
     op.create_index(
@@ -1308,6 +1315,7 @@ def downgrade() -> None:
     op.drop_index("ix_ims_controls_requirement_id", table_name="ims_controls")
     op.drop_index("ix_ims_controls_tenant_id", table_name="ims_controls")
     op.drop_index("ix_ims_risks_owner_user_id", table_name="ims_risks")
+    op.drop_index("ix_ims_risks_risk_score", table_name="ims_risks")
     op.drop_index("ix_ims_risks_status", table_name="ims_risks")
     op.drop_index("ix_ims_risks_scope_id", table_name="ims_risks")
     op.drop_index("ix_ims_risks_tenant_id", table_name="ims_risks")

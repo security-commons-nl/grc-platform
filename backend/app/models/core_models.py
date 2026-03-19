@@ -7,6 +7,7 @@ from typing import Any, Optional
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
+    Computed,
     Date,
     DateTime,
     ForeignKey,
@@ -148,6 +149,13 @@ class InputDocumentStatusEnum(str, enum.Enum):
 # ---------------------------------------------------------------------------
 
 
+class StandardDomainEnum(str, enum.Enum):
+    ISMS = "ISMS"
+    PIMS = "PIMS"
+    BCMS = "BCMS"
+    all = "all"
+
+
 class StandardStatusEnum(str, enum.Enum):
     actief = "actief"
     vervallen = "vervallen"
@@ -242,9 +250,6 @@ class EvidenceTypeEnum(str, enum.Enum):
 
 
 class IncidentTypeEnum(str, enum.Enum):
-    informatiebeveiliging = "informatiebeveiliging"
-    privacy = "privacy"
-    continuiteit = "continuiteit"
     informatiebeveiliging = "informatiebeveiliging"
     privacy = "privacy"
     continuiteit = "continuiteit"
@@ -745,7 +750,7 @@ class IMSStandard(Base):
     superseded_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_standards.id"), nullable=True
     )
-    domain: Mapped[DomainEnum] = mapped_column(String(10), nullable=False)
+    domain: Mapped[StandardDomainEnum] = mapped_column(String(10), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -930,6 +935,9 @@ class IMSRisk(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     likelihood: Mapped[int] = mapped_column(Integer, nullable=False)
     impact: Mapped[int] = mapped_column(Integer, nullable=False)
+    risk_score: Mapped[int] = mapped_column(
+        Integer, Computed("likelihood * impact", persisted=True), nullable=False
+    )
     financial_impact_eur: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(15, 2), nullable=True
     )
