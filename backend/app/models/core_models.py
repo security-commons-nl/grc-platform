@@ -34,22 +34,28 @@ class Base(DeclarativeBase):
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Enums — Domain 1: Platform-breed
+# ---------------------------------------------------------------------------
+
+
 class TenantType(str, enum.Enum):
+    single = "single"
     centrum = "centrum"
-    deelgemeente = "deelgemeente"
-    standalone = "standalone"
 
 
 class TenantRoleEnum(str, enum.Enum):
     admin = "admin"
-    process_owner = "process_owner"
-    editor = "editor"
+    sims_lid = "sims_lid"
+    tims_lid = "tims_lid"
+    discipline_eigenaar = "discipline_eigenaar"
+    lijnmanager = "lijnmanager"
     viewer = "viewer"
 
 
 class RegionRoleEnum(str, enum.Enum):
-    region_admin = "region_admin"
-    region_viewer = "region_viewer"
+    regionaal_toezichthouder = "regionaal_toezichthouder"
+    regionaal_viewer = "regionaal_viewer"
 
 
 class DomainEnum(str, enum.Enum):
@@ -59,9 +65,8 @@ class DomainEnum(str, enum.Enum):
 
 
 class AIFeedbackEnum(str, enum.Enum):
-    positive = "positive"
-    negative = "negative"
-    neutral = "neutral"
+    positief = "positief"
+    negatief = "negatief"
 
 
 # ---------------------------------------------------------------------------
@@ -70,72 +75,72 @@ class AIFeedbackEnum(str, enum.Enum):
 
 
 class GremiumEnum(str, enum.Enum):
-    directie = "directie"
-    mt = "mt"
-    ciso = "ciso"
-    po = "po"
-    fg = "fg"
-    bcm_coordinator = "bcm_coordinator"
-    werkgroep = "werkgroep"
-    audit = "audit"
+    sims = "sims"
+    tims = "tims"
+    lijnmanagement = "lijnmanagement"
+    discipline_eigenaar = "discipline_eigenaar"
 
 
 class DependencyTypeEnum(str, enum.Enum):
     B = "B"  # Blokkerend
-    W = "W"  # Wenselijk
+    W = "W"  # Waarschuwing
 
 
 class StepStatusEnum(str, enum.Enum):
-    not_started = "not_started"
-    in_progress = "in_progress"
-    completed = "completed"
-    skipped = "skipped"
+    niet_gestart = "niet_gestart"
+    in_uitvoering = "in_uitvoering"
+    concept = "concept"
+    in_review = "in_review"
+    vastgesteld = "vastgesteld"
 
 
 class DecisionTypeEnum(str, enum.Enum):
-    scope = "scope"
-    normenkader = "normenkader"
-    risicobereidheid = "risicobereidheid"
-    behandelkeuze = "behandelkeuze"
-    uitzondering = "uitzondering"
-    escalatie = "escalatie"
-    overig = "overig"
+    normaal = "normaal"
+    restrisico_acceptatie = "restrisico_acceptatie"
+    beleidsafwijking = "beleidsafwijking"
+    fase_overgang = "fase_overgang"
+    non_compliance = "non_compliance"
+    in_control_declaration = "in_control_declaration"
+    exception = "exception"
 
 
 class DocumentTypeEnum(str, enum.Enum):
-    beleid = "beleid"
-    procedure = "procedure"
-    instructie = "instructie"
-    rapport = "rapport"
-    plan = "plan"
-    register = "register"
+    handboek = "handboek"
+    soa = "soa"
+    risicoregister = "risicoregister"
+    auditrapportage = "auditrapportage"
+    managementreview = "managementreview"
+    bcp = "bcp"
+    dpia = "dpia"
+    bia = "bia"
+    normenkader = "normenkader"
+    besluitlog_export = "besluitlog_export"
     overig = "overig"
 
 
 class VisibilityEnum(str, enum.Enum):
-    intern = "intern"
-    beperkt = "beperkt"
-    openbaar = "openbaar"
+    prive = "privé"
+    regionaal = "regionaal"
 
 
 class DocumentVersionStatusEnum(str, enum.Enum):
     concept = "concept"
-    review = "review"
+    in_review = "in_review"
     vastgesteld = "vastgesteld"
-    ingetrokken = "ingetrokken"
 
 
 class InputDocumentSourceTypeEnum(str, enum.Enum):
-    upload = "upload"
-    url = "url"
-    api = "api"
+    pdf = "pdf"
+    docx = "docx"
+    markdown = "markdown"
 
 
 class InputDocumentStatusEnum(str, enum.Enum):
     pending = "pending"
-    processing = "processing"
-    processed = "processed"
-    failed = "failed"
+    analysing = "analysing"
+    pending_review = "pending_review"
+    incorporated = "incorporated"
+    rejected = "rejected"
 
 
 # ---------------------------------------------------------------------------
@@ -144,10 +149,8 @@ class InputDocumentStatusEnum(str, enum.Enum):
 
 
 class StandardStatusEnum(str, enum.Enum):
-    draft = "draft"
-    active = "active"
-    superseded = "superseded"
-    withdrawn = "withdrawn"
+    actief = "actief"
+    vervallen = "vervallen"
 
 
 class MappingCreatedByEnum(str, enum.Enum):
@@ -173,98 +176,91 @@ class IngestionStatusEnum(str, enum.Enum):
 
 
 class ScopeTypeEnum(str, enum.Enum):
-    organization = "organization"
+    organisatie = "organisatie"
     cluster = "cluster"
-    process = "process"
+    proces = "proces"
     asset = "asset"
-    supplier = "supplier"
+    leverancier = "leverancier"
 
 
 class RiskStatusEnum(str, enum.Enum):
-    identified = "identified"
-    assessed = "assessed"
-    treated = "treated"
-    accepted = "accepted"
-    closed = "closed"
+    open = "open"
+    in_behandeling = "in_behandeling"
+    geaccepteerd = "geaccepteerd"
+    gesloten = "gesloten"
 
 
 class ImplementationStatusEnum(str, enum.Enum):
-    not_started = "not_started"
-    planned = "planned"
-    in_progress = "in_progress"
-    implemented = "implemented"
-    not_applicable = "not_applicable"
+    niet_gestart = "niet_gestart"
+    in_uitvoering = "in_uitvoering"
+    geimplementeerd = "geïmplementeerd"
+    geverifieerd = "geverifieerd"
 
 
 class AssessmentTypeEnum(str, enum.Enum):
+    audit = "audit"
     dpia = "dpia"
     pentest = "pentest"
-    audit = "audit"
     self_assessment = "self_assessment"
+    bc_oefening = "bc_oefening"
     gap_analysis = "gap_analysis"
+    management_review = "management_review"
 
 
 class AssessmentStatusEnum(str, enum.Enum):
-    planned = "planned"
-    active = "active"
-    completed = "completed"
-    cancelled = "cancelled"
+    gepland = "gepland"
+    actief = "actief"
+    afgerond = "afgerond"
+    geannuleerd = "geannuleerd"
 
 
 class FindingSeverityEnum(str, enum.Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
-    informational = "informational"
+    kritiek = "kritiek"
+    hoog = "hoog"
+    gemiddeld = "gemiddeld"
+    laag = "laag"
+    info = "info"
 
 
 class FindingStatusEnum(str, enum.Enum):
     open = "open"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    accepted = "accepted"
-    false_positive = "false_positive"
+    in_behandeling = "in_behandeling"
+    gesloten = "gesloten"
 
 
 class ActionStatusEnum(str, enum.Enum):
     open = "open"
-    in_progress = "in_progress"
-    completed = "completed"
-    cancelled = "cancelled"
+    in_uitvoering = "in_uitvoering"
+    afgerond = "afgerond"
 
 
 class EvidenceTypeEnum(str, enum.Enum):
     document = "document"
     screenshot = "screenshot"
     log = "log"
-    certificate = "certificate"
-    report = "report"
-    other = "other"
+    attestation = "attestation"
 
 
 class IncidentTypeEnum(str, enum.Enum):
-    data_breach = "data_breach"
-    availability = "availability"
-    integrity = "integrity"
-    confidentiality = "confidentiality"
-    physical = "physical"
-    other = "other"
+    informatiebeveiliging = "informatiebeveiliging"
+    privacy = "privacy"
+    continuiteit = "continuiteit"
+    informatiebeveiliging = "informatiebeveiliging"
+    privacy = "privacy"
+    continuiteit = "continuiteit"
 
 
 class IncidentSeverityEnum(str, enum.Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
+    kritiek = "kritiek"
+    hoog = "hoog"
+    gemiddeld = "gemiddeld"
+    laag = "laag"
 
 
 class IncidentStatusEnum(str, enum.Enum):
-    reported = "reported"
-    investigating = "investigating"
-    contained = "contained"
-    resolved = "resolved"
-    closed = "closed"
+    open = "open"
+    in_behandeling = "in_behandeling"
+    afgerond = "afgerond"
 
 
 # ---------------------------------------------------------------------------
@@ -312,12 +308,11 @@ class KnowledgeLayerEnum(str, enum.Enum):
 
 
 class KnowledgeSourceTypeEnum(str, enum.Enum):
-    standard = "standard"
-    document = "document"
-    decision = "decision"
-    policy = "policy"
-    finding = "finding"
-    other = "other"
+    standaard = "standaard"
+    blueprint = "blueprint"
+    beleid = "beleid"
+    besluit = "besluit"
+    handboek_versie = "handboek_versie"
 
 
 # ---------------------------------------------------------------------------
