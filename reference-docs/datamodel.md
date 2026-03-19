@@ -197,6 +197,39 @@ Elke versie van een document. De database is altijd leidend — dit is de bron, 
 
 **Ontwerpkeuze:** `content_json` bevat de volledige documentstructuur als JSON (secties, placeholders ingevuld). Exportfunctie rendert dit on-demand naar PDF/Word. Nooit bestandsopslag voor inhoud.
 
+### `ims_step_input_documents`
+Staging voor de secundaire invoerroute (K6): gebruiker uploadt bestaand document als input voor een stap.
+
+| Veld | Type | Toelichting |
+|------|------|-------------|
+| id | UUID PK | |
+| tenant_id | UUID FK → tenants | |
+| step_execution_id | UUID FK → ims_step_executions | Welke stap wordt gevoed |
+| source_type | ENUM | `pdf` \| `docx` \| `markdown` |
+| storage_path | TEXT | Pad in object storage (MinIO/Azure Blob) |
+| status | ENUM | `pending` \| `analysing` \| `pending_review` \| `incorporated` \| `rejected` |
+| uploaded_at | TIMESTAMPTZ | |
+| uploaded_by_user_id | UUID FK → users | |
+| created_at | TIMESTAMPTZ | |
+
+### `ims_gap_analysis_results`
+Output van de gap-agent per geüpload document — immutable per bevinding.
+
+| Veld | Type | Toelichting |
+|------|------|-------------|
+| id | UUID PK | |
+| input_document_id | UUID FK → ims_step_input_documents ON DELETE CASCADE | |
+| tenant_id | UUID FK → tenants | |
+| field_reference | TEXT | Welk veld/stap wordt geraakt |
+| ai_suggestion | TEXT | Wat stelt de agent voor |
+| uncertainty | BOOL DEFAULT false | Agent was niet zeker — "verifieer handmatig" |
+| validated | BOOL DEFAULT false | Gebruiker heeft bevinding beoordeeld |
+| validated_at | TIMESTAMPTZ NULL | |
+| validated_by_user_id | UUID FK → users NULL | |
+| created_at | TIMESTAMPTZ | |
+
+**Workflow:** upload → `pending` → agent analyseert → `pending_review` + results aangemaakt → gebruiker valideert per result → `incorporated` of `rejected`. Geen `updated_at` — validatie verloopt via `validated` flag.
+
 ---
 
 ## Domein 3 — Normen & mapping
@@ -253,6 +286,26 @@ Welke normen volgt deze tenant?
 | is_active | BOOL | |
 | decision_id | UUID FK → ims_decisions NULL | Koppeling aan besluitlog (stap 6) |
 
+### `ims_standard_ingestions`
+Staging voor de agentic normenkader-workflow (K15): 2e-lijn uploadt norm-PDF of URL → agent parseert → review → activatie.
+
+| Veld | Type | Toelichting |
+|------|------|-------------|
+| id | UUID PK | |
+| tenant_id | UUID FK → tenants | |
+| uploaded_by_user_id | UUID FK → users | Alleen 2e-lijnsrol (CISO, FG) |
+| source_type | ENUM | `pdf` \| `url` |
+| source_path | TEXT | Pad in object storage of URL |
+| detected_standard_id | UUID FK → ims_standards NULL | Wat denkt de agent dat dit is |
+| detected_version | VARCHAR(20) NULL | |
+| status | ENUM | `parsing` \| `pending_review` \| `approved` \| `rejected` |
+| parsed_requirements_json | JSONB NULL | Agent-output ter review (tijdelijk — na approval verplaatst naar ims_requirements) |
+| reviewed_at | TIMESTAMPTZ NULL | |
+| reviewed_by_user_id | UUID FK → users NULL | |
+| created_at | TIMESTAMPTZ | |
+
+**Workflow:** upload → `parsing` → agent vult `parsed_requirements_json` → `pending_review` → 2e-lijn keurt goed → `ims_standards` + `ims_requirements` records aangemaakt → `approved`. Bij goedkeuring: bestaande `ims_requirement_mappings` die geraakt worden krijgen `orphaned = true`.
+
 ---
 
 ## Domein 4 — GRC-kern
@@ -269,6 +322,10 @@ Hiërarchisch scopemodel: Organisatie → Cluster → Proces → Asset / Leveran
 | parent_id | UUID FK → ims_scopes NULL | Hiërarchie |
 | domain | ENUM NULL | `ISMS` \| `PIMS` \| `BCMS` \| NULL |
 | is_critical | BOOL | Kritiek proces/asset (BCM) |
+| verwerkt_pii | BOOL DEFAULT false | Dit proces/systeem raakt persoonsgegevens (PIMS-relevant) |
+| ext_verwerking_ref | TEXT NULL | Referentie naar extern verwerkingsregister (bijv. "VR-042") |
+
+**Stap 8-toelichting:** IMS bouwt geen AVG Art. 30-register — dat bestaat al extern. IMS registreert alleen wélke scopes PII raken (`verwerkt_pii`) en wat de externe referentie is (`ext_verwerking_ref`). Koppeling Proces↔Systeem verloopt via de bestaande `parent_id`-hiërarchie.
 
 ### `ims_risks`
 Risico's per tenant, gekoppeld aan scope.
@@ -622,7 +679,7 @@ Functioneel weloverwogen weggelaten na analyse van het oude datamodel (~100 enti
 | WebhookLog, IntegrationSyncLog | Real-time sync met TopDesk/ServiceNow is niet in scope |
 | RiskQuantificationProfile | `financial_impact_eur` (nullable) op `ims_risks` volstaat voor v1 |
 | InControlAssessment | `ims_decisions` met `decision_type = in_control_declaration` |
-| GapAnalysis / GapAnalysisItem | `ims_assessments` met `assessment_type = gap_analysis` + findings |
+| GapAnalysis / GapAnalysisItem (als apart GRC-object) | `ims_assessments` met `assessment_type = gap_analysis` + findings; invoerroute-staging via `ims_gap_analysis_results` |
 | Initiative / InitiativeMilestone | Niet passend bij IMS-scope v1 |
 | Objective / ObjectiveKPI / KPIMeasurement | Te vroeg; inrichtingsscore + GRC-score zijn de enige scores in v1 |
 | ManagementReview | `ims_assessments` met `assessment_type = management_review` |
@@ -631,4 +688,8 @@ Functioneel weloverwogen weggelaten na analyse van het oude datamodel (~100 enti
 
 ---
 
-*Volgende stap: datamodel valideren → eerste migrations schrijven → API-skeleton bouwen*
+**Bewust niet opgenomen — AVG Art. 30 verwerkingsregister:** IMS bouwt dit niet — extern register bestaat al. IMS registreert alleen `verwerkt_pii` (bool) + `ext_verwerking_ref` (tekst) op `ims_scopes` als PII-koppeling.
+
+---
+
+*Volgende stap: eerste Alembic-migrations schrijven → API-skeleton bouwen*
