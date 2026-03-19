@@ -104,49 +104,51 @@ AI agents genereren deze documenten op basis van wat de gemeente tijdens het pro
 
 ### Fase 0 — Fundament
 
-| # | Stap | Output | Gremium | Status |
-|---|------|--------|---------|--------|
-| 1 | Bestuurlijk commitment | Besluitmemo + besluitlog #001 | SIMS | Vastgesteld |
-| 2a | Organisatiecontext vaststellen | Organisatiecontextdocument + stakeholderregister + PII-rol (sectie IMS Handboek) | TIMS | Vastgesteld |
-| 2b | Scope bepalen | Formeel scopebesluit (besluitlog) | SIMS | Vastgesteld |
-| 3a | Governance- en beleidsvoorstel opstellen | Concept governance + concept IMS-beleid + communicatiematrix | TIMS | Vastgesteld |
-| 3b | Governance en beleid vaststellen | Formeel governance-besluit + IMS-beleid + besluitlog | SIMS | Vastgesteld |
-| 4 | Gap-analyse | Nulmeting per domein + besluitlog | TIMS | Vastgesteld |
-| 5 | Registers & risicobeoordeling | Registerinventarisatie + eerste risicobeeld + risicobeoordelingsmethodiek | TIMS | Vastgesteld |
-| 6 | Normenkader & kerncontrols | Normenkader + minimale werkset kerncontrols + besluitlog | SIMS | Vastgesteld |
+| # | Stap | Waarom nu | Output | Gremium |
+|---|------|-----------|--------|---------|
+| 1 | Bestuurlijk commitment | Zonder formeel mandaat van het bestuur heeft het TIMS geen autoriteit om besluiten te nemen of middelen in te zetten. Dit is de juridische en bestuurlijke basis voor alles wat volgt. | Besluitmemo + besluitlog #001 | SIMS |
+| 2a | Organisatiecontext vaststellen | De scope, de stakeholders en de PII-rol van de gemeente moeten bekend zijn voordat er iets wordt ingericht. Zonder context kiest iedereen zijn eigen referentiekader. | Organisatiecontextdocument + stakeholderregister + PII-rol | TIMS |
+| 2b | Scope bepalen | De scope bepaalt op welke organisatieonderdelen en domeinen het IMS van toepassing is. Zonder vastgestelde scope kun je geen gap-analyse uitvoeren — je weet niet wat je moet meten. | Formeel scopebesluit | SIMS |
+| 3a | Governance- en beleidsvoorstel opstellen | Nu de context en scope bekend zijn, kan het TIMS uitwerken hoe het IMS wordt bestuurd: wie zit waar, wie rapporteert aan wie, wat is het beleid. Dit is het ontwerp — nog geen besluit. | Concept governance + concept IMS-beleid + communicatiematrix | TIMS |
+| 3b | Governance en beleid vaststellen | Het SIMS stelt het governance-voorstel van het TIMS formeel vast. Pas na dit besluit is de structuur gezaghebbend en kan lijnmanagement straks worden aangesproken op hun rol. | Formeel governance-besluit + IMS-beleid | SIMS |
+| 4 | Gap-analyse | Met governance vastgesteld en scope duidelijk kan de nulmeting beginnen: waar staan we nu ten opzichte van de norm? Deze meting is de basis voor alles wat daarna geprioriteerd wordt. | Nulmeting per domein + volwassenheidsprofiel v1 | TIMS |
+| 5 | Registers & risicobeoordeling | De gap-analyse laat zien wat ontbreekt. Nu worden de basisregisters opgebouwd en de eerste risico's in kaart gebracht — zodat stap 6 controls kan selecteren op basis van echte risico's, niet op aannames. | Registerinventarisatie + eerste risicobeeld + risicobeoordelingsmethodiek | TIMS |
+| 6 | Normenkader & kerncontrols | Het normenkader en de minimale werkset controls zijn de randvoorwaarde voor Fase 1. Zonder dit weet lijnmanagement niet op basis van welke maatregelen ze moeten werken. | Normenkader + minimale werkset kerncontrols | SIMS |
 
 ### Fase 1 — Lijnmanagement doet risicoanalyse
 
-| # | Stap | Output | Gremium | Status |
-|---|------|--------|---------|--------|
-| 7 | Onboarding & awareness lijnmanagement | Awareness-materiaal + competentiebeoordeling + documentbeheerprocedure | TIMS | Vastgesteld |
-| 8 | Koppeling processen, systemen & verwerkingen | Geïntegreerd register (proces → systeem → verwerking) + PII-doorgifte-inventarisatie (PIMS-track) + privacy-by-design procedure | TIMS + lijnmanagement | Vastgesteld |
-| 9 | Risicoanalyse door lijnmanagement | Risicoregister per afdeling/proces + BIA (BCMS-track) | Lijnmanagement | Vastgesteld |
-| 10 | Risicobehandeling & controls toewijzen | Risicobehandelplan + controls met eigenaren + implementatieplan + continuïteitsstrategieën + business continuity plans (BCMS-track) + PII-doorgifte-waarborgen (PIMS-track) | TIMS | Vastgesteld |
-| 11 | Statement of Applicability (SoA) | SoA-document incl. ISO 27701 Annex A/B (gegenereerd of handmatig) | SIMS | Vastgesteld |
-| 12 | Monitoring & rapportage inrichten | KPI's + rapportagelijnen + dashboards | TIMS | Vastgesteld |
+| # | Stap | Waarom nu | Output | Gremium |
+|---|------|-----------|--------|---------|
+| 7 | Onboarding & awareness lijnmanagement | Het normenkader staat vast. Nu moet lijnmanagement weten wat er van hen verwacht wordt en in welke taal het IMS communiceert. Zonder awareness voeren ze stap 9 uit zonder te begrijpen waarom. | Awareness-materiaal + competentiebeoordeling + documentbeheerprocedure | TIMS |
+| 8 | Koppeling processen, systemen & verwerkingen | Risicoanalyse (stap 9) vereist inzicht in welke processen welke systemen gebruiken en welke persoonsgegevens daarin zitten. Dit register legt die koppeling — zonder deze basis is de risicoanalyse incompleet. | Geïntegreerd register + PII-doorgifte-inventarisatie + PbD-procedure | TIMS + lijnmanagement |
+| 9 | Risicoanalyse door lijnmanagement | Het register is beschikbaar, de methodiek staat vast, lijnmanagement is onboarded. Nu kan de daadwerkelijke beoordeling plaatsvinden: wat zijn de risico's per afdeling/proces? | Risicoregister per afdeling/proces + BIA (BCMS-track) | Lijnmanagement |
+| 10 | Risicobehandeling & controls toewijzen | De risico's zijn bekend. Nu wordt per risico bepaald: accepteren, mitigeren, overdragen of vermijden — en worden controls en eigenaren toegewezen. Zonder dit stap blijft het risicoregister een lijst zonder actie. | Risicobehandelplan + controls met eigenaren + implementatieplan + BCPs | TIMS |
+| 11 | Statement of Applicability (SoA) | Met de risicoanalyse en controls in kaart kan worden vastgesteld welke ISO-controls van toepassing zijn en waarom. De SoA is het formele bewijs van een weloverwogen norm-keuze — vereist voor certificering. | SoA-document incl. ISO 27701 Annex A/B | SIMS |
+| 12 | Monitoring & rapportage inrichten | Het IMS is ingericht. Nu moet de infrastructuur staan om het ook te kunnen bewaken: KPI's, rapportagelijnen, dashboards. Zonder dit kan het SIMS in Fase 2 niet sturen op resultaten. | KPI's + rapportagelijnen + dashboards | TIMS |
 
 ### Fase 2 — PDCA draait, controls, evidence
 
-| # | Stap | Output | Gremium | Status |
-|---|------|--------|---------|--------|
-| 13 | Interne audit plannen & uitvoeren | Auditprogramma + auditrapportages + BC-oefenrapportage (BCMS-track) | TIMS | Vastgesteld |
-| 14 | Management review | Review-rapportage (verplichte inputchecklist ISO 9.3.2) + verbeterbeslissingen | SIMS | Vastgesteld |
-| 15 | Afwijkingen, incidenten & corrigerende maatregelen | Non-conformiteitenregister + incidentmanagement + correctieve acties | TIMS | Vastgesteld |
-| 16 | Evidence-verzameling & control-monitoring | Bewijs per control + continue monitoring + privacy-procedures (PIMS-track) | Lijnmanagement | Vastgesteld |
-| 17 | PDCA-cyclus formaliseren | Jaarplanning + reviewcyclus + periodieke risicoherbeoordeling + communicatieprocedures + verbeterdoelen | SIMS | Vastgesteld |
+*Cyclisch, niet lineair. Stappen 13-17 herhalen zich jaarlijks. Stap 15 is event-driven.*
 
-*Fase 2 is cyclisch, niet lineair. Deze stappen herhalen zich. Het platform schakelt hier van inrichtingsmodus (IMS-proces) naar beheermodus (IMS-tooling).*
+| # | Stap | Waarom nu | Output | Gremium |
+|---|------|-----------|--------|---------|
+| 13 | Interne audit plannen & uitvoeren | Het IMS draait. Nu moet onafhankelijk worden getoetst of de controls ook daadwerkelijk werken. De audit levert de input voor de management review en toont aan dat het systeem zichzelf bewaakt. | Auditprogramma + auditrapportages + BC-oefenrapportage | TIMS |
+| 14 | Management review | De auditresultaten, risicostatussen en KPI's zijn beschikbaar. Het SIMS beoordeelt het geheel en neemt verbeterbeslissingen. Dit is het moment waarop de PDCA-cirkel sluit op strategisch niveau. | Review-rapportage + verbeterbeslissingen | SIMS |
+| 15 | Afwijkingen, incidenten & corrigerende maatregelen | Afwijkingen en incidenten doen zich voor wanneer ze zich voordoen — niet op een gepland moment. Dit is de event-driven stap die ervoor zorgt dat problemen worden geregistreerd, geanalyseerd en opgevolgd. | Non-conformiteitenregister + correctieve acties | TIMS |
+| 16 | Evidence-verzameling & control-monitoring | Controls zijn toegewezen en geïmplementeerd. Nu moet worden bewezen dat ze ook werken: bewijs per control, continue monitoring, privacy-procedures actueel houden. Zonder evidence is een audit niet te doorstaan. | Bewijs per control + continue monitoring + privacy-procedures | Lijnmanagement |
+| 17 | PDCA-cyclus formaliseren | Aan het einde van de cyclus wordt de volgende cyclus gepland. Stap 17 zorgt dat de PDCA niet stopt na één ronde maar structureel verankerd is in de jaarplanning. | Jaarplanning + risicoherbeoordeling + communicatieprocedures | SIMS |
 
-### Fase 3 — Volwassen GRC-platform (optioneel)
+### Fase 3 — Volwassen GRC-platform (optioneel, modulair)
 
-| # | Stap | Output | Gremium | Status |
-|---|------|--------|---------|--------|
-| 18 | Certificeringsgereedheid | Pre-audit rapport + gap-remediatie + certificeringsaanvraag | SIMS | Vastgesteld |
-| 19 | Geavanceerde analytics & rapportage | Trendanalyses + predictive risk + geautomatiseerde rapportages | TIMS | Vastgesteld |
-| 20 | Externe integraties | Ketenpartner-koppelingen + leveranciersportaal + data-uitwisseling | TIMS | Vastgesteld |
-| 21 | Multi-framework optimalisatie | Cross-mapping controls naar meerdere normen + duplicatie-eliminatie | TIMS | Vastgesteld |
-| 22 | Benchmarking & kennisdeling | Benchmark-rapportage + best practice bibliotheek | SIMS | Vastgesteld |
+*Geen vaste volgorde. Gemeente activeert onderdelen op basis van ambitie en capaciteit.*
+
+| # | Stap | Waarom nu | Output | Gremium |
+|---|------|-----------|--------|---------|
+| 18 | Certificeringsgereedheid | De organisatie wil externe validatie van het IMS. Een pre-audit brengt resterende gaps in beeld zodat de certificeringsaanvraag met vertrouwen kan worden ingediend. | Pre-audit rapport + gap-remediatie + certificeringsaanvraag | SIMS |
+| 19 | Geavanceerde analytics & rapportage | Het IMS heeft genoeg historische data opgebouwd om trends te zien. Predictive risk en geautomatiseerde rapportages maken het IMS proactief in plaats van reactief. | Trendanalyses + predictive risk + geautomatiseerde rapportages | TIMS |
+| 20 | Externe integraties | De organisatie werkt intensief samen met ketenpartners of leveranciers. Koppelingen maken data-uitwisseling gestructureerd en controleerbaar in plaats van handmatig. | Ketenpartner-koppelingen + leveranciersportaal | TIMS |
+| 21 | Multi-framework optimalisatie | De organisatie werkt met meerdere normen (BIO, AVG, BCM). Cross-mapping elimineert dubbel werk: één control dekt meerdere normeisen. | Cross-mapping controls + duplicatie-eliminatie | TIMS |
+| 22 | Benchmarking & kennisdeling | Meerdere gemeenten gebruiken het platform. Vergelijking en kennisdeling versnellen volwassenheid in de regio en maken gezamenlijk leren mogelijk. | Benchmark-rapportage + best practice bibliotheek | SIMS |
 
 *Fase 3 is volledig optioneel. Er is geen go/no-go — de gemeente kiest per onderdeel of en wanneer het relevant wordt. Fase 2 (PDCA draait) is het minimale eindplaatje. Fase 3 is het ambitieplaatje.*
 
