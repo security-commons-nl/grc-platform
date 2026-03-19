@@ -13,7 +13,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: IMS/backend
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: IMS/backend/requirements.txt
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -45,5 +45,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
-          path: IMS/backend/pytest-results.xml
+          path: backend/pytest-results.xml
           if-no-files-found: ignore
