@@ -282,4 +282,130 @@ Het platform is zo gebouwd dat wisselen tussen beide geen code-wijzigingen verei
 
 ---
 
-*Bronnen: LIVIQ PRINCIPLES.md, LIVIQ BEST_PRACTICES_REPOS.md, LIVIQ SECURE-ARCHITECTURE-BASELINE.md (productie-gevalideerd maart 2026) + IMS-proces CONTEXT.md K1-K15*
+## 9. RBAC — Permissiematrix
+
+### Rolhiërarchie
+
+```
+admin
+  └── sims_lid          (SIMS = strategisch niveau — restrisico/beleidsafwijking)
+        └── tims_lid    (TIMS = tactisch niveau — normaal accorderen)
+              └── discipline_eigenaar  (operationeel, eigen domein)
+                    └── lijnmanager   (eigen processen)
+                          └── viewer  (read-only)
+```
+
+Hogere rol erft alle rechten van lagere rol. `admin` is platformbeheerder (technisch), niet inhoudelijk.
+
+### Permissiematrix per resource
+
+| Resource | viewer | lijnmanager | discipline_eigenaar | tims_lid | sims_lid | admin |
+|----------|--------|-------------|---------------------|----------|----------|-------|
+| Stap-executions lezen | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Stap-executions bijwerken | ❌ | eigen proces | eigen domein | ✅ | ✅ | ✅ |
+| Besluit aanmaken (normaal) | ❌ | ❌ | ✅ groen | ✅ | ✅ | ✅ |
+| Besluit aanmaken (restrisico) | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Besluit aanmaken (beleidsafwijking) | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Risico's lezen | ✅ | eigen | eigen domein | ✅ | ✅ | ✅ |
+| Risico's aanmaken/bewerken | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Controls lezen | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Controls aanmaken/bewerken | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Assessments aanmaken | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Evidence toevoegen | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Verbeteracties aanmaken | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Documenten lezen (privé) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Documenten vaststellen | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Normenkader beheren | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Users beheren | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Scores inzien | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**Domeinscoping:** `tims_lid` en `discipline_eigenaar` met `domain=ISMS` zien alleen ISMS-resources. De API filtert altijd op zowel `tenant_id` als `domain` (indien gevuld op de rol).
+
+**Escalatieladder risico-accordering:**
+- Groen (score 1–4): `discipline_eigenaar`
+- Geel (5–9): `tims_lid`
+- Oranje (10–14): `sims_lid`
+- Rood (15–25): `sims_lid` + expliciete notatie in besluitlog
+
+### Regionale rollen
+
+| Rol | Wat mag het |
+|-----|-------------|
+| `regionaal_toezichthouder` | Cross-tenant READ op regionaal-gepubliceerde documenten en scores. Nooit schrijven. |
+| `regionaal_viewer` | Idem, maar alleen documenten — geen scores of besluitlog. |
+
+### API-afdwinging
+
+Elke endpoint valideert in deze volgorde:
+1. JWT geldig en niet verlopen
+2. `tenant_id` uit JWT matcht resource-tenant (geen cross-tenant leaks)
+3. Gebruiker heeft vereiste rol (via `user_tenant_roles`)
+4. Domeinfilter toegepast indien rol domein-specifiek is
+5. Bij schrijfoperaties: escalatieladder gecontroleerd (applicatielogica, niet DB)
+
+Nooit rechten hardcoden per endpoint — gebruik een centrale `require_role()`-dependency in FastAPI.
+
+---
+
+## 10. API Security — Implementatiechecklist
+
+### Authenticatie & autorisatie
+
+| # | Vereiste | Implementatie |
+|---|----------|---------------|
+| A1 | JWT RS256, expiry 15 min | `python-jose` + RS256 keypair in `.env` |
+| A2 | Refresh token, expiry 7 dagen, httpOnly cookie | Aparte `/auth/refresh`-endpoint |
+| A3 | Token revocation bij uitloggen | Blacklist in Redis (korte TTL) |
+| A4 | `tenant_id` in JWT-claims | Middleware extraheert en valideert bij elke request |
+| A5 | RBAC-check via centrale dependency | `Depends(require_role("tims_lid"))` in FastAPI |
+
+### Rate limiting (via Caddy)
+
+| Endpoint-categorie | Limiet |
+|-------------------|--------|
+| Algemene API | 200 req/min per IP |
+| Auth-endpoints (`/auth/login`, `/auth/refresh`) | 10 req/min per IP |
+| AI-endpoints (`/agents/*`) | 20 req/min per gebruiker |
+| Export-endpoints (PDF/Word generatie) | 5 req/min per gebruiker |
+
+AI-endpoints krijgen een aparte, strengere limiet — één LLM-call kost 10–100× meer dan een DB-query.
+
+### Input & output
+
+- Alle input gevalideerd via Pydantic-modellen (FastAPI doet dit automatisch)
+- Geen stack traces in productie-errors — `debug=False` in FastAPI, generieke 500-response
+- CORS: alleen de frontend-origin toegestaan (`ALLOWED_ORIGINS` in `.env`)
+- SQL-injectie: SQLAlchemy ORM met parameterized queries — nooit raw SQL met f-strings
+
+### Secrets & configuratie
+
+- Alle secrets via `.env` — nooit in code of git
+- `.env` chmod 600 op server
+- Aparte DB-user per module met minimale rechten (principe 2.4)
+- AI API-key nooit in logs of error-responses
+
+### Bouwinstructies
+
+```python
+# FastAPI — centrale RBAC-dependency
+from fastapi import Depends, HTTPException, status
+
+def require_role(*roles):
+    def dependency(current_user = Depends(get_current_user)):
+        if current_user.role not in roles:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        # tenant_id check is altijd al gedaan in get_current_user
+        return current_user
+    return dependency
+
+# Gebruik:
+@router.post("/decisions/")
+async def create_decision(
+    user = Depends(require_role("tims_lid", "sims_lid", "admin"))
+):
+    ...
+```
+
+---
+
+*Bronnen: LIVIQ PRINCIPLES.md, LIVIQ BEST_PRACTICES_REPOS.md, LIVIQ SECURE-ARCHITECTURE-BASELINE.md (productie-gevalideerd maart 2026) + IMS-proces CONTEXT.md K1-K15 + skills: database-schema-design, access-control-rbac, api-security-hardening*
