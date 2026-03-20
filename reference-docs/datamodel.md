@@ -503,8 +503,80 @@ GRC-score per tenant per domein per jaar — data-gedreven, daalt als activiteit
 | domain | ENUM | `ISMS` \| `PIMS` \| `BCMS` \| `totaal` |
 | cyclus_year | INT | |
 | score_pct | DECIMAL(5,2) | 0.00–100.00 |
-| components_json | JSONB | Uitsplitsing per component (controls, evidence, audits, ...) |
+| components_json | JSONB | 12-cellenmatrix — structuur zie hieronder |
 | calculated_at | TIMESTAMPTZ | |
+
+#### GRC-score berekeningsmodel — 12-cellenmatrix
+
+*Gebaseerd op het rapportagemodel IMS (geconsolideerd, maart 2026). Beheermodus (Fase 2+), niet inrichtingsmodus.*
+
+De GRC-score is een aggregatie over 4 fasen per domein. Dit is het KPI-framework waarmee TIMS, SIMS, DT, College en Raad rapportages ontvangen.
+
+**De 4 fasen (x-as):**
+
+| Fase | Vraag | Databron in IMS |
+|------|-------|-----------------|
+| **Beleid** | Is er beleid vastgesteld dat deze norm-eis afdekt? | `ims_documents` (vastgesteld) gekoppeld aan `ims_requirements` via `ims_controls.requirement_id` |
+| **Opzet** | Is er een control ontworpen? | `ims_controls` bestaan per `requirement_id` |
+| **Bestaan** | Is de control geïmplementeerd? | `ims_controls.implementation_status` ∈ (`geïmplementeerd`, `geverifieerd`) |
+| **Werking** | Is effectiviteit getoetst en aantoonbaar? | `ims_evidence` aanwezig + `ims_assessments` met positief resultaat |
+
+**De 3 domeinen (y-as):**
+
+| Domein | Normenkader | Omvang |
+|--------|-------------|--------|
+| Security (ISMS) | BIO 2.0 / ISO 27001 | ~163 controls |
+| Privacy (PIMS) | AVG / ISO 27701 | ~40 kernverplichtingen |
+| Continuïteit (BCMS) | ISO 22301 | ~10 eisen |
+
+**Cascade-regel:** Werking ≤ Bestaan ≤ Opzet. Een control kan niet getoetst zijn als het niet bestaat, en niet bestaan als het niet ontworpen is. Beleid staat los (kan bestaan zonder opzet).
+
+**`components_json` structuur:**
+
+```json
+{
+  "beleid_pct": 72.5,
+  "opzet_pct": 45.0,
+  "bestaan_pct": 30.0,
+  "werking_pct": 12.5,
+  "beleid_count": 118,
+  "beleid_total": 163,
+  "opzet_count": 73,
+  "opzet_total": 163,
+  "bestaan_count": 49,
+  "bestaan_total": 163,
+  "werking_count": 20,
+  "werking_total": 163,
+  "onbekend_count": 12,
+  "trend_beleid": "stabiel",
+  "trend_opzet": "stijgend",
+  "trend_bestaan": "stijgend",
+  "trend_werking": "nvt"
+}
+```
+
+**Kleurcodes (applicatielogica):**
+
+| Kleur | Score | Betekenis |
+|-------|-------|-----------|
+| Rood | < 40% | Kritiek — onvoldoende beheerst |
+| Oranje | 40–70% | In opbouw — deels beheerst |
+| Groen | > 70% | Op orde — conform norm |
+| Grijs | ? | Onbekend — governance gap |
+
+**Rapportageproducten (afgeleide views, niet aparte tabellen):**
+
+```
+Bronrapportage (kwartaal, volledig, 12 cellen + details)
+  └─→ SIMS-pakket (4x/jr, 2-4 p.)
+        ├─→ DT-rapportage (2x/jr)
+        │     ├─→ College-brief (2x/jr, max 2 p.)
+        │     │     └─→ Raad-brief
+        │     └─→ MT IDA / Regio (2x/jr)
+        └─→ Expert Views (bijlage)
+```
+
+Alle producten worden on-demand gegenereerd uit de GRC-scores + besluitlog + bevindingen. Geen aparte rapportage-tabellen.
 
 ---
 
