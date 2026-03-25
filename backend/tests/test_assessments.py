@@ -2,19 +2,20 @@ import uuid
 import pytest
 from httpx import AsyncClient
 from datetime import date
+from tests.conftest import make_token
 
 
 @pytest.mark.asyncio
-async def test_create_assessment(client: AsyncClient, test_tenant):
+async def test_create_assessment(client: AsyncClient, test_tenant, tenant_token):
     response = await client.post(
         "/api/v1/assessments/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "assessment_type": "audit",
             "domain": "ISMS",
             "planned_at": "2024-06-01",
             "status": "gepland",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -23,47 +24,46 @@ async def test_create_assessment(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_create_assessment_types(client: AsyncClient, test_tenant):
+async def test_create_assessment_types(client: AsyncClient, test_tenant, tenant_token):
     for atype in ["dpia", "pentest", "self_assessment", "bc_oefening", "gap_analysis"]:
         response = await client.post(
             "/api/v1/assessments/",
-            params={"tenant_id": test_tenant["id"]},
             json={
                 "assessment_type": atype,
                 "planned_at": "2024-07-01",
                 "status": "gepland",
             },
+            headers={"Authorization": f"Bearer {tenant_token}"},
         )
         assert response.status_code == 201
         assert response.json()["assessment_type"] == atype
 
 
 @pytest.mark.asyncio
-async def test_list_assessments(client: AsyncClient, test_tenant):
+async def test_list_assessments(client: AsyncClient, test_tenant, tenant_token):
     response = await client.get(
         "/api/v1/assessments/",
-        params={"tenant_id": test_tenant["id"]},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 @pytest.mark.asyncio
-async def test_create_finding(client: AsyncClient, test_tenant):
+async def test_create_finding(client: AsyncClient, test_tenant, tenant_token):
     assessment_resp = await client.post(
         "/api/v1/assessments/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "assessment_type": "audit",
             "planned_at": "2024-06-01",
             "status": "actief",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assessment_id = assessment_resp.json()["id"]
 
     response = await client.post(
         "/api/v1/assessments/findings/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "assessment_id": assessment_id,
             "title": "Ontbrekend wachtwoordbeleid",
@@ -71,6 +71,7 @@ async def test_create_finding(client: AsyncClient, test_tenant):
             "severity": "hoog",
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -79,19 +80,18 @@ async def test_create_finding(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_create_corrective_action_from_finding(client: AsyncClient, test_tenant):
+async def test_create_corrective_action_from_finding(client: AsyncClient, test_tenant, tenant_token):
     assessment_resp = await client.post(
         "/api/v1/assessments/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "assessment_type": "audit",
             "planned_at": "2024-06-01",
             "status": "actief",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     finding_resp = await client.post(
         "/api/v1/assessments/findings/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "assessment_id": assessment_resp.json()["id"],
             "title": "CA Finding",
@@ -99,11 +99,11 @@ async def test_create_corrective_action_from_finding(client: AsyncClient, test_t
             "severity": "gemiddeld",
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
 
     response = await client.post(
         "/api/v1/assessments/corrective-actions/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "finding_id": finding_resp.json()["id"],
             "title": "Wachtwoordbeleid implementeren",
@@ -111,6 +111,7 @@ async def test_create_corrective_action_from_finding(client: AsyncClient, test_t
             "due_date": "2024-09-01",
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -119,15 +120,14 @@ async def test_create_corrective_action_from_finding(client: AsyncClient, test_t
 
 
 @pytest.mark.asyncio
-async def test_create_corrective_action_from_risk(client: AsyncClient, test_tenant):
+async def test_create_corrective_action_from_risk(client: AsyncClient, test_tenant, tenant_token):
     scope_resp = await client.post(
         "/api/v1/scopes/",
-        params={"tenant_id": test_tenant["id"]},
         json={"type": "cluster", "name": "CA Risk Scope", "domain": "ISMS"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     risk_resp = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope_resp.json()["id"],
             "domain": "ISMS",
@@ -137,11 +137,11 @@ async def test_create_corrective_action_from_risk(client: AsyncClient, test_tena
             "impact": 3,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
 
     response = await client.post(
         "/api/v1/assessments/corrective-actions/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "risk_id": risk_resp.json()["id"],
             "title": "Risico mitigeren",
@@ -149,12 +149,16 @@ async def test_create_corrective_action_from_risk(client: AsyncClient, test_tena
             "due_date": "2024-12-01",
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     assert response.json()["risk_id"] == risk_resp.json()["id"]
 
 
 @pytest.mark.asyncio
-async def test_assessment_not_found(client: AsyncClient):
-    response = await client.get(f"/api/v1/assessments/{uuid.uuid4()}")
+async def test_assessment_not_found(client: AsyncClient, admin_token):
+    response = await client.get(
+        f"/api/v1/assessments/{uuid.uuid4()}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert response.status_code == 404

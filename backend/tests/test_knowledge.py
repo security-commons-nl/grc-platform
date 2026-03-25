@@ -1,10 +1,11 @@
 import uuid
 import pytest
 from httpx import AsyncClient
+from tests.conftest import make_token
 
 
 @pytest.mark.asyncio
-async def test_create_knowledge_chunk(client: AsyncClient, test_tenant):
+async def test_create_knowledge_chunk(client: AsyncClient, test_tenant, tenant_token):
     response = await client.post(
         "/api/v1/knowledge/",
         json={
@@ -15,6 +16,7 @@ async def test_create_knowledge_chunk(client: AsyncClient, test_tenant):
             "content": "Het informatiebeveiligingsbeleid van Gemeente Leiden is gebaseerd op ISO 27001:2022.",
             "model_used": "mistral-small-latest",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -24,7 +26,7 @@ async def test_create_knowledge_chunk(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_create_normatief_chunk_no_tenant(client: AsyncClient):
+async def test_create_normatief_chunk_no_tenant(client: AsyncClient, admin_token):
     response = await client.post(
         "/api/v1/knowledge/",
         json={
@@ -34,6 +36,7 @@ async def test_create_normatief_chunk_no_tenant(client: AsyncClient):
             "content": "ISO 27001 clause 4.1 requires understanding context.",
             "model_used": "mistral-small-latest",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -42,7 +45,7 @@ async def test_create_normatief_chunk_no_tenant(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant):
+async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant, tenant_token):
     # Create one of each layer
     await client.post(
         "/api/v1/knowledge/",
@@ -53,6 +56,7 @@ async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant):
             "content": "Normatief test chunk",
             "model_used": "test-model",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     await client.post(
         "/api/v1/knowledge/",
@@ -64,12 +68,14 @@ async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant):
             "content": "Organisatie test chunk",
             "model_used": "test-model",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
 
     # Filter normatief
     response = await client.get(
         "/api/v1/knowledge/",
         params={"layer": "normatief"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     for chunk in response.json():
@@ -79,6 +85,7 @@ async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant):
     response = await client.get(
         "/api/v1/knowledge/",
         params={"layer": "organisatie", "tenant_id": test_tenant["id"]},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     for chunk in response.json():
@@ -86,13 +93,16 @@ async def test_list_knowledge_filter_layer(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_knowledge_chunk_not_found(client: AsyncClient):
-    response = await client.get(f"/api/v1/knowledge/{uuid.uuid4()}")
+async def test_knowledge_chunk_not_found(client: AsyncClient, admin_token):
+    response = await client.get(
+        f"/api/v1/knowledge/{uuid.uuid4()}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_update_knowledge_chunk(client: AsyncClient, test_tenant):
+async def test_update_knowledge_chunk(client: AsyncClient, test_tenant, tenant_token):
     create_resp = await client.post(
         "/api/v1/knowledge/",
         json={
@@ -103,19 +113,21 @@ async def test_update_knowledge_chunk(client: AsyncClient, test_tenant):
             "content": "Original content",
             "model_used": "test-model",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     chunk_id = create_resp.json()["id"]
 
     response = await client.patch(
         f"/api/v1/knowledge/{chunk_id}",
         json={"content": "Updated content"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     assert response.json()["content"] == "Updated content"
 
 
 @pytest.mark.asyncio
-async def test_delete_knowledge_chunk(client: AsyncClient, test_tenant):
+async def test_delete_knowledge_chunk(client: AsyncClient, test_tenant, tenant_token):
     create_resp = await client.post(
         "/api/v1/knowledge/",
         json={
@@ -126,12 +138,19 @@ async def test_delete_knowledge_chunk(client: AsyncClient, test_tenant):
             "content": "To be deleted",
             "model_used": "test-model",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     chunk_id = create_resp.json()["id"]
 
-    response = await client.delete(f"/api/v1/knowledge/{chunk_id}")
+    response = await client.delete(
+        f"/api/v1/knowledge/{chunk_id}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
     assert response.status_code == 204
 
     # Verify deletion
-    get_resp = await client.get(f"/api/v1/knowledge/{chunk_id}")
+    get_resp = await client.get(
+        f"/api/v1/knowledge/{chunk_id}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
     assert get_resp.status_code == 404

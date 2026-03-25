@@ -1,10 +1,11 @@
 import uuid
 import pytest
 from httpx import AsyncClient
+from tests.conftest import make_token
 
 
 @pytest.mark.asyncio
-async def test_create_step(client: AsyncClient):
+async def test_create_step(client: AsyncClient, admin_token):
     response = await client.post(
         "/api/v1/steps/",
         json={
@@ -16,6 +17,7 @@ async def test_create_step(client: AsyncClient):
             "is_optional": False,
             "domain": "ISMS",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -25,7 +27,7 @@ async def test_create_step(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_steps(client: AsyncClient):
+async def test_list_steps(client: AsyncClient, admin_token):
     # Create a step first
     await client.post(
         "/api/v1/steps/",
@@ -36,14 +38,18 @@ async def test_list_steps(client: AsyncClient):
             "waarom_nu": "Risico's in kaart brengen",
             "required_gremium": "tims",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
-    response = await client.get("/api/v1/steps/")
+    response = await client.get(
+        "/api/v1/steps/",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 @pytest.mark.asyncio
-async def test_list_steps_filter_phase(client: AsyncClient):
+async def test_list_steps_filter_phase(client: AsyncClient, admin_token):
     await client.post(
         "/api/v1/steps/",
         json={
@@ -53,15 +59,20 @@ async def test_list_steps_filter_phase(client: AsyncClient):
             "waarom_nu": "Maatregelen invoeren",
             "required_gremium": "lijnmanagement",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
-    response = await client.get("/api/v1/steps/", params={"phase": 3})
+    response = await client.get(
+        "/api/v1/steps/",
+        params={"phase": 3},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert response.status_code == 200
     for step in response.json():
         assert step["phase"] == 3
 
 
 @pytest.mark.asyncio
-async def test_create_step_execution(client: AsyncClient, test_tenant):
+async def test_create_step_execution(client: AsyncClient, test_tenant, tenant_token):
     # Create step first
     step_resp = await client.post(
         "/api/v1/steps/",
@@ -72,16 +83,17 @@ async def test_create_step_execution(client: AsyncClient, test_tenant):
             "waarom_nu": "Test",
             "required_gremium": "sims",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     step = step_resp.json()
 
     response = await client.post(
         "/api/v1/steps/executions/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "step_id": step["id"],
             "status": "niet_gestart",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -90,7 +102,7 @@ async def test_create_step_execution(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_step_execution_valid_transition(client: AsyncClient, test_tenant):
+async def test_step_execution_valid_transition(client: AsyncClient, test_tenant, tenant_token):
     step_resp = await client.post(
         "/api/v1/steps/",
         json={
@@ -100,13 +112,14 @@ async def test_step_execution_valid_transition(client: AsyncClient, test_tenant)
             "waarom_nu": "Test",
             "required_gremium": "sims",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     step = step_resp.json()
 
     exec_resp = await client.post(
         "/api/v1/steps/executions/",
-        params={"tenant_id": test_tenant["id"]},
         json={"step_id": step["id"], "status": "niet_gestart"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     exec_id = exec_resp.json()["id"]
 
@@ -114,6 +127,7 @@ async def test_step_execution_valid_transition(client: AsyncClient, test_tenant)
     response = await client.patch(
         f"/api/v1/steps/executions/{exec_id}",
         json={"status": "in_uitvoering"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "in_uitvoering"
@@ -123,13 +137,14 @@ async def test_step_execution_valid_transition(client: AsyncClient, test_tenant)
     response = await client.patch(
         f"/api/v1/steps/executions/{exec_id}",
         json={"status": "concept"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "concept"
 
 
 @pytest.mark.asyncio
-async def test_step_execution_invalid_transition(client: AsyncClient, test_tenant):
+async def test_step_execution_invalid_transition(client: AsyncClient, test_tenant, tenant_token):
     step_resp = await client.post(
         "/api/v1/steps/",
         json={
@@ -139,13 +154,14 @@ async def test_step_execution_invalid_transition(client: AsyncClient, test_tenan
             "waarom_nu": "Test",
             "required_gremium": "sims",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     step = step_resp.json()
 
     exec_resp = await client.post(
         "/api/v1/steps/executions/",
-        params={"tenant_id": test_tenant["id"]},
         json={"step_id": step["id"], "status": "niet_gestart"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     exec_id = exec_resp.json()["id"]
 
@@ -153,12 +169,13 @@ async def test_step_execution_invalid_transition(client: AsyncClient, test_tenan
     response = await client.patch(
         f"/api/v1/steps/executions/{exec_id}",
         json={"status": "vastgesteld"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_step_execution_skip(client: AsyncClient, test_tenant):
+async def test_step_execution_skip(client: AsyncClient, test_tenant, tenant_token):
     step_resp = await client.post(
         "/api/v1/steps/",
         json={
@@ -169,12 +186,12 @@ async def test_step_execution_skip(client: AsyncClient, test_tenant):
             "required_gremium": "sims",
             "is_optional": True,
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     step = step_resp.json()
 
     exec_resp = await client.post(
         "/api/v1/steps/executions/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "step_id": step["id"],
             "status": "niet_gestart",
@@ -182,6 +199,7 @@ async def test_step_execution_skip(client: AsyncClient, test_tenant):
             "skip_reason": "Niet van toepassing",
             "skip_logged_by": "Test User",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert exec_resp.status_code == 201
     data = exec_resp.json()
@@ -190,7 +208,7 @@ async def test_step_execution_skip(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_create_step_dependency(client: AsyncClient):
+async def test_create_step_dependency(client: AsyncClient, admin_token):
     step1_resp = await client.post(
         "/api/v1/steps/",
         json={
@@ -200,6 +218,7 @@ async def test_create_step_dependency(client: AsyncClient):
             "waarom_nu": "Test",
             "required_gremium": "sims",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     step2_resp = await client.post(
         "/api/v1/steps/",
@@ -210,6 +229,7 @@ async def test_create_step_dependency(client: AsyncClient):
             "waarom_nu": "Test",
             "required_gremium": "sims",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     step1 = step1_resp.json()
     step2 = step2_resp.json()
@@ -221,6 +241,7 @@ async def test_create_step_dependency(client: AsyncClient):
             "depends_on_step_id": step1["id"],
             "dependency_type": "B",
         },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 201
     data = response.json()

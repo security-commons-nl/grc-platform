@@ -3,6 +3,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
 from app.models.core_models import IMSRisk, IMSRiskControlLink
 from app.schemas.risks import (
@@ -28,15 +29,15 @@ def calculate_risk_level(score: int) -> str:
 
 @router.get("/", response_model=list[RiskResponse])
 async def list_risks(
-    tenant_id: UUID = Query(...),
     domain: str | None = None,
     status: str | None = None,
     scope_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(IMSRisk).where(IMSRisk.tenant_id == tenant_id)
+    query = select(IMSRisk).where(IMSRisk.tenant_id == current_user.tenant_id)
     if domain:
         query = query.where(IMSRisk.domain == domain)
     if status:
@@ -49,7 +50,11 @@ async def list_risks(
 
 
 @router.get("/{risk_id}", response_model=RiskResponse)
-async def get_risk(risk_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_risk(
+    risk_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRisk).where(IMSRisk.id == risk_id))
     risk = result.scalar_one_or_none()
     if not risk:
@@ -60,7 +65,7 @@ async def get_risk(risk_id: UUID, db: AsyncSession = Depends(get_db)):
 @router.post("/", response_model=RiskResponse, status_code=201)
 async def create_risk(
     data: RiskCreate,
-    tenant_id: UUID = Query(...),
+    current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
     db: AsyncSession = Depends(get_db),
 ):
     risk_score = data.likelihood * data.impact
@@ -71,20 +76,25 @@ async def create_risk(
     risk_data.pop("impact", None)
 
     risk = IMSRisk(
-        tenant_id=tenant_id,
+        tenant_id=current_user.tenant_id,
         likelihood=data.likelihood,
         impact=data.impact,
         risk_level=risk_level,
         **risk_data,
     )
     db.add(risk)
-    await db.commit()
+    await db.flush()
     await db.refresh(risk)
     return risk
 
 
 @router.patch("/{risk_id}", response_model=RiskResponse)
-async def update_risk(risk_id: UUID, data: RiskUpdate, db: AsyncSession = Depends(get_db)):
+async def update_risk(
+    risk_id: UUID,
+    data: RiskUpdate,
+    current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRisk).where(IMSRisk.id == risk_id))
     risk = result.scalar_one_or_none()
     if not risk:
@@ -102,13 +112,17 @@ async def update_risk(risk_id: UUID, data: RiskUpdate, db: AsyncSession = Depend
         risk_score = likelihood * impact
         risk.risk_level = calculate_risk_level(risk_score)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(risk)
     return risk
 
 
 @router.delete("/{risk_id}", status_code=204)
-async def delete_risk(risk_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_risk(
+    risk_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRisk).where(IMSRisk.id == risk_id))
     risk = result.scalar_one_or_none()
     if not risk:
@@ -120,7 +134,7 @@ async def delete_risk(risk_id: UUID, db: AsyncSession = Depends(get_db)):
     for link in links_result.scalars().all():
         await db.delete(link)
     await db.delete(risk)
-    await db.commit()
+    await db.flush()
 
 
 # ── Risk-Control Links ─────────────────────────────────────────────────────
@@ -132,6 +146,7 @@ async def list_risk_control_links(
     control_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSRiskControlLink)
@@ -145,16 +160,25 @@ async def list_risk_control_links(
 
 
 @router.post("/links/", response_model=RiskControlLinkResponse, status_code=201)
-async def create_risk_control_link(data: RiskControlLinkCreate, db: AsyncSession = Depends(get_db)):
+async def create_risk_control_link(
+    data: RiskControlLinkCreate,
+    current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
+    db: AsyncSession = Depends(get_db),
+):
     link = IMSRiskControlLink(**data.model_dump())
     db.add(link)
-    await db.commit()
+    await db.flush()
     await db.refresh(link)
     return link
 
 
 @router.delete("/links/{risk_id}/{control_id}", status_code=204)
-async def delete_risk_control_link(risk_id: UUID, control_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_risk_control_link(
+    risk_id: UUID,
+    control_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSRiskControlLink).where(
             and_(
@@ -167,4 +191,4 @@ async def delete_risk_control_link(risk_id: UUID, control_id: UUID, db: AsyncSes
     if not link:
         raise HTTPException(status_code=404, detail="RiskControlLink not found")
     await db.delete(link)
-    await db.commit()
+    await db.flush()

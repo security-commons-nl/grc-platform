@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
 from app.models.core_models import IMSStep, IMSStepDependency, IMSStepExecution
 from app.schemas.steps import (
@@ -33,6 +34,7 @@ async def list_steps(
     domain: str | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSStep)
@@ -46,7 +48,11 @@ async def list_steps(
 
 
 @router.get("/{step_id}", response_model=StepResponse)
-async def get_step(step_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_step(
+    step_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStep).where(IMSStep.id == step_id))
     step = result.scalar_one_or_none()
     if not step:
@@ -55,35 +61,48 @@ async def get_step(step_id: UUID, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/", response_model=StepResponse, status_code=201)
-async def create_step(data: StepCreate, db: AsyncSession = Depends(get_db)):
+async def create_step(
+    data: StepCreate,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     step = IMSStep(**data.model_dump())
     db.add(step)
-    await db.commit()
+    await db.flush()
     await db.refresh(step)
     return step
 
 
 @router.patch("/{step_id}", response_model=StepResponse)
-async def update_step(step_id: UUID, data: StepUpdate, db: AsyncSession = Depends(get_db)):
+async def update_step(
+    step_id: UUID,
+    data: StepUpdate,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStep).where(IMSStep.id == step_id))
     step = result.scalar_one_or_none()
     if not step:
         raise HTTPException(status_code=404, detail="Step not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(step, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(step)
     return step
 
 
 @router.delete("/{step_id}", status_code=204)
-async def delete_step(step_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_step(
+    step_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStep).where(IMSStep.id == step_id))
     step = result.scalar_one_or_none()
     if not step:
         raise HTTPException(status_code=404, detail="Step not found")
     await db.delete(step)
-    await db.commit()
+    await db.flush()
 
 
 # ── Step Dependencies ──────────────────────────────────────────────────────
@@ -94,6 +113,7 @@ async def list_step_dependencies(
     step_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSStepDependency)
@@ -105,22 +125,30 @@ async def list_step_dependencies(
 
 
 @router.post("/dependencies/", response_model=StepDependencyResponse, status_code=201)
-async def create_step_dependency(data: StepDependencyCreate, db: AsyncSession = Depends(get_db)):
+async def create_step_dependency(
+    data: StepDependencyCreate,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     dep = IMSStepDependency(**data.model_dump())
     db.add(dep)
-    await db.commit()
+    await db.flush()
     await db.refresh(dep)
     return dep
 
 
 @router.delete("/dependencies/{dep_id}", status_code=204)
-async def delete_step_dependency(dep_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_step_dependency(
+    dep_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStepDependency).where(IMSStepDependency.id == dep_id))
     dep = result.scalar_one_or_none()
     if not dep:
         raise HTTPException(status_code=404, detail="StepDependency not found")
     await db.delete(dep)
-    await db.commit()
+    await db.flush()
 
 
 # ── Step Executions ─────────────────────────────────────────────────────────
@@ -128,14 +156,14 @@ async def delete_step_dependency(dep_id: UUID, db: AsyncSession = Depends(get_db
 
 @router.get("/executions/", response_model=list[StepExecutionResponse])
 async def list_step_executions(
-    tenant_id: UUID = Query(...),
     step_id: UUID | None = None,
     status_filter: str | None = Query(None, alias="status"),
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(IMSStepExecution).where(IMSStepExecution.tenant_id == tenant_id)
+    query = select(IMSStepExecution).where(IMSStepExecution.tenant_id == current_user.tenant_id)
     if step_id:
         query = query.where(IMSStepExecution.step_id == step_id)
     if status_filter:
@@ -146,7 +174,11 @@ async def list_step_executions(
 
 
 @router.get("/executions/{execution_id}", response_model=StepExecutionResponse)
-async def get_step_execution(execution_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_step_execution(
+    execution_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStepExecution).where(IMSStepExecution.id == execution_id))
     execution = result.scalar_one_or_none()
     if not execution:
@@ -157,12 +189,12 @@ async def get_step_execution(execution_id: UUID, db: AsyncSession = Depends(get_
 @router.post("/executions/", response_model=StepExecutionResponse, status_code=201)
 async def create_step_execution(
     data: StepExecutionCreate,
-    tenant_id: UUID = Query(...),
+    current_user: CurrentUser = Depends(require_role("tims_lid")),
     db: AsyncSession = Depends(get_db),
 ):
-    execution = IMSStepExecution(tenant_id=tenant_id, **data.model_dump())
+    execution = IMSStepExecution(tenant_id=current_user.tenant_id, **data.model_dump())
     db.add(execution)
-    await db.commit()
+    await db.flush()
     await db.refresh(execution)
     return execution
 
@@ -171,6 +203,7 @@ async def create_step_execution(
 async def update_step_execution(
     execution_id: UUID,
     data: StepExecutionUpdate,
+    current_user: CurrentUser = Depends(require_role("tims_lid")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(IMSStepExecution).where(IMSStepExecution.id == execution_id))
@@ -200,16 +233,20 @@ async def update_step_execution(
     for field, value in update_data.items():
         setattr(execution, field, value)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(execution)
     return execution
 
 
 @router.delete("/executions/{execution_id}", status_code=204)
-async def delete_step_execution(execution_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_step_execution(
+    execution_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStepExecution).where(IMSStepExecution.id == execution_id))
     execution = result.scalar_one_or_none()
     if not execution:
         raise HTTPException(status_code=404, detail="StepExecution not found")
     await db.delete(execution)
-    await db.commit()
+    await db.flush()

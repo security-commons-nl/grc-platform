@@ -1,24 +1,24 @@
 import uuid
 import pytest
 from httpx import AsyncClient
+from tests.conftest import make_token
 
 
-async def _create_scope(client, tenant_id):
+async def _create_scope(client, tenant_token):
     resp = await client.post(
         "/api/v1/scopes/",
-        params={"tenant_id": tenant_id},
         json={"type": "cluster", "name": f"Risk Scope {uuid.uuid4().hex[:6]}", "domain": "ISMS"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     return resp.json()
 
 
 @pytest.mark.asyncio
-async def test_create_risk_auto_score(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_create_risk_auto_score(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     response = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -28,6 +28,7 @@ async def test_create_risk_auto_score(client: AsyncClient, test_tenant):
             "impact": 4,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -37,12 +38,11 @@ async def test_create_risk_auto_score(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_risk_level_groen(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_risk_level_groen(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     response = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -52,6 +52,7 @@ async def test_risk_level_groen(client: AsyncClient, test_tenant):
             "impact": 2,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -60,12 +61,11 @@ async def test_risk_level_groen(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_risk_level_geel(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_risk_level_geel(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     response = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -75,6 +75,7 @@ async def test_risk_level_geel(client: AsyncClient, test_tenant):
             "impact": 3,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     data = response.json()
     assert data["risk_score"] == 9
@@ -82,12 +83,11 @@ async def test_risk_level_geel(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_risk_level_rood(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_risk_level_rood(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     response = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -97,6 +97,7 @@ async def test_risk_level_rood(client: AsyncClient, test_tenant):
             "impact": 5,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     data = response.json()
     assert data["risk_score"] == 25
@@ -104,12 +105,11 @@ async def test_risk_level_rood(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_update_risk_recalculates_level(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_update_risk_recalculates_level(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     create_resp = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -119,6 +119,7 @@ async def test_update_risk_recalculates_level(client: AsyncClient, test_tenant):
             "impact": 1,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     risk_id = create_resp.json()["id"]
     assert create_resp.json()["risk_level"] == "groen"
@@ -127,6 +128,7 @@ async def test_update_risk_recalculates_level(client: AsyncClient, test_tenant):
     response = await client.patch(
         f"/api/v1/risks/{risk_id}",
         json={"likelihood": 5, "impact": 5},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -134,28 +136,31 @@ async def test_update_risk_recalculates_level(client: AsyncClient, test_tenant):
 
 
 @pytest.mark.asyncio
-async def test_list_risks_filter(client: AsyncClient, test_tenant):
+async def test_list_risks_filter(client: AsyncClient, test_tenant, tenant_token):
     response = await client.get(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"], "domain": "ISMS"},
+        params={"domain": "ISMS"},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 @pytest.mark.asyncio
-async def test_risk_not_found(client: AsyncClient):
-    response = await client.get(f"/api/v1/risks/{uuid.uuid4()}")
+async def test_risk_not_found(client: AsyncClient, admin_token):
+    response = await client.get(
+        f"/api/v1/risks/{uuid.uuid4()}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_risk_control_link(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_risk_control_link(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     risk_resp = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -165,18 +170,19 @@ async def test_risk_control_link(client: AsyncClient, test_tenant):
             "impact": 3,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     risk_id = risk_resp.json()["id"]
 
     control_resp = await client.post(
         "/api/v1/controls/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "title": "Link Test Control",
             "description": "Test",
             "domain": "ISMS",
             "implementation_status": "niet_gestart",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     control_id = control_resp.json()["id"]
 
@@ -184,23 +190,26 @@ async def test_risk_control_link(client: AsyncClient, test_tenant):
     link_resp = await client.post(
         "/api/v1/risks/links/",
         json={"risk_id": risk_id, "control_id": control_id},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert link_resp.status_code == 201
     assert link_resp.json()["risk_id"] == risk_id
     assert link_resp.json()["control_id"] == control_id
 
     # Delete link
-    del_resp = await client.delete(f"/api/v1/risks/links/{risk_id}/{control_id}")
+    del_resp = await client.delete(
+        f"/api/v1/risks/links/{risk_id}/{control_id}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
     assert del_resp.status_code == 204
 
 
 @pytest.mark.asyncio
-async def test_delete_risk_cascades_links(client: AsyncClient, test_tenant):
-    scope = await _create_scope(client, test_tenant["id"])
+async def test_delete_risk_cascades_links(client: AsyncClient, test_tenant, tenant_token):
+    scope = await _create_scope(client, tenant_token)
 
     risk_resp = await client.post(
         "/api/v1/risks/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "scope_id": scope["id"],
             "domain": "ISMS",
@@ -210,33 +219,39 @@ async def test_delete_risk_cascades_links(client: AsyncClient, test_tenant):
             "impact": 2,
             "status": "open",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     risk_id = risk_resp.json()["id"]
 
     control_resp = await client.post(
         "/api/v1/controls/",
-        params={"tenant_id": test_tenant["id"]},
         json={
             "title": "Cascade Delete Control",
             "description": "Test",
             "domain": "ISMS",
             "implementation_status": "niet_gestart",
         },
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     control_id = control_resp.json()["id"]
 
     await client.post(
         "/api/v1/risks/links/",
         json={"risk_id": risk_id, "control_id": control_id},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
 
     # Delete risk should also delete link
-    del_resp = await client.delete(f"/api/v1/risks/{risk_id}")
+    del_resp = await client.delete(
+        f"/api/v1/risks/{risk_id}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
     assert del_resp.status_code == 204
 
     # Verify link is gone
     links_resp = await client.get(
         "/api/v1/risks/links/",
         params={"risk_id": risk_id},
+        headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert len(links_resp.json()) == 0

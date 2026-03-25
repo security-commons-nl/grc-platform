@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
 from app.models.core_models import (
     IMSStandard, IMSRequirement, IMSRequirementMapping,
@@ -28,6 +29,7 @@ async def list_standards(
     status: str | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSStandard)
@@ -41,7 +43,11 @@ async def list_standards(
 
 
 @router.get("/{standard_id}", response_model=StandardResponse)
-async def get_standard(standard_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_standard(
+    standard_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStandard).where(IMSStandard.id == standard_id))
     standard = result.scalar_one_or_none()
     if not standard:
@@ -50,35 +56,48 @@ async def get_standard(standard_id: UUID, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/", response_model=StandardResponse, status_code=201)
-async def create_standard(data: StandardCreate, db: AsyncSession = Depends(get_db)):
+async def create_standard(
+    data: StandardCreate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
+):
     standard = IMSStandard(**data.model_dump())
     db.add(standard)
-    await db.commit()
+    await db.flush()
     await db.refresh(standard)
     return standard
 
 
 @router.patch("/{standard_id}", response_model=StandardResponse)
-async def update_standard(standard_id: UUID, data: StandardUpdate, db: AsyncSession = Depends(get_db)):
+async def update_standard(
+    standard_id: UUID,
+    data: StandardUpdate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStandard).where(IMSStandard.id == standard_id))
     standard = result.scalar_one_or_none()
     if not standard:
         raise HTTPException(status_code=404, detail="Standard not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(standard, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(standard)
     return standard
 
 
 @router.delete("/{standard_id}", status_code=204)
-async def delete_standard(standard_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_standard(
+    standard_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSStandard).where(IMSStandard.id == standard_id))
     standard = result.scalar_one_or_none()
     if not standard:
         raise HTTPException(status_code=404, detail="Standard not found")
     await db.delete(standard)
-    await db.commit()
+    await db.flush()
 
 
 # ── Requirements ───────────────────────────────────────────────────────────
@@ -90,6 +109,7 @@ async def list_requirements(
     domain: str | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSRequirement)
@@ -103,7 +123,11 @@ async def list_requirements(
 
 
 @router.get("/requirements/{requirement_id}", response_model=RequirementResponse)
-async def get_requirement(requirement_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_requirement(
+    requirement_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRequirement).where(IMSRequirement.id == requirement_id))
     req = result.scalar_one_or_none()
     if not req:
@@ -112,35 +136,48 @@ async def get_requirement(requirement_id: UUID, db: AsyncSession = Depends(get_d
 
 
 @router.post("/requirements/", response_model=RequirementResponse, status_code=201)
-async def create_requirement(data: RequirementCreate, db: AsyncSession = Depends(get_db)):
+async def create_requirement(
+    data: RequirementCreate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
+):
     req = IMSRequirement(**data.model_dump())
     db.add(req)
-    await db.commit()
+    await db.flush()
     await db.refresh(req)
     return req
 
 
 @router.patch("/requirements/{requirement_id}", response_model=RequirementResponse)
-async def update_requirement(requirement_id: UUID, data: RequirementUpdate, db: AsyncSession = Depends(get_db)):
+async def update_requirement(
+    requirement_id: UUID,
+    data: RequirementUpdate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRequirement).where(IMSRequirement.id == requirement_id))
     req = result.scalar_one_or_none()
     if not req:
         raise HTTPException(status_code=404, detail="Requirement not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(req, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(req)
     return req
 
 
 @router.delete("/requirements/{requirement_id}", status_code=204)
-async def delete_requirement(requirement_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_requirement(
+    requirement_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(IMSRequirement).where(IMSRequirement.id == requirement_id))
     req = result.scalar_one_or_none()
     if not req:
         raise HTTPException(status_code=404, detail="Requirement not found")
     await db.delete(req)
-    await db.commit()
+    await db.flush()
 
 
 # ── Requirement Mappings ───────────────────────────────────────────────────
@@ -152,6 +189,7 @@ async def list_requirement_mappings(
     target_requirement_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(IMSRequirementMapping)
@@ -165,7 +203,11 @@ async def list_requirement_mappings(
 
 
 @router.get("/mappings/{mapping_id}", response_model=RequirementMappingResponse)
-async def get_requirement_mapping(mapping_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_requirement_mapping(
+    mapping_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSRequirementMapping).where(IMSRequirementMapping.id == mapping_id)
     )
@@ -176,17 +218,24 @@ async def get_requirement_mapping(mapping_id: UUID, db: AsyncSession = Depends(g
 
 
 @router.post("/mappings/", response_model=RequirementMappingResponse, status_code=201)
-async def create_requirement_mapping(data: RequirementMappingCreate, db: AsyncSession = Depends(get_db)):
+async def create_requirement_mapping(
+    data: RequirementMappingCreate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
+):
     mapping = IMSRequirementMapping(**data.model_dump())
     db.add(mapping)
-    await db.commit()
+    await db.flush()
     await db.refresh(mapping)
     return mapping
 
 
 @router.patch("/mappings/{mapping_id}", response_model=RequirementMappingResponse)
 async def update_requirement_mapping(
-    mapping_id: UUID, data: RequirementMappingUpdate, db: AsyncSession = Depends(get_db)
+    mapping_id: UUID,
+    data: RequirementMappingUpdate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(IMSRequirementMapping).where(IMSRequirementMapping.id == mapping_id)
@@ -196,13 +245,17 @@ async def update_requirement_mapping(
         raise HTTPException(status_code=404, detail="RequirementMapping not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(mapping, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(mapping)
     return mapping
 
 
 @router.delete("/mappings/{mapping_id}", status_code=204)
-async def delete_requirement_mapping(mapping_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_requirement_mapping(
+    mapping_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSRequirementMapping).where(IMSRequirementMapping.id == mapping_id)
     )
@@ -210,7 +263,7 @@ async def delete_requirement_mapping(mapping_id: UUID, db: AsyncSession = Depend
     if not mapping:
         raise HTTPException(status_code=404, detail="RequirementMapping not found")
     await db.delete(mapping)
-    await db.commit()
+    await db.flush()
 
 
 # ── Tenant Normenkader ─────────────────────────────────────────────────────
@@ -218,14 +271,14 @@ async def delete_requirement_mapping(mapping_id: UUID, db: AsyncSession = Depend
 
 @router.get("/normenkader/", response_model=list[TenantNormenkaderResponse])
 async def list_tenant_normenkader(
-    tenant_id: UUID = Query(...),
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     query = (
         select(IMSTenantNormenkader)
-        .where(IMSTenantNormenkader.tenant_id == tenant_id)
+        .where(IMSTenantNormenkader.tenant_id == current_user.tenant_id)
         .offset(skip)
         .limit(limit)
     )
@@ -236,19 +289,22 @@ async def list_tenant_normenkader(
 @router.post("/normenkader/", response_model=TenantNormenkaderResponse, status_code=201)
 async def create_tenant_normenkader(
     data: TenantNormenkaderCreate,
-    tenant_id: UUID = Query(...),
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
     db: AsyncSession = Depends(get_db),
 ):
-    nk = IMSTenantNormenkader(tenant_id=tenant_id, **data.model_dump())
+    nk = IMSTenantNormenkader(tenant_id=current_user.tenant_id, **data.model_dump())
     db.add(nk)
-    await db.commit()
+    await db.flush()
     await db.refresh(nk)
     return nk
 
 
 @router.patch("/normenkader/{nk_id}", response_model=TenantNormenkaderResponse)
 async def update_tenant_normenkader(
-    nk_id: UUID, data: TenantNormenkaderUpdate, db: AsyncSession = Depends(get_db)
+    nk_id: UUID,
+    data: TenantNormenkaderUpdate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(IMSTenantNormenkader).where(IMSTenantNormenkader.id == nk_id)
@@ -258,13 +314,17 @@ async def update_tenant_normenkader(
         raise HTTPException(status_code=404, detail="TenantNormenkader not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(nk, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(nk)
     return nk
 
 
 @router.delete("/normenkader/{nk_id}", status_code=204)
-async def delete_tenant_normenkader(nk_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_tenant_normenkader(
+    nk_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSTenantNormenkader).where(IMSTenantNormenkader.id == nk_id)
     )
@@ -272,7 +332,7 @@ async def delete_tenant_normenkader(nk_id: UUID, db: AsyncSession = Depends(get_
     if not nk:
         raise HTTPException(status_code=404, detail="TenantNormenkader not found")
     await db.delete(nk)
-    await db.commit()
+    await db.flush()
 
 
 # ── Standard Ingestions ────────────────────────────────────────────────────
@@ -280,13 +340,13 @@ async def delete_tenant_normenkader(nk_id: UUID, db: AsyncSession = Depends(get_
 
 @router.get("/ingestions/", response_model=list[StandardIngestionResponse])
 async def list_standard_ingestions(
-    tenant_id: UUID = Query(...),
     status_filter: str | None = Query(None, alias="status"),
     skip: int = 0,
     limit: int = 100,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(IMSStandardIngestion).where(IMSStandardIngestion.tenant_id == tenant_id)
+    query = select(IMSStandardIngestion).where(IMSStandardIngestion.tenant_id == current_user.tenant_id)
     if status_filter:
         query = query.where(IMSStandardIngestion.status == status_filter)
     query = query.offset(skip).limit(limit)
@@ -295,7 +355,11 @@ async def list_standard_ingestions(
 
 
 @router.get("/ingestions/{ingestion_id}", response_model=StandardIngestionResponse)
-async def get_standard_ingestion(ingestion_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_standard_ingestion(
+    ingestion_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSStandardIngestion).where(IMSStandardIngestion.id == ingestion_id)
     )
@@ -308,19 +372,22 @@ async def get_standard_ingestion(ingestion_id: UUID, db: AsyncSession = Depends(
 @router.post("/ingestions/", response_model=StandardIngestionResponse, status_code=201)
 async def create_standard_ingestion(
     data: StandardIngestionCreate,
-    tenant_id: UUID = Query(...),
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
     db: AsyncSession = Depends(get_db),
 ):
-    ingestion = IMSStandardIngestion(tenant_id=tenant_id, **data.model_dump())
+    ingestion = IMSStandardIngestion(tenant_id=current_user.tenant_id, **data.model_dump())
     db.add(ingestion)
-    await db.commit()
+    await db.flush()
     await db.refresh(ingestion)
     return ingestion
 
 
 @router.patch("/ingestions/{ingestion_id}", response_model=StandardIngestionResponse)
 async def update_standard_ingestion(
-    ingestion_id: UUID, data: StandardIngestionUpdate, db: AsyncSession = Depends(get_db)
+    ingestion_id: UUID,
+    data: StandardIngestionUpdate,
+    current_user: CurrentUser = Depends(require_role("sims_lid")),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(IMSStandardIngestion).where(IMSStandardIngestion.id == ingestion_id)
@@ -330,13 +397,17 @@ async def update_standard_ingestion(
         raise HTTPException(status_code=404, detail="StandardIngestion not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(ingestion, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(ingestion)
     return ingestion
 
 
 @router.delete("/ingestions/{ingestion_id}", status_code=204)
-async def delete_standard_ingestion(ingestion_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_standard_ingestion(
+    ingestion_id: UUID,
+    current_user: CurrentUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IMSStandardIngestion).where(IMSStandardIngestion.id == ingestion_id)
     )
@@ -344,4 +415,4 @@ async def delete_standard_ingestion(ingestion_id: UUID, db: AsyncSession = Depen
     if not ingestion:
         raise HTTPException(status_code=404, detail="StandardIngestion not found")
     await db.delete(ingestion)
-    await db.commit()
+    await db.flush()
