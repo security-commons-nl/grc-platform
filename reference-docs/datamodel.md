@@ -1,7 +1,7 @@
 # IMS — Datamodel
 
 *Vastgesteld: 2026-03-19*
-*Status: ontwerp — nog niet geïmplementeerd*
+*Status: geïmplementeerd in `backend/app/models/core_models.py` + Alembic-migraties 001-003*
 
 Alle tabellen hebben prefix `ims_`. Platform-brede tabellen (users, tenants) hebben geen prefix.
 
