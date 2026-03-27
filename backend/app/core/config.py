@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "development"
     DEFAULT_TENANT_ID: str = "leiden"
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
 
     LANGFUSE_SECRET_KEY: str = ""
     LANGFUSE_PUBLIC_KEY: str = ""

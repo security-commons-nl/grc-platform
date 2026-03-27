@@ -97,7 +97,7 @@ export default function StepDetailPage({
       setSelectedStatus('');
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = err.body?.detail || JSON.stringify(err.body);
+        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
         setError(`Fout bij statuswijziging: ${detail}`);
       } else {
         setError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
