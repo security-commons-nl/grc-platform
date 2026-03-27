@@ -27,6 +27,7 @@ async def engine():
 @pytest_asyncio.fixture(autouse=True)
 async def clean_tables(engine):
     async with engine.begin() as conn:
+        # Truncate user/tenant data but NOT reference data (ims_steps, ims_step_dependencies, ims_standards)
         await conn.execute(text(
             "TRUNCATE TABLE "
             "ai_audit_logs, ims_gap_analysis_results, ims_step_input_documents, "
@@ -34,8 +35,8 @@ async def clean_tables(engine):
             "ims_incidents, ims_evidence, ims_corrective_actions, ims_findings, "
             "ims_assessments, ims_risk_control_links, ims_controls, ims_risks, ims_scopes, "
             "ims_standard_ingestions, ims_tenant_normenkader, ims_requirement_mappings, "
-            "ims_requirements, ims_standards, ims_document_versions, ims_documents, "
-            "ims_decisions, ims_step_executions, ims_step_dependencies, ims_steps, "
+            "ims_requirements, ims_document_versions, ims_documents, "
+            "ims_decisions, ims_step_executions, "
             "user_region_roles, user_tenant_roles, users, tenants, regions "
             "CASCADE"
         ))
