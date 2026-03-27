@@ -2,7 +2,7 @@
 
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import {
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -47,7 +47,7 @@ export default function StepDetailPage({
     () => api.steps.get(stepId),
   );
 
-  const { data: allExecutions, isLoading: execLoading } = useSWR<StepExecutionResponse[]>(
+  const { data: allExecutions, isLoading: execLoading, mutate: mutateExecutions } = useSWR<StepExecutionResponse[]>(
     '/steps/executions/',
     () => api.steps.listExecutions(),
   );
@@ -93,7 +93,7 @@ export default function StepDetailPage({
         await api.steps.updateExecution(execution.id, { status: selectedStatus });
       }
       // Revalidate
-      await mutate('/steps/executions/');
+      await mutateExecutions();
       setSelectedStatus('');
     } catch (err) {
       if (err instanceof ApiError) {

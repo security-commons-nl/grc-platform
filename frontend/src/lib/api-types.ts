@@ -184,3 +184,103 @@ export interface DocumentVersionResponse {
   decision_id?: string | null;
   created_at: string;
 }
+
+// ── Scopes ──────────────────────────────────────────────────────────────────
+
+export interface ScopeResponse {
+  id: string;
+  tenant_id: string;
+  parent_id?: string | null;
+  name: string;
+  scope_type: string;
+  domain?: string | null;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Assessments ─────────────────────────────────────────────────────────────
+
+export interface AssessmentResponse {
+  id: string;
+  tenant_id: string;
+  scope_id?: string | null;
+  assessment_type: string;
+  domain?: string | null;
+  status: string;
+  planned_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Findings ────────────────────────────────────────────────────────────────
+
+export interface FindingResponse {
+  id: string;
+  tenant_id: string;
+  assessment_id: string;
+  title: string;
+  description?: string | null;
+  severity: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Corrective Actions ──────────────────────────────────────────────────────
+
+export interface CorrectiveActionResponse {
+  id: string;
+  tenant_id: string;
+  finding_id?: string | null;
+  title: string;
+  description?: string | null;
+  status: string;
+  due_date?: string | null;
+  owner_user_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Evidence ────────────────────────────────────────────────────────────────
+
+export interface EvidenceResponse {
+  id: string;
+  tenant_id: string;
+  control_id?: string | null;
+  title: string;
+  evidence_type: string;
+  collected_at?: string | null;
+  valid_until?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Incidents ───────────────────────────────────────────────────────────────
+
+export interface IncidentResponse {
+  id: string;
+  tenant_id: string;
+  title: string;
+  incident_type: string;
+  severity: string;
+  status: string;
+  reported_at?: string | null;
+  resolved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Knowledge ───────────────────────────────────────────────────────────────
+
+export interface KnowledgeArtifactResponse {
+  id: string;
+  tenant_id: string;
+  title: string;
+  content?: string | null;
+  artifact_type: string;
+  created_at: string;
+  updated_at: string;
+}

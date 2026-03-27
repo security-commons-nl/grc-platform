@@ -11,6 +11,15 @@ import type {
   DocumentResponse,
   DocumentVersionResponse,
   SetupScoreResponse,
+  RiskResponse,
+  ControlResponse,
+  ScopeResponse,
+  AssessmentResponse,
+  FindingResponse,
+  CorrectiveActionResponse,
+  EvidenceResponse,
+  IncidentResponse,
+  KnowledgeArtifactResponse,
 } from './api-types';
 
 export class ApiError extends Error {
@@ -91,15 +100,105 @@ export const api = {
         body: JSON.stringify(data),
       }),
     listVersions: (docId: string) =>
-      apiFetch<DocumentVersionResponse[]>(`/documents/${docId}/versions/`),
+      apiFetch<DocumentVersionResponse[]>(`/documents/versions/?document_id=${docId}`),
     createVersion: (docId: string, data: Record<string, unknown>) =>
-      apiFetch<DocumentVersionResponse>(`/documents/${docId}/versions/`, {
+      apiFetch<DocumentVersionResponse>(`/documents/versions/?document_id=${docId}`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
   },
   scores: {
     setupScores: () => apiFetch<SetupScoreResponse[]>('/scores/setup-scores/'),
+  },
+  risks: {
+    list: () => apiFetch<RiskResponse[]>('/risks/'),
+    get: (id: string) => apiFetch<RiskResponse>(`/risks/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<RiskResponse>('/risks/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      apiFetch<RiskResponse>(`/risks/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/risks/${id}`, { method: 'DELETE' }),
+  },
+  controls: {
+    list: () => apiFetch<ControlResponse[]>('/controls/'),
+    get: (id: string) => apiFetch<ControlResponse>(`/controls/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<ControlResponse>('/controls/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      apiFetch<ControlResponse>(`/controls/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/controls/${id}`, { method: 'DELETE' }),
+  },
+  scopes: {
+    list: () => apiFetch<ScopeResponse[]>('/scopes/'),
+    get: (id: string) => apiFetch<ScopeResponse>(`/scopes/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<ScopeResponse>('/scopes/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  assessments: {
+    list: () => apiFetch<AssessmentResponse[]>('/assessments/'),
+    get: (id: string) => apiFetch<AssessmentResponse>(`/assessments/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<AssessmentResponse>('/assessments/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  findings: {
+    list: () => apiFetch<FindingResponse[]>('/findings/'),
+    get: (id: string) => apiFetch<FindingResponse>(`/findings/${id}`),
+  },
+  correctiveActions: {
+    list: () => apiFetch<CorrectiveActionResponse[]>('/corrective-actions/'),
+    get: (id: string) => apiFetch<CorrectiveActionResponse>(`/corrective-actions/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<CorrectiveActionResponse>('/corrective-actions/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  evidence: {
+    list: () => apiFetch<EvidenceResponse[]>('/evidence/'),
+    get: (id: string) => apiFetch<EvidenceResponse>(`/evidence/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<EvidenceResponse>('/evidence/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  incidents: {
+    list: () => apiFetch<IncidentResponse[]>('/incidents/'),
+    get: (id: string) => apiFetch<IncidentResponse>(`/incidents/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<IncidentResponse>('/incidents/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  knowledge: {
+    list: () => apiFetch<KnowledgeArtifactResponse[]>('/knowledge/'),
+    get: (id: string) => apiFetch<KnowledgeArtifactResponse>(`/knowledge/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<KnowledgeArtifactResponse>('/knowledge/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   },
 };
 
