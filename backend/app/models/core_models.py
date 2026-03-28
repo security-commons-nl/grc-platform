@@ -7,6 +7,7 @@ from typing import Any, Optional
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Computed,
     Date,
     DateTime,
@@ -93,6 +94,17 @@ class StepStatusEnum(str, enum.Enum):
     concept = "concept"
     in_review = "in_review"
     vastgesteld = "vastgesteld"
+
+
+class OutputTypeEnum(str, enum.Enum):
+    document = "document"
+    decision = "decision"
+    register = "register"
+
+
+class OutputRequirementEnum(str, enum.Enum):
+    V = "V"  # Verplicht
+    A = "A"  # Aanbevolen
 
 
 class DecisionTypeEnum(str, enum.Enum):
@@ -505,6 +517,10 @@ class IMSStep(Base):
         nullable=False,
     )
 
+    outputs: Mapped[list["IMSStepOutput"]] = relationship(
+        "IMSStepOutput", back_populates="step", lazy="selectin"
+    )
+
 
 class IMSStepDependency(Base):
     __tablename__ = "ims_step_dependencies"
@@ -555,6 +571,81 @@ class IMSStepExecution(Base):
     skipped: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     skip_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     skip_logged_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+
+class IMSStepOutput(Base):
+    __tablename__ = "ims_step_outputs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    step_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_steps.id"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    output_type: Mapped[OutputTypeEnum] = mapped_column(String(20), nullable=False)
+    requirement: Mapped[OutputRequirementEnum] = mapped_column(
+        String(1), nullable=False, default="V"
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    step: Mapped["IMSStep"] = relationship("IMSStep", back_populates="outputs")
+
+
+class IMSStepOutputFulfillment(Base):
+    __tablename__ = "ims_step_output_fulfillments"
+    __table_args__ = (
+        CheckConstraint(
+            "(CASE WHEN decision_id IS NOT NULL THEN 1 ELSE 0 END"
+            " + CASE WHEN document_id IS NOT NULL THEN 1 ELSE 0 END) = 1",
+            name="ck_fulfillment_one_link",
+        ),
+        UniqueConstraint(
+            "step_output_id", "step_execution_id",
+            name="uq_fulfillment_output_execution",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    step_output_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_step_outputs.id"), nullable=False
+    )
+    step_execution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_step_executions.id"), nullable=False
+    )
+    decision_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_decisions.id"), nullable=True
+    )
+    document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_documents.id"), nullable=True
+    )
+    fulfilled_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    fulfilled_by: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )

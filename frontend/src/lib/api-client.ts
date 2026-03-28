@@ -7,6 +7,8 @@ import type {
   StepResponse,
   StepExecutionResponse,
   StepDependencyResponse,
+  StepReadiness,
+  StepOutputFulfillmentResponse,
   DecisionResponse,
   DocumentResponse,
   DocumentVersionResponse,
@@ -82,6 +84,24 @@ export const api = {
       }),
     listDependencies: () =>
       apiFetch<StepDependencyResponse[]>('/steps/dependencies/'),
+    getReadiness: (executionId: string) =>
+      apiFetch<StepReadiness>(`/steps/executions/${executionId}/readiness`),
+    listFulfillments: (executionId: string) =>
+      apiFetch<StepOutputFulfillmentResponse[]>(
+        `/steps/executions/${executionId}/fulfillments`
+      ),
+    createFulfillment: (
+      executionId: string,
+      data: { step_output_id: string; decision_id?: string; document_id?: string }
+    ) =>
+      apiFetch<StepOutputFulfillmentResponse>(
+        `/steps/executions/${executionId}/fulfillments`,
+        { method: 'POST', body: JSON.stringify(data) }
+      ),
+    deleteFulfillment: (fulfillmentId: string) =>
+      apiFetch<void>(`/steps/fulfillments/${fulfillmentId}`, {
+        method: 'DELETE',
+      }),
   },
   decisions: {
     list: () => apiFetch<DecisionResponse[]>('/decisions/'),

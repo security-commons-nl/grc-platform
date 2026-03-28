@@ -20,96 +20,22 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { WaaromTooltip } from '@/components/shared/waarom-tooltip';
 import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { api, apiFetch, ApiError } from '@/lib/api-client';
-import { STEP_CONFIGS } from '@/lib/step-config';
 import type {
   StepResponse,
   StepExecutionResponse,
-  StepDependencyResponse,
-  DecisionResponse,
-  DocumentResponse,
+  StepReadiness,
 } from '@/lib/api-types';
 
-// --- Status transition labels (direct buttons, no dropdown) ---
-const STATUS_ACTIONS: Record<
-  string,
-  { target: string; label: string; variant: 'primary' | 'secondary' | 'danger' }[]
-> = {
-  niet_gestart: [
-    { target: 'in_uitvoering', label: 'Start deze stap', variant: 'primary' },
-  ],
-  in_uitvoering: [
-    { target: 'concept', label: 'Markeer als concept', variant: 'primary' },
-  ],
-  concept: [
-    { target: 'in_review', label: 'Indienen voor review', variant: 'primary' },
-  ],
-  in_review: [
-    { target: 'vastgesteld', label: 'Goedkeuren', variant: 'primary' },
-    { target: 'concept', label: 'Terugsturen', variant: 'secondary' },
-  ],
-  vastgesteld: [],
+// Pure UI labels — no process logic
+const TRANSITION_LABELS: Record<string, { label: string; variant: 'primary' | 'secondary' | 'danger' }> = {
+  in_uitvoering: { label: 'Start deze stap', variant: 'primary' },
+  concept: { label: 'Markeer als concept', variant: 'primary' },
+  in_review: { label: 'Indienen voor review', variant: 'primary' },
+  vastgesteld: { label: 'Goedkeuren', variant: 'primary' },
 };
 
-// --- What's needed before transitioning (stok achter de deur) ---
-interface GateCheck {
-  passed: boolean;
-  message: string;
-}
-
-function checkGates(
-  currentStatus: string,
-  targetStatus: string,
-  decisions: DecisionResponse[],
-  documents: DocumentResponse[],
-  stepId: string,
-): GateCheck {
-  // Starting a step is always allowed
-  if (currentStatus === 'niet_gestart' && targetStatus === 'in_uitvoering') {
-    return { passed: true, message: '' };
-  }
-
-  // in_uitvoering → concept: must have at least 1 decision or document linked to this step
-  if (currentStatus === 'in_uitvoering' && targetStatus === 'concept') {
-    const hasOutput =
-      decisions.some((d) => d.step_execution_id === stepId) ||
-      documents.some((d) => d.step_execution_id === stepId);
-    if (!hasOutput) {
-      return {
-        passed: false,
-        message:
-          'Voeg eerst een besluit of document toe voordat je deze stap als concept markeert.',
-      };
-    }
-  }
-
-  // concept → in_review: same check (at least 1 output)
-  if (currentStatus === 'concept' && targetStatus === 'in_review') {
-    const hasOutput =
-      decisions.some((d) => d.step_execution_id === stepId) ||
-      documents.some((d) => d.step_execution_id === stepId);
-    if (!hasOutput) {
-      return {
-        passed: false,
-        message:
-          'Er moet minimaal een besluit of document aan deze stap gekoppeld zijn.',
-      };
-    }
-  }
-
-  // in_review → vastgesteld: must have a decision in the besluitlog for this step
-  if (currentStatus === 'in_review' && targetStatus === 'vastgesteld') {
-    const hasDecision = decisions.some((d) => d.step_execution_id === stepId);
-    if (!hasDecision) {
-      return {
-        passed: false,
-        message:
-          'Er moet een besluit in de besluitlog staan voordat deze stap vastgesteld kan worden.',
-      };
-    }
-  }
-
-  return { passed: true, message: '' };
-}
+// For the "terugsturen" case (in_review → concept)
+const BACK_TRANSITION_LABEL = { label: 'Terugsturen', variant: 'secondary' as const };
 
 export default function StepDetailPage({
   params,
@@ -137,70 +63,30 @@ export default function StepDetailPage({
     api.steps.listExecutions(),
   );
 
-  const { data: dependencies } = useSWR<StepDependencyResponse[]>(
-    '/steps/dependencies/',
-    () => api.steps.listDependencies(),
-  );
-
-  // Fetch decisions and documents linked to this step (for gate checks)
-  const { data: decisions = [] } = useSWR<DecisionResponse[]>(
-    '/decisions/',
-    () => api.decisions.list(),
-  );
-
-  const { data: documents = [] } = useSWR<DocumentResponse[]>(
-    '/documents/',
-    () => api.documents.list(),
-  );
-
   const execution = allExecutions?.find((e) => e.step_id === stepId);
+  const executionId = execution?.id;
   const currentStatus = execution?.status || 'niet_gestart';
   const isCompleted = currentStatus === 'vastgesteld';
-  const executionId = execution?.id;
 
-  const stepConfig = step ? STEP_CONFIGS[step.number] || null : null;
-
-  // Check if dependencies are met
-  const stepDeps = dependencies?.filter((d) => d.step_id === stepId) || [];
-  const blockingDeps = stepDeps.filter((dep) => {
-    if (dep.dependency_type !== 'B') return false;
-    const depExec = allExecutions?.find(
-      (e) => e.step_id === dep.depends_on_step_id,
-    );
-    return !depExec || depExec.status !== 'vastgesteld';
-  });
-  const isBlocked = blockingDeps.length > 0;
-
-  const actions = STATUS_ACTIONS[currentStatus] || [];
-
-  // Count linked outputs
-  const linkedDecisions = decisions.filter(
-    (d) => d.step_execution_id === executionId,
+  // Readiness from API — the single source of truth for gates and transitions
+  const {
+    data: readiness,
+    mutate: mutateReadiness,
+  } = useSWR<StepReadiness>(
+    executionId ? `/steps/executions/${executionId}/readiness` : null,
+    () => (executionId ? api.steps.getReadiness(executionId) : null!),
   );
-  const linkedDocuments = documents.filter(
-    (d) => d.step_execution_id === executionId,
-  );
-  const outputCount = linkedDecisions.length + linkedDocuments.length;
+
+  const isBlocked = readiness ? !readiness.dependencies_met : false;
+  const allowedTransitions = readiness?.allowed_transitions || [];
 
   async function handleTransition(targetStatus: string) {
-    // Gate check
-    const gate = checkGates(
-      currentStatus,
-      targetStatus,
-      decisions,
-      documents,
-      executionId || '',
-    );
-    if (!gate.passed) {
-      setError(gate.message);
-      return;
-    }
-
     setIsUpdating(true);
     setError(null);
 
     try {
       if (!execution) {
+        // Create execution first, then transition
         const created = await api.steps.createExecution({
           step_id: stepId,
           status: 'niet_gestart',
@@ -216,6 +102,7 @@ export default function StepDetailPage({
         });
       }
       await mutateExecutions();
+      await mutateReadiness();
     } catch (err) {
       if (err instanceof ApiError) {
         const detail =
@@ -291,6 +178,26 @@ export default function StepDetailPage({
     );
   }
 
+  // Build action buttons from API-provided allowed transitions
+  const actions = allowedTransitions.map((t) => {
+    // Special case: going back from in_review to concept
+    if (currentStatus === 'in_review' && t === 'concept') {
+      return { target: t, ...BACK_TRANSITION_LABEL };
+    }
+    const label = TRANSITION_LABELS[t] || { label: t, variant: 'primary' as const };
+    return { target: t, ...label };
+  });
+
+  // For niet_gestart without execution, allow starting
+  const canStart = !execution && !isCompleted;
+  if (canStart) {
+    actions.push({
+      target: 'in_uitvoering',
+      label: 'Start deze stap',
+      variant: 'primary',
+    });
+  }
+
   return (
     <PageWrapper
       title={`Stap ${step.number} -- ${step.name}`}
@@ -364,49 +271,56 @@ export default function StepDetailPage({
                 </div>
               )}
 
-              {stepConfig && stepConfig.outputs.length > 0 && (
+              {/* Outputs from API (step.outputs) */}
+              {step.outputs && step.outputs.length > 0 && (
                 <div className="pt-2 border-t border-neutral-100">
                   <p className="text-xs text-neutral-500 mb-2">
-                    Verwachte outputs
+                    Verplichte outputs ({readiness ? `${readiness.required_fulfilled}/${readiness.required_total}` : '...'})
                   </p>
-                  <ul className="space-y-1">
-                    {stepConfig.outputs.map((output) => (
-                      <li
-                        key={output}
-                        className="text-xs text-neutral-600 flex items-start gap-1.5"
-                      >
-                        <span className="mt-1 h-1 w-1 rounded-full bg-neutral-400 flex-shrink-0" />
-                        {output}
-                      </li>
-                    ))}
+                  <ul className="space-y-1.5">
+                    {step.outputs
+                      .sort((a, b) => a.sort_order - b.sort_order)
+                      .map((output) => {
+                        const item = readiness?.outputs.find(
+                          (o) => o.output.id === output.id,
+                        );
+                        const fulfilled = item?.fulfilled || false;
+                        return (
+                          <li
+                            key={output.id}
+                            className="text-xs flex items-start gap-1.5"
+                          >
+                            <span
+                              className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
+                                fulfilled
+                                  ? 'bg-green-500'
+                                  : output.requirement === 'V'
+                                    ? 'bg-red-400'
+                                    : 'bg-neutral-300'
+                              }`}
+                            />
+                            <span
+                              className={
+                                fulfilled
+                                  ? 'text-green-700'
+                                  : 'text-neutral-600'
+                              }
+                            >
+                              {output.name}
+                              {output.requirement === 'V' && (
+                                <span className="ml-1 text-neutral-400">
+                                  (V)
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        );
+                      })}
                   </ul>
                 </div>
               )}
             </div>
           </Card>
-
-          {/* Linked outputs count */}
-          {execution && (
-            <Card>
-              <p className="text-xs text-neutral-500 mb-2">
-                Gekoppelde outputs
-              </p>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">Besluiten</span>
-                  <Badge variant={linkedDecisions.length > 0 ? 'success' : 'neutral'}>
-                    {linkedDecisions.length}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">Documenten</span>
-                  <Badge variant={linkedDocuments.length > 0 ? 'success' : 'neutral'}>
-                    {linkedDocuments.length}
-                  </Badge>
-                </div>
-              </div>
-            </Card>
-          )}
         </div>
 
         {/* Right main area */}
@@ -423,16 +337,14 @@ export default function StepDetailPage({
 
           {/* Step description */}
           <Card>
-            {stepConfig && (
-              <div>
-                <h3 className="text-base font-semibold text-neutral-900 mb-2">
-                  {stepConfig.title}
-                </h3>
-                <p className="text-sm text-neutral-600 leading-relaxed">
-                  {stepConfig.description}
-                </p>
-              </div>
-            )}
+            <div>
+              <h3 className="text-base font-semibold text-neutral-900 mb-2">
+                {step.name}
+              </h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                {step.waarom_nu}
+              </p>
+            </div>
           </Card>
 
           {/* Action buttons (direct, no dropdown) */}
@@ -443,11 +355,11 @@ export default function StepDetailPage({
                   Acties
                 </h4>
 
-                {/* Gate warning */}
-                {currentStatus !== 'niet_gestart' && outputCount === 0 && (
+                {/* Missing outputs warning from readiness */}
+                {readiness && !readiness.all_required_met && currentStatus !== 'niet_gestart' && (
                   <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-                    Voeg eerst een besluit of document toe aan deze stap
-                    voordat je verder kunt.
+                    Niet alle verplichte outputs zijn ingevuld ({readiness.required_fulfilled}/{readiness.required_total}).
+                    Vul de ontbrekende outputs aan om verder te kunnen.
                   </div>
                 )}
 

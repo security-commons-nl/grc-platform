@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
-from typing import Optional
+from typing import Optional, List
 
 
 # ── IMSStep ─────────────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ class StepResponse(BaseModel):
     required_gremium: str
     is_optional: bool
     domain: Optional[str]
+    outputs: List["StepOutputResponse"] = []
     created_at: datetime
     updated_at: datetime
 
@@ -96,3 +97,66 @@ class StepExecutionResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── IMSStepOutput ────────────────────────────────────────────────────────
+
+
+class StepOutputResponse(BaseModel):
+    id: UUID
+    step_id: UUID
+    name: str
+    output_type: str
+    requirement: str
+    sort_order: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── IMSStepOutputFulfillment ────────────────────────────────────────────
+
+
+class StepOutputFulfillmentCreate(BaseModel):
+    step_output_id: UUID
+    decision_id: Optional[UUID] = None
+    document_id: Optional[UUID] = None
+
+
+class StepOutputFulfillmentResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    step_output_id: UUID
+    step_execution_id: UUID
+    decision_id: Optional[UUID]
+    document_id: Optional[UUID]
+    fulfilled_at: datetime
+    fulfilled_by: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── StepReadiness (computed) ────────────────────────────────────────────
+
+
+class OutputReadinessItem(BaseModel):
+    output: StepOutputResponse
+    fulfilled: bool
+    fulfillment: Optional[StepOutputFulfillmentResponse] = None
+
+
+class StepReadiness(BaseModel):
+    step_id: UUID
+    execution_id: Optional[UUID]
+    current_status: str
+    outputs: List[OutputReadinessItem]
+    required_fulfilled: int
+    required_total: int
+    all_required_met: bool
+    dependencies_met: bool
+    blocking_dependencies: List[UUID]
+    allowed_transitions: List[str]
+    can_advance: bool

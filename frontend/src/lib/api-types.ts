@@ -36,6 +36,17 @@ export interface TenantResponse {
 
 // ── Steps ───────────────────────────────────────────────────────────────────
 
+export interface StepOutputResponse {
+  id: string;
+  step_id: string;
+  name: string;
+  output_type: string;
+  requirement: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StepResponse {
   id: string;
   number: string;
@@ -45,6 +56,7 @@ export interface StepResponse {
   required_gremium: string;
   is_optional: boolean;
   domain?: string | null;
+  outputs: StepOutputResponse[];
   created_at: string;
   updated_at: string;
 }
@@ -70,6 +82,39 @@ export interface StepDependencyResponse {
   dependency_type: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface StepOutputFulfillmentResponse {
+  id: string;
+  tenant_id: string;
+  step_output_id: string;
+  step_execution_id: string;
+  decision_id?: string | null;
+  document_id?: string | null;
+  fulfilled_at: string;
+  fulfilled_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OutputReadinessItem {
+  output: StepOutputResponse;
+  fulfilled: boolean;
+  fulfillment?: StepOutputFulfillmentResponse | null;
+}
+
+export interface StepReadiness {
+  step_id: string;
+  execution_id?: string | null;
+  current_status: string;
+  outputs: OutputReadinessItem[];
+  required_fulfilled: number;
+  required_total: number;
+  all_required_met: boolean;
+  dependencies_met: boolean;
+  blocking_dependencies: string[];
+  allowed_transitions: string[];
+  can_advance: boolean;
 }
 
 // ── Decisions ───────────────────────────────────────────────────────────────

@@ -36,7 +36,7 @@ async def clean_tables(engine):
             "ims_assessments, ims_risk_control_links, ims_controls, ims_risks, ims_scopes, "
             "ims_standard_ingestions, ims_tenant_normenkader, ims_requirement_mappings, "
             "ims_requirements, ims_document_versions, ims_documents, "
-            "ims_decisions, ims_step_executions, "
+            "ims_step_output_fulfillments, ims_decisions, ims_step_executions, "
             "user_region_roles, user_tenant_roles, users, tenants, regions "
             "CASCADE"
         ))
