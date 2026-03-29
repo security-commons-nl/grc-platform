@@ -40,6 +40,17 @@ def upgrade() -> None:
         "UPDATE user_tenant_roles SET role = 'tactisch_lid' WHERE role = 'tims_lid'"
     ))
 
+    # Rename TIMS/SIMS in waarom_nu free-text fields
+    op.execute(sa.text(
+        "UPDATE ims_steps SET waarom_nu = REPLACE(waarom_nu, 'het TIMS', 'het tactisch gremium') WHERE waarom_nu LIKE '%het TIMS%'"
+    ))
+    op.execute(sa.text(
+        "UPDATE ims_steps SET waarom_nu = REPLACE(waarom_nu, 'Het SIMS', 'Het strategisch gremium') WHERE waarom_nu LIKE '%Het SIMS%'"
+    ))
+    op.execute(sa.text(
+        "UPDATE ims_steps SET waarom_nu = REPLACE(waarom_nu, 'het SIMS', 'het strategisch gremium') WHERE waarom_nu LIKE '%het SIMS%'"
+    ))
+
     # Rename tenant and region (if Leiden defaults exist)
     op.execute(sa.text(
         "UPDATE tenants SET name = 'Voorbeeldgemeente' WHERE name = 'Gemeente Leiden'"
