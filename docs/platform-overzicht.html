@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Platform — Overzicht</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-primary: #0a0f1a;
+    --bg-card: #111827;
+    --bg-card-hover: #1f2937;
+    --border: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --isms: #60a5fa;
+    --pims: #a78bfa;
+    --bcms: #34d399;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 2rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+
+  .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+  .generated { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 1rem; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-v { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .badge-a { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .badge-fase0 { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+  .badge-fase1 { background: rgba(96,165,250,0.2); color: #93c5fd; }
+  .badge-fase2 { background: rgba(52,211,153,0.2); color: #6ee7b7; }
+  .badge-fase3 { background: rgba(167,139,250,0.2); color: #c4b5fd; }
+  .badge-agent { background: rgba(99,102,241,0.15); color: var(--accent); }
+  .badge-method { background: rgba(52,211,153,0.15); color: var(--bcms); font-family: monospace; }
+
+  .stat { text-align: center; }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.8rem; color: var(--text-secondary); }
+
+  .step-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 8px;
+    background: rgba(99,102,241,0.15); color: var(--accent);
+    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+  }
+
+  .output-list { list-style: none; padding: 0; }
+  .output-list li { padding: 0.2rem 0; font-size: 0.85rem; color: var(--text-secondary); }
+  .output-list li::before { content: '→ '; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+  th { text-align: left; padding: 0.5rem; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  td { padding: 0.5rem; font-size: 0.85rem; border-bottom: 1px solid rgba(55,65,81,0.5); }
+  tr:hover td { background: rgba(99,102,241,0.05); }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: rgba(99,102,241,0.1); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+  .dep-arrow { color: var(--text-muted); font-size: 0.8rem; }
+  .dep-b { color: var(--danger); }
+  .dep-w { color: var(--warning); }
+
+  .nav { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .nav a { color: var(--accent); text-decoration: none; font-size: 0.85rem; padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s; }
+  .nav a:hover { background: var(--bg-card); border-color: var(--accent); }
+</style>
+</head><body>
+<h1>IMS Platform — Functioneel Overzicht</h1>
+<p class="subtitle">Integrated Management System voor gemeenten (ISMS · PIMS · BCMS)</p>
+<p class="generated">Auto-generated op 2026-03-29 14:57 uit codebase</p>
+
+<div class="nav">
+  <a href="#stats">Statistieken</a>
+  <a href="#stappen">22 Stappen</a>
+  <a href="#agents">AI Agents</a>
+  <a href="#deps">Afhankelijkheden</a>
+  <a href="architectuur.html">→ Technische architectuur</a>
+</div>
+
+<h2 id="stats">Statistieken</h2>
+<div class="grid">
+  <div class="card stat"><div class="stat-value">24</div><div class="stat-label">Processtappen</div></div>
+  <div class="card stat"><div class="stat-value">20</div><div class="stat-label">Output-definities (Fase 0)</div></div>
+  <div class="card stat"><div class="stat-value">7</div><div class="stat-label">AI Agents</div></div>
+  <div class="card stat"><div class="stat-value">4</div><div class="stat-label">Fasen</div></div>
+</div>
+
+<h2 id="stappen">Processtappen</h2>
+<h3>Fase 0 — Fundament (8 stappen)</h3>
+<div class="grid">
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">1</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Bestuurlijk commitment</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      <span class="badge badge-agent">commitment-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Besluitmemo <span class="badge badge-v">V</span></li><li>Besluitlog #001 <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">2a</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Organisatiecontext vaststellen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      <span class="badge badge-agent">context-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Organisatiecontextdocument <span class="badge badge-v">V</span></li><li>Stakeholderregister <span class="badge badge-v">V</span></li><li>PII-rol <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">2b</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Scope bepalen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      <span class="badge badge-agent">scope-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Formeel scopebesluit <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">3a</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Governance- en beleidsvoorstel opstellen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      <span class="badge badge-agent">governance-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Concept governance-document <span class="badge badge-v">V</span></li><li>Concept IMS-beleid <span class="badge badge-v">V</span></li><li>Communicatiematrix <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">3b</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Governance en beleid vaststellen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      
+                    </div>
+                    <ul class="output-list"><li>Formeel governance-besluit <span class="badge badge-v">V</span></li><li>IMS-beleid (definitief) <span class="badge badge-v">V</span></li><li>Besluitlog <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">4</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Gap-analyse</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      <span class="badge badge-agent">gap-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Nulmeting per domein <span class="badge badge-v">V</span></li><li>Volwassenheidsprofiel v1 <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">5</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Registers &amp; risicobeoordeling</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      <span class="badge badge-agent">register-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Registerinventarisatie <span class="badge badge-v">V</span></li><li>Eerste risicobeeld <span class="badge badge-v">V</span></li><li>Risicobeoordelingsmethodiek <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">6</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Normenkader &amp; kerncontrols</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase0">Fase 0</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      <span class="badge badge-agent">controls-agent</span>
+                    </div>
+                    <ul class="output-list"><li>Normenkader <span class="badge badge-v">V</span></li><li>Minimale werkset kerncontrols <span class="badge badge-v">V</span></li><li>Besluitlog <span class="badge badge-v">V</span></li></ul>
+                  </div>
+                </div>
+              </div>
+</div>
+<h3>Fase 1 — Lijnmanagement (6 stappen)</h3>
+<div class="grid">
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">7</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Onboarding &amp; awareness lijnmanagement</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">8</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Koppeling processen, systemen &amp; verwerkingen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">9</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Risicoanalyse door lijnmanagement</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">lijnmanagement</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">10</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Risicobehandeling &amp; controls toewijzen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">11</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Statement of Applicability (SoA)</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">12</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Monitoring &amp; rapportage inrichten</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase1">Fase 1</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+</div>
+<h3>Fase 2 — PDCA & Evidence (5 stappen)</h3>
+<div class="grid">
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">13</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Interne audit plannen &amp; uitvoeren</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase2">Fase 2</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">14</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Management review</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase2">Fase 2</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">15</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Afwijkingen, incidenten &amp; corrigerende maatregelen</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase2">Fase 2</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">discipline_eigenaar</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">16</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Evidence-verzameling &amp; control-monitoring</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase2">Fase 2</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">discipline_eigenaar</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">17</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">PDCA-cyclus formaliseren</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase2">Fase 2</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+</div>
+<h3>Fase 3 — Volwassen GRC (5 stappen)</h3>
+<div class="grid">
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">18</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Certificeringsgereedheid</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase3">Fase 3</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">19</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Geavanceerde analytics &amp; rapportage</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase3">Fase 3</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">20</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Externe integraties</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase3">Fase 3</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">21</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Multi-framework optimalisatie</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase3">Fase 3</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">tims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                  <div class="step-number">22</div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.95rem">Benchmarking &amp; kennisdeling</div>
+                    <div style="margin-top:0.3rem">
+                      <span class="badge badge-fase3">Fase 3</span>
+                      <span class="badge" style="background:rgba(156,163,175,0.15);color:var(--text-secondary)">sims</span>
+                      
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+</div>
+<h2 id="agents">AI Agents (Fase 0)</h2><div class="grid">
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">commitment-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 1: Bestuurlijk commitment</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>commitment.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">context-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 2a: Organisatiecontext vaststellen</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>context.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">scope-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 2b: Scope bepalen</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>scope.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">governance-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 3a: Governance- en beleidsvoorstel opstellen</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>governance.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">gap-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 4: Gap-analyse</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>gap.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">register-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 5: Registers &amp; risicobeoordeling</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>register.txt</code></div>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;color:var(--accent)">controls-agent</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem">Stap 6: Normenkader &amp; kerncontrols</div>
+            <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Prompt: <code>controls.txt</code></div>
+          </div>
+</div>
+<h2 id="deps">Afhankelijkheden</h2><table><tr><th>Stap</th><th>Afhankelijk van</th><th>Type</th></tr>
+<tr><td><strong>2a</strong></td><td>1</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>2b</strong></td><td>1</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>2b</strong></td><td>2a</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>3a</strong></td><td>2b</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>3b</strong></td><td>3a</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>4</strong></td><td>3b</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>5</strong></td><td>4</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>6</strong></td><td>5</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>7</strong></td><td>6</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>8</strong></td><td>7</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>9</strong></td><td>8</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>9</strong></td><td>7</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>10</strong></td><td>9</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>11</strong></td><td>10</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>12</strong></td><td>11</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>13</strong></td><td>12</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>13</strong></td><td>11</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>14</strong></td><td>13</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>15</strong></td><td>11</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>16</strong></td><td>10</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>17</strong></td><td>14</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>18</strong></td><td>17</td><td><span class="dep-b">Blokkerend</span></td></tr>
+<tr><td><strong>19</strong></td><td>17</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>20</strong></td><td>17</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>21</strong></td><td>17</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+<tr><td><strong>22</strong></td><td>18</td><td><span class="dep-w">Waarschuwing</span></td></tr>
+</table>
+</body></html>

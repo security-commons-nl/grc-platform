@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Platform — Architectuur</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-primary: #0a0f1a;
+    --bg-card: #111827;
+    --bg-card-hover: #1f2937;
+    --border: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --isms: #60a5fa;
+    --pims: #a78bfa;
+    --bcms: #34d399;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 2rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+
+  .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+  .generated { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 1rem; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-v { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .badge-a { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .badge-fase0 { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+  .badge-fase1 { background: rgba(96,165,250,0.2); color: #93c5fd; }
+  .badge-fase2 { background: rgba(52,211,153,0.2); color: #6ee7b7; }
+  .badge-fase3 { background: rgba(167,139,250,0.2); color: #c4b5fd; }
+  .badge-agent { background: rgba(99,102,241,0.15); color: var(--accent); }
+  .badge-method { background: rgba(52,211,153,0.15); color: var(--bcms); font-family: monospace; }
+
+  .stat { text-align: center; }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.8rem; color: var(--text-secondary); }
+
+  .step-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 8px;
+    background: rgba(99,102,241,0.15); color: var(--accent);
+    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+  }
+
+  .output-list { list-style: none; padding: 0; }
+  .output-list li { padding: 0.2rem 0; font-size: 0.85rem; color: var(--text-secondary); }
+  .output-list li::before { content: '→ '; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+  th { text-align: left; padding: 0.5rem; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  td { padding: 0.5rem; font-size: 0.85rem; border-bottom: 1px solid rgba(55,65,81,0.5); }
+  tr:hover td { background: rgba(99,102,241,0.05); }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: rgba(99,102,241,0.1); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+  .dep-arrow { color: var(--text-muted); font-size: 0.8rem; }
+  .dep-b { color: var(--danger); }
+  .dep-w { color: var(--warning); }
+
+  .nav { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .nav a { color: var(--accent); text-decoration: none; font-size: 0.85rem; padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s; }
+  .nav a:hover { background: var(--bg-card); border-color: var(--accent); }
+</style>
+</head><body>
+<h1>IMS Platform — Technische Architectuur</h1>
+<p class="subtitle">Datamodel · API · Services · Tests</p>
+<p class="generated">Auto-generated op 2026-03-29 14:57 uit codebase</p>
+
+<div class="nav">
+  <a href="#stats">Statistieken</a>
+  <a href="#datamodel">Datamodel</a>
+  <a href="#api">API Endpoints</a>
+  <a href="#migrations">Migraties</a>
+  <a href="#tests">Tests</a>
+  <a href="platform-overzicht.html">→ Functioneel overzicht</a>
+</div>
+
+<h2 id="stats">Statistieken</h2>
+<div class="grid">
+  <div class="card stat"><div class="stat-value">36</div><div class="stat-label">Database tabellen</div></div>
+  <div class="card stat"><div class="stat-value">156</div><div class="stat-label">API Endpoints</div></div>
+  <div class="card stat"><div class="stat-value">6</div><div class="stat-label">Migraties</div></div>
+  <div class="card stat"><div class="stat-value">128</div><div class="stat-label">Tests</div></div>
+</div>
+
+<h2 id="datamodel">Datamodel</h2><div class="grid-2">
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">agent_conversations</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">7 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_step_executions.id</code></td></tr><tr><td><code>agent_name</code></td><td style="color:var(--text-muted)">VARCHAR(100)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">agent_messages</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">7 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>conversation_id</code></td><td style="color:var(--text-muted)">UUID → <code>agent_conversations.id</code></td></tr><tr><td><code>role</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>content</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>metadata_json</code></td><td style="color:var(--text-muted)">JSONB (nullable)</td></tr><tr><td><code>audit_log_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ai_audit_logs.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ai_audit_logs</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">13 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>agent_name</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_step_executions.id</code></td></tr><tr><td><code>model</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>prompt_tokens</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>completion_tokens</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>langfuse_trace_id</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>feedback</code></td><td style="color:var(--text-muted)">VARCHAR(20) (nullable)</td></tr><tr><td><code>feedback_comment</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_assessments</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">13 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>assessment_type</code></td><td style="color:var(--text-muted)">VARCHAR(30)</td></tr><tr><td><code>scope_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_scopes.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10) (nullable)</td></tr><tr><td><code>planned_at</code></td><td style="color:var(--text-muted)">DATE</td></tr><tr><td><code>started_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>completed_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>cyclus_id</code></td><td style="color:var(--text-muted)">INTEGER (nullable)</td></tr><tr><td><code>document_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_documents.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_controls</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">11 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>requirement_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_requirements.id</code></td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>description</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>owner_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>implementation_status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>implementation_date</code></td><td style="color:var(--text-muted)">DATE (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_corrective_actions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">12 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>finding_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_findings.id</code></td></tr><tr><td><code>risk_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_risks.id</code></td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>description</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>owner_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>due_date</code></td><td style="color:var(--text-muted)">DATE</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>completed_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_decisions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">17 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>number</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_step_executions.id</code></td></tr><tr><td><code>decision_type</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>content</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>grondslag</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>gremium</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>decided_by_name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>decided_by_role</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>decided_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>valid_until</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>motivation</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>alternatives</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>iso_clause</code></td><td style="color:var(--text-muted)">VARCHAR(20) (nullable)</td></tr><tr><td><code>supersedes_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_decisions.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_document_versions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">12 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>document_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_documents.id</code></td></tr><tr><td><code>version_number</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>content_json</code></td><td style="color:var(--text-muted)">JSONB (nullable)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>generated_by_agent</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>created_by_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>vastgesteld_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>vastgesteld_by_name</code></td><td style="color:var(--text-muted)">VARCHAR(200) (nullable)</td></tr><tr><td><code>vastgesteld_by_role</code></td><td style="color:var(--text-muted)">VARCHAR(200) (nullable)</td></tr><tr><td><code>decision_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_decisions.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_documents</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_step_executions.id</code></td></tr><tr><td><code>document_type</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10) (nullable)</td></tr><tr><td><code>visibility</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>withdrawn_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_evidence</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">11 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>control_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_controls.id</code></td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>evidence_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>storage_path</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>collected_at</code></td><td style="color:var(--text-muted)">DATE</td></tr><tr><td><code>valid_until</code></td><td style="color:var(--text-muted)">DATE (nullable)</td></tr><tr><td><code>collected_by_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_findings</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>assessment_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_assessments.id</code></td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>description</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>severity</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>requirement_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_requirements.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_gap_analysis_results</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>input_document_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_step_input_documents.id</code></td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>field_reference</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>ai_suggestion</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>uncertainty</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>validated</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>validated_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>validated_by_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_grc_scores</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">9 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>cyclus_year</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>score_pct</code></td><td style="color:var(--text-muted)">NUMERIC(5, 2)</td></tr><tr><td><code>components_json</code></td><td style="color:var(--text-muted)">JSONB</td></tr><tr><td><code>calculated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_incidents</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">12 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>incident_type</code></td><td style="color:var(--text-muted)">VARCHAR(30)</td></tr><tr><td><code>severity</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>reported_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>resolved_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>external_ticket_id</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>corrective_action_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_corrective_actions.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_knowledge_chunks</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">11 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>layer</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>tenants.id</code></td></tr><tr><td><code>source_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>source_id</code></td><td style="color:var(--text-muted)">UUID (nullable)</td></tr><tr><td><code>chunk_index</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>content</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>embedding</code></td><td style="color:var(--text-muted)">VECTOR(1536)</td></tr><tr><td><code>model_used</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_maturity_profiles</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>existing_registers</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>existing_analyses</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>coordination_capacity</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>linemanagement_structure</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>recommended_option</code></td><td style="color:var(--text-muted)">VARCHAR(1) (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_requirement_mappings</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>source_requirement_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_requirements.id</code></td></tr><tr><td><code>target_requirement_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_requirements.id</code></td></tr><tr><td><code>norm_version_source</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>confidence_score</code></td><td style="color:var(--text-muted)">NUMERIC(3, 2)</td></tr><tr><td><code>created_by</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>verified</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>orphaned</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_requirements</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">9 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>standard_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_standards.id</code></td></tr><tr><td><code>code</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">VARCHAR(500)</td></tr><tr><td><code>description</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>is_mandatory</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_risk_control_links</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">2 kolommen</div>
+            <table><tr><td><code>risk_id</code> 🔑</td><td style="color:var(--text-muted)">UUID → <code>ims_risks.id</code></td></tr><tr><td><code>control_id</code> 🔑</td><td style="color:var(--text-muted)">UUID → <code>ims_controls.id</code></td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_risks</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">17 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>scope_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_scopes.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>title</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>description</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>likelihood</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>impact</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>risk_score</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>financial_impact_eur</code></td><td style="color:var(--text-muted)">NUMERIC(15, 2) (nullable)</td></tr><tr><td><code>risk_level</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>owner_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>cyclus_id</code></td><td style="color:var(--text-muted)">INTEGER (nullable)</td></tr><tr><td><code>treatment_decision_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_decisions.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_scopes</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">11 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>parent_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_scopes.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10) (nullable)</td></tr><tr><td><code>is_critical</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>verwerkt_pii</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>ext_verwerking_ref</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_setup_scores</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">11 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>cyclus_year</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>score_pct</code></td><td style="color:var(--text-muted)">NUMERIC(5, 2)</td></tr><tr><td><code>steps_completed</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>steps_total</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>confirmed_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>calculated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_standard_ingestions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">13 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>uploaded_by_user_id</code></td><td style="color:var(--text-muted)">UUID → <code>users.id</code></td></tr><tr><td><code>source_type</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>source_path</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>detected_standard_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_standards.id</code></td></tr><tr><td><code>detected_version</code></td><td style="color:var(--text-muted)">VARCHAR(20) (nullable)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>parsed_requirements_json</code></td><td style="color:var(--text-muted)">JSONB (nullable)</td></tr><tr><td><code>reviewed_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>reviewed_by_user_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>users.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_standards</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">9 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(100)</td></tr><tr><td><code>version</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>published_at</code></td><td style="color:var(--text-muted)">DATE (nullable)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>superseded_by_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_standards.id</code></td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_dependencies</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">6 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>depends_on_step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>dependency_type</code></td><td style="color:var(--text-muted)">VARCHAR(1)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_executions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">12 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>cyclus_id</code></td><td style="color:var(--text-muted)">INTEGER (nullable)</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>started_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>completed_at</code></td><td style="color:var(--text-muted)">DATETIME (nullable)</td></tr><tr><td><code>skipped</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>skip_reason</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>skip_logged_by</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_input_documents</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_step_executions.id</code></td></tr><tr><td><code>source_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>storage_path</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>status</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>uploaded_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>uploaded_by_user_id</code></td><td style="color:var(--text-muted)">UUID → <code>users.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_output_fulfillments</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>step_output_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_step_outputs.id</code></td></tr><tr><td><code>step_execution_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_step_executions.id</code></td></tr><tr><td><code>decision_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_decisions.id</code></td></tr><tr><td><code>document_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_documents.id</code></td></tr><tr><td><code>fulfilled_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>fulfilled_by</code></td><td style="color:var(--text-muted)">VARCHAR(200) (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_outputs</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">8 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>output_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>requirement</code></td><td style="color:var(--text-muted)">VARCHAR(1)</td></tr><tr><td><code>sort_order</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_steps</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">10 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>number</code></td><td style="color:var(--text-muted)">VARCHAR(10)</td></tr><tr><td><code>phase</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>waarom_nu</code></td><td style="color:var(--text-muted)">TEXT</td></tr><tr><td><code>required_gremium</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>is_optional</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10) (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_tenant_normenkader</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">8 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>standard_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_standards.id</code></td></tr><tr><td><code>adopted_at</code></td><td style="color:var(--text-muted)">DATE</td></tr><tr><td><code>is_active</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>decision_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>ims_decisions.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">regions</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">5 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>centrum_tenant_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>tenants.id</code></td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">tenants</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">7 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>type</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>region_id</code></td><td style="color:var(--text-muted)">UUID (nullable) → <code>regions.id</code></td></tr><tr><td><code>is_active</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">user_region_roles</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">6 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>user_id</code></td><td style="color:var(--text-muted)">UUID → <code>users.id</code></td></tr><tr><td><code>region_id</code></td><td style="color:var(--text-muted)">UUID → <code>regions.id</code></td></tr><tr><td><code>role</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">user_tenant_roles</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">7 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>user_id</code></td><td style="color:var(--text-muted)">UUID → <code>users.id</code></td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>role</code></td><td style="color:var(--text-muted)">VARCHAR(50)</td></tr><tr><td><code>domain</code></td><td style="color:var(--text-muted)">VARCHAR(10) (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+
+          <div class="card">
+            <div style="font-weight:600;font-family:monospace;color:var(--accent)">users</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">8 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>tenant_id</code></td><td style="color:var(--text-muted)">UUID → <code>tenants.id</code></td></tr><tr><td><code>external_id</code></td><td style="color:var(--text-muted)">VARCHAR(255)</td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(255)</td></tr><tr><td><code>email</code></td><td style="color:var(--text-muted)">VARCHAR(255)</td></tr><tr><td><code>is_active</code></td><td style="color:var(--text-muted)">BOOLEAN</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+          </div>
+</div>
+<h2 id="api">API Endpoints</h2><table><tr><th>Methode</th><th>Pad</th><th>Naam</th></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/agents/conversations/{conversation_id}</code></td><td style="color:var(--text-muted)">get_conversation</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/agents/conversations/{conversation_id}/feedback</code></td><td style="color:var(--text-muted)">submit_feedback</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/agents/conversations/{conversation_id}/generate</code></td><td style="color:var(--text-muted)">generate_documents</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/agents/conversations/{conversation_id}/messages</code></td><td style="color:var(--text-muted)">send_message</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/agents/{agent_name}/conversations</code></td><td style="color:var(--text-muted)">start_conversation</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/</code></td><td style="color:var(--text-muted)">list_assessments</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/assessments/</code></td><td style="color:var(--text-muted)">create_assessment</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/corrective-actions/</code></td><td style="color:var(--text-muted)">list_corrective_actions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/assessments/corrective-actions/</code></td><td style="color:var(--text-muted)">create_corrective_action</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/corrective-actions/{action_id}</code></td><td style="color:var(--text-muted)">get_corrective_action</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/assessments/corrective-actions/{action_id}</code></td><td style="color:var(--text-muted)">update_corrective_action</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/assessments/corrective-actions/{action_id}</code></td><td style="color:var(--text-muted)">delete_corrective_action</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/findings/</code></td><td style="color:var(--text-muted)">list_findings</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/assessments/findings/</code></td><td style="color:var(--text-muted)">create_finding</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/findings/{finding_id}</code></td><td style="color:var(--text-muted)">get_finding</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/assessments/findings/{finding_id}</code></td><td style="color:var(--text-muted)">update_finding</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/assessments/findings/{finding_id}</code></td><td style="color:var(--text-muted)">delete_finding</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/assessments/{assessment_id}</code></td><td style="color:var(--text-muted)">get_assessment</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/assessments/{assessment_id}</code></td><td style="color:var(--text-muted)">update_assessment</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/assessments/{assessment_id}</code></td><td style="color:var(--text-muted)">delete_assessment</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/auth/agent-token</code></td><td style="color:var(--text-muted)">create_agent_token</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/auth/dev-token</code></td><td style="color:var(--text-muted)">create_dev_token</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/auth/me</code></td><td style="color:var(--text-muted)">get_me</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/controls/</code></td><td style="color:var(--text-muted)">list_controls</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/controls/</code></td><td style="color:var(--text-muted)">create_control</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/controls/{control_id}</code></td><td style="color:var(--text-muted)">get_control</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/controls/{control_id}</code></td><td style="color:var(--text-muted)">update_control</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/controls/{control_id}</code></td><td style="color:var(--text-muted)">delete_control</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/decisions/</code></td><td style="color:var(--text-muted)">list_decisions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/decisions/</code></td><td style="color:var(--text-muted)">create_decision</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/decisions/{decision_id}</code></td><td style="color:var(--text-muted)">get_decision</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/</code></td><td style="color:var(--text-muted)">list_documents</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/documents/</code></td><td style="color:var(--text-muted)">create_document</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/gap-analysis/</code></td><td style="color:var(--text-muted)">list_gap_analysis_results</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/documents/gap-analysis/</code></td><td style="color:var(--text-muted)">create_gap_analysis_result</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/gap-analysis/{gap_id}</code></td><td style="color:var(--text-muted)">get_gap_analysis_result</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/documents/gap-analysis/{gap_id}</code></td><td style="color:var(--text-muted)">validate_gap_analysis_result</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/input-documents/</code></td><td style="color:var(--text-muted)">list_step_input_documents</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/documents/input-documents/</code></td><td style="color:var(--text-muted)">create_step_input_document</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/input-documents/{input_doc_id}</code></td><td style="color:var(--text-muted)">get_step_input_document</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/documents/input-documents/{input_doc_id}</code></td><td style="color:var(--text-muted)">update_step_input_document</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/versions/</code></td><td style="color:var(--text-muted)">list_document_versions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/documents/versions/</code></td><td style="color:var(--text-muted)">create_document_version</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/versions/{version_id}</code></td><td style="color:var(--text-muted)">get_document_version</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/documents/{document_id}</code></td><td style="color:var(--text-muted)">get_document</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/documents/{document_id}</code></td><td style="color:var(--text-muted)">update_document</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/documents/{document_id}</code></td><td style="color:var(--text-muted)">delete_document</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/evidence/</code></td><td style="color:var(--text-muted)">list_evidence</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/evidence/</code></td><td style="color:var(--text-muted)">create_evidence</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/evidence/{evidence_id}</code></td><td style="color:var(--text-muted)">get_evidence</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/evidence/{evidence_id}</code></td><td style="color:var(--text-muted)">update_evidence</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/evidence/{evidence_id}</code></td><td style="color:var(--text-muted)">delete_evidence</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/health</code></td><td style="color:var(--text-muted)">health_check</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/incidents/</code></td><td style="color:var(--text-muted)">list_incidents</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/incidents/</code></td><td style="color:var(--text-muted)">create_incident</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/incidents/{incident_id}</code></td><td style="color:var(--text-muted)">get_incident</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/incidents/{incident_id}</code></td><td style="color:var(--text-muted)">update_incident</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/incidents/{incident_id}</code></td><td style="color:var(--text-muted)">delete_incident</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/knowledge/</code></td><td style="color:var(--text-muted)">list_knowledge_chunks</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/knowledge/</code></td><td style="color:var(--text-muted)">create_knowledge_chunk</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/knowledge/{chunk_id}</code></td><td style="color:var(--text-muted)">get_knowledge_chunk</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/knowledge/{chunk_id}</code></td><td style="color:var(--text-muted)">update_knowledge_chunk</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/knowledge/{chunk_id}</code></td><td style="color:var(--text-muted)">delete_knowledge_chunk</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/risks/</code></td><td style="color:var(--text-muted)">list_risks</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/risks/</code></td><td style="color:var(--text-muted)">create_risk</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/risks/links/</code></td><td style="color:var(--text-muted)">list_risk_control_links</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/risks/links/</code></td><td style="color:var(--text-muted)">create_risk_control_link</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/risks/links/{risk_id}/{control_id}</code></td><td style="color:var(--text-muted)">delete_risk_control_link</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/risks/{risk_id}</code></td><td style="color:var(--text-muted)">get_risk</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/risks/{risk_id}</code></td><td style="color:var(--text-muted)">update_risk</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/risks/{risk_id}</code></td><td style="color:var(--text-muted)">delete_risk</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scopes/</code></td><td style="color:var(--text-muted)">list_scopes</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/scopes/</code></td><td style="color:var(--text-muted)">create_scope</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scopes/{scope_id}</code></td><td style="color:var(--text-muted)">get_scope</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/scopes/{scope_id}</code></td><td style="color:var(--text-muted)">update_scope</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/scopes/{scope_id}</code></td><td style="color:var(--text-muted)">delete_scope</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/grc-scores/</code></td><td style="color:var(--text-muted)">list_grc_scores</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/scores/grc-scores/</code></td><td style="color:var(--text-muted)">create_grc_score</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/grc-scores/{score_id}</code></td><td style="color:var(--text-muted)">get_grc_score</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/scores/grc-scores/{score_id}</code></td><td style="color:var(--text-muted)">update_grc_score</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/scores/grc-scores/{score_id}</code></td><td style="color:var(--text-muted)">delete_grc_score</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/maturity-profiles/</code></td><td style="color:var(--text-muted)">list_maturity_profiles</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/scores/maturity-profiles/</code></td><td style="color:var(--text-muted)">create_maturity_profile</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/maturity-profiles/{profile_id}</code></td><td style="color:var(--text-muted)">get_maturity_profile</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/scores/maturity-profiles/{profile_id}</code></td><td style="color:var(--text-muted)">update_maturity_profile</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/scores/maturity-profiles/{profile_id}</code></td><td style="color:var(--text-muted)">delete_maturity_profile</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/setup-scores/</code></td><td style="color:var(--text-muted)">list_setup_scores</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/scores/setup-scores/</code></td><td style="color:var(--text-muted)">create_setup_score</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/scores/setup-scores/{score_id}</code></td><td style="color:var(--text-muted)">get_setup_score</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/scores/setup-scores/{score_id}</code></td><td style="color:var(--text-muted)">update_setup_score</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/scores/setup-scores/{score_id}</code></td><td style="color:var(--text-muted)">delete_setup_score</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/</code></td><td style="color:var(--text-muted)">list_standards</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/standards/</code></td><td style="color:var(--text-muted)">create_standard</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/ingestions/</code></td><td style="color:var(--text-muted)">list_standard_ingestions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/standards/ingestions/</code></td><td style="color:var(--text-muted)">create_standard_ingestion</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/ingestions/{ingestion_id}</code></td><td style="color:var(--text-muted)">get_standard_ingestion</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/standards/ingestions/{ingestion_id}</code></td><td style="color:var(--text-muted)">update_standard_ingestion</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/standards/ingestions/{ingestion_id}</code></td><td style="color:var(--text-muted)">delete_standard_ingestion</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/mappings/</code></td><td style="color:var(--text-muted)">list_requirement_mappings</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/standards/mappings/</code></td><td style="color:var(--text-muted)">create_requirement_mapping</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/mappings/{mapping_id}</code></td><td style="color:var(--text-muted)">get_requirement_mapping</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/standards/mappings/{mapping_id}</code></td><td style="color:var(--text-muted)">update_requirement_mapping</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/standards/mappings/{mapping_id}</code></td><td style="color:var(--text-muted)">delete_requirement_mapping</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/normenkader/</code></td><td style="color:var(--text-muted)">list_tenant_normenkader</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/standards/normenkader/</code></td><td style="color:var(--text-muted)">create_tenant_normenkader</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/standards/normenkader/{nk_id}</code></td><td style="color:var(--text-muted)">update_tenant_normenkader</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/standards/normenkader/{nk_id}</code></td><td style="color:var(--text-muted)">delete_tenant_normenkader</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/requirements/</code></td><td style="color:var(--text-muted)">list_requirements</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/standards/requirements/</code></td><td style="color:var(--text-muted)">create_requirement</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/requirements/{requirement_id}</code></td><td style="color:var(--text-muted)">get_requirement</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/standards/requirements/{requirement_id}</code></td><td style="color:var(--text-muted)">update_requirement</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/standards/requirements/{requirement_id}</code></td><td style="color:var(--text-muted)">delete_requirement</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/standards/{standard_id}</code></td><td style="color:var(--text-muted)">get_standard</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/standards/{standard_id}</code></td><td style="color:var(--text-muted)">update_standard</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/standards/{standard_id}</code></td><td style="color:var(--text-muted)">delete_standard</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/</code></td><td style="color:var(--text-muted)">list_steps</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/steps/</code></td><td style="color:var(--text-muted)">create_step</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/dependencies/</code></td><td style="color:var(--text-muted)">list_step_dependencies</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/steps/dependencies/</code></td><td style="color:var(--text-muted)">create_step_dependency</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/steps/dependencies/{dep_id}</code></td><td style="color:var(--text-muted)">delete_step_dependency</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/executions/</code></td><td style="color:var(--text-muted)">list_step_executions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/steps/executions/</code></td><td style="color:var(--text-muted)">create_step_execution</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/executions/{execution_id}</code></td><td style="color:var(--text-muted)">get_step_execution</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/steps/executions/{execution_id}</code></td><td style="color:var(--text-muted)">update_step_execution</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/steps/executions/{execution_id}</code></td><td style="color:var(--text-muted)">delete_step_execution</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/executions/{execution_id}/fulfillments</code></td><td style="color:var(--text-muted)">list_fulfillments</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/steps/executions/{execution_id}/fulfillments</code></td><td style="color:var(--text-muted)">create_fulfillment</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/executions/{execution_id}/readiness</code></td><td style="color:var(--text-muted)">get_step_readiness</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/steps/fulfillments/{fulfillment_id}</code></td><td style="color:var(--text-muted)">delete_fulfillment</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/steps/{step_id}</code></td><td style="color:var(--text-muted)">get_step</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/steps/{step_id}</code></td><td style="color:var(--text-muted)">update_step</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/steps/{step_id}</code></td><td style="color:var(--text-muted)">delete_step</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/</code></td><td style="color:var(--text-muted)">list_tenants</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/tenants/</code></td><td style="color:var(--text-muted)">create_tenant</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/regions/</code></td><td style="color:var(--text-muted)">list_regions</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/tenants/regions/</code></td><td style="color:var(--text-muted)">create_region</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/regions/{region_id}</code></td><td style="color:var(--text-muted)">get_region</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/tenants/regions/{region_id}</code></td><td style="color:var(--text-muted)">update_region</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/tenants/regions/{region_id}</code></td><td style="color:var(--text-muted)">delete_region</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/user-region-roles/</code></td><td style="color:var(--text-muted)">list_user_region_roles</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/tenants/user-region-roles/</code></td><td style="color:var(--text-muted)">create_user_region_role</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/tenants/user-region-roles/{role_id}</code></td><td style="color:var(--text-muted)">delete_user_region_role</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/user-tenant-roles/</code></td><td style="color:var(--text-muted)">list_user_tenant_roles</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/tenants/user-tenant-roles/</code></td><td style="color:var(--text-muted)">create_user_tenant_role</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/tenants/user-tenant-roles/{role_id}</code></td><td style="color:var(--text-muted)">delete_user_tenant_role</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/users/</code></td><td style="color:var(--text-muted)">list_users</td></tr>
+<tr><td><span class="badge badge-method">POST</span></td><td><code>/api/v1/tenants/users/</code></td><td style="color:var(--text-muted)">create_user</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/users/{user_id}</code></td><td style="color:var(--text-muted)">get_user</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/tenants/users/{user_id}</code></td><td style="color:var(--text-muted)">update_user</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/tenants/users/{user_id}</code></td><td style="color:var(--text-muted)">delete_user</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/api/v1/tenants/{tenant_id}</code></td><td style="color:var(--text-muted)">get_tenant</td></tr>
+<tr><td><span class="badge badge-method">PATCH</span></td><td><code>/api/v1/tenants/{tenant_id}</code></td><td style="color:var(--text-muted)">update_tenant</td></tr>
+<tr><td><span class="badge badge-method">DELETE</span></td><td><code>/api/v1/tenants/{tenant_id}</code></td><td style="color:var(--text-muted)">delete_tenant</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/docs</code></td><td style="color:var(--text-muted)">swagger_ui_html</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/docs/oauth2-redirect</code></td><td style="color:var(--text-muted)">swagger_ui_redirect</td></tr>
+<tr><td><span class="badge badge-method">GET</span></td><td><code>/openapi.json</code></td><td style="color:var(--text-muted)">openapi</td></tr>
+</table>
+<h2 id="migrations">Migratie-keten</h2><table><tr><th>Bestand</th><th>Beschrijving</th></tr>
+<tr><td><code>001_initial_schema.py</code></td><td>Initial schema — all IMS v1 tables.</td></tr>
+<tr><td><code>002_enable_rls.py</code></td><td>Enable Row Level Security for tenant isolation</td></tr>
+<tr><td><code>003_seed_reference_data.py</code></td><td>Seed reference data — 22 IMS steps + dependencies + base standards</td></tr>
+<tr><td><code>004_step_outputs.py</code></td><td>Add step output definitions and fulfillment tracking</td></tr>
+<tr><td><code>005_seed_step_outputs.py</code></td><td>Seed step output definitions for all 22 steps</td></tr>
+<tr><td><code>006_agent_conversations.py</code></td><td>Add agent conversation and message tables</td></tr>
+</table>
+<h2 id="tests">Tests (128 totaal)</h2><div class="grid">
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_agents.py</code>
+            <span class="stat-value" style="font-size:1.2rem">13</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_assessments.py</code>
+            <span class="stat-value" style="font-size:1.2rem">7</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_auth.py</code>
+            <span class="stat-value" style="font-size:1.2rem">7</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_controls.py</code>
+            <span class="stat-value" style="font-size:1.2rem">6</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_decisions.py</code>
+            <span class="stat-value" style="font-size:1.2rem">9</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_documents.py</code>
+            <span class="stat-value" style="font-size:1.2rem">7</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_evidence.py</code>
+            <span class="stat-value" style="font-size:1.2rem">4</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_incidents.py</code>
+            <span class="stat-value" style="font-size:1.2rem">5</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_knowledge.py</code>
+            <span class="stat-value" style="font-size:1.2rem">6</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_risks.py</code>
+            <span class="stat-value" style="font-size:1.2rem">9</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_scopes.py</code>
+            <span class="stat-value" style="font-size:1.2rem">5</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_scores.py</code>
+            <span class="stat-value" style="font-size:1.2rem">6</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_seed_data.py</code>
+            <span class="stat-value" style="font-size:1.2rem">6</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_standards.py</code>
+            <span class="stat-value" style="font-size:1.2rem">7</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_step_outputs.py</code>
+            <span class="stat-value" style="font-size:1.2rem">10</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_steps.py</code>
+            <span class="stat-value" style="font-size:1.2rem">8</span>
+          </div>
+
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <code>test_tenants.py</code>
+            <span class="stat-value" style="font-size:1.2rem">13</span>
+          </div>
+</div>
+</body></html>

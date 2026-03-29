@@ -172,3 +172,4 @@ Environment variables via `.env` file:
 - **Rosetta Stone Pattern**: RequirementMapping enables cross-framework mapping (BIO-ISO27001) with AI confidence scores.
 - **Database leading**: documenten zijn gegenereerde views van DB-data, niet opgeslagen bestanden.
 - **Elke bouwsteen heeft een eval**: geen code zonder test.
+- **Documentatie is auto-generated**: `python generate-docs.py` genereert `docs/platform-overzicht.html` (functioneel) + `docs/architectuur.html` (technisch) uit de codebase. Nooit handmatig HTML bewerken.
