@@ -13,6 +13,8 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
+import { formatApiError } from '@/lib/format-error';
+import { formatApiError } from '@/lib/format-error';
 import type { IncidentResponse } from '@/lib/api-types';
 
 const TYPE_OPTIONS = [
@@ -90,7 +92,7 @@ export default function IncidentenPage() {
       resetForm();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
+        const detail = formatApiError(err.body);
         setFormError(`Fout bij aanmaken: ${detail}`);
       } else {
         setFormError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);

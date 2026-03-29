@@ -34,3 +34,4 @@ SERVER_ACCESS.md
 .vscode/
 .idea/
 .claude/worktrees/
+frontend/test-results/

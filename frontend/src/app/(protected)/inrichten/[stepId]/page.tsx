@@ -20,6 +20,7 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { WaaromTooltip } from '@/components/shared/waarom-tooltip';
 import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { ChatIsland } from '@/components/ai/chat-island';
+import { formatApiError } from '@/lib/format-error';
 import { api, apiFetch, ApiError } from '@/lib/api-client';
 import type {
   StepResponse,
@@ -147,10 +148,7 @@ export default function StepDetailPage({
       await mutateReadiness();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail =
-          (err.body as Record<string, unknown>)?.detail ||
-          JSON.stringify(err.body);
-        setError(`Fout: ${detail}`);
+        setError(`Fout: ${formatApiError(err.body)}`);
       } else {
         setError(
           `Fout: ${err instanceof Error ? err.message : String(err)}`,
@@ -180,10 +178,7 @@ export default function StepDetailPage({
       setUploadFile('');
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail =
-          (err.body as Record<string, unknown>)?.detail ||
-          JSON.stringify(err.body);
-        setError(`Upload fout: ${detail}`);
+        setError(`Upload fout: ${formatApiError(err.body)}`);
       } else {
         setError(`Upload fout: ${err instanceof Error ? err.message : String(err)}`);
       }

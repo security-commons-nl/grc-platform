@@ -13,6 +13,7 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
+import { formatApiError } from '@/lib/format-error';
 import type { AssessmentResponse } from '@/lib/api-types';
 
 const TYPE_OPTIONS = [
@@ -55,8 +56,8 @@ export default function AssessmentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.assessment_type || !formData.domain) {
-      setFormError('Vul alle verplichte velden in.');
+    if (!formData.assessment_type || !formData.domain || !formData.planned_at) {
+      setFormError('Vul alle verplichte velden in (inclusief geplande datum).');
       return;
     }
 
@@ -69,17 +70,14 @@ export default function AssessmentsPage() {
         domain: formData.domain,
         status: 'gepland',
       };
-      if (formData.planned_at) {
-        payload.planned_at = formData.planned_at;
-      }
+      payload.planned_at = formData.planned_at;
       await api.assessments.create(payload);
       await mutate();
       setShowForm(false);
       resetForm();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
-        setFormError(`Fout bij aanmaken: ${detail}`);
+        setFormError(`Fout bij aanmaken: ${formatApiError(err.body)}`);
       } else {
         setFormError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
       }

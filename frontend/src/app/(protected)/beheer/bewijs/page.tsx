@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import useSWR from 'swr';
 import { DocumentMagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card } from '@/components/ui/card';
@@ -11,7 +12,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
-import type { EvidenceResponse } from '@/lib/api-types';
+import { formatApiError } from '@/lib/format-error';
+import type { EvidenceResponse, ControlResponse } from '@/lib/api-types';
 
 const EVIDENCE_TYPE_OPTIONS = [
   { value: '', label: 'Selecteer type...' },
@@ -27,26 +29,34 @@ export default function BewijsPage() {
     '/evidence/',
     '/evidence/',
   );
+  const { data: controls } = useSWR<ControlResponse[]>('/controls/', () => api.controls.list());
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
+    control_id: '',
     title: '',
     evidence_type: '',
+    storage_path: '',
     collected_at: '',
     valid_until: '',
   });
 
+  const controlOptions = [
+    { value: '', label: 'Selecteer control...' },
+    ...(controls || []).map((c) => ({ value: c.id, label: c.title })),
+  ];
+
   function resetForm() {
-    setFormData({ title: '', evidence_type: '', collected_at: '', valid_until: '' });
+    setFormData({ control_id: '', title: '', evidence_type: '', storage_path: '', collected_at: '', valid_until: '' });
     setFormError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.title || !formData.evidence_type || !formData.collected_at) {
-      setFormError('Vul alle verplichte velden in.');
+    if (!formData.control_id || !formData.title || !formData.evidence_type || !formData.collected_at) {
+      setFormError('Vul alle verplichte velden in (inclusief control).');
       return;
     }
 
@@ -55,8 +65,10 @@ export default function BewijsPage() {
 
     try {
       const payload: Record<string, unknown> = {
+        control_id: formData.control_id,
         title: formData.title,
         evidence_type: formData.evidence_type,
+        storage_path: formData.storage_path || 'n/a',
         collected_at: formData.collected_at,
       };
       if (formData.valid_until) {
@@ -68,8 +80,7 @@ export default function BewijsPage() {
       resetForm();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
-        setFormError(`Fout bij aanmaken: ${detail}`);
+        setFormError(`Fout bij aanmaken: ${formatApiError(err.body)}`);
       } else {
         setFormError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -101,6 +112,12 @@ export default function BewijsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <h3 className="text-base font-semibold text-neutral-900">Nieuw bewijs</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select
+                label="Control *"
+                options={controlOptions}
+                value={formData.control_id}
+                onChange={(e) => setFormData({ ...formData, control_id: e.target.value })}
+              />
               <Input
                 label="Titel *"
                 value={formData.title}

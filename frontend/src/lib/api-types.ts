@@ -191,6 +191,7 @@ export interface RiskResponse {
   status: string;
   owner_user_id?: string | null;
   cyclus_id?: number | null;
+  treatment_decision_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -291,6 +292,8 @@ export interface AssessmentResponse {
   planned_at?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
+  cyclus_id?: number | null;
+  document_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -334,6 +337,7 @@ export interface EvidenceResponse {
   evidence_type: string;
   collected_at?: string | null;
   valid_until?: string | null;
+  collected_by_user_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -349,6 +353,8 @@ export interface IncidentResponse {
   status: string;
   reported_at?: string | null;
   resolved_at?: string | null;
+  external_ticket_id?: string | null;
+  corrective_action_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -12,6 +12,7 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { DecisionLogTable } from '@/components/inrichten/decision-log-table';
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
+import { formatApiError } from '@/lib/format-error';
 import type { DecisionResponse } from '@/lib/api-types';
 
 const DECISION_TYPE_OPTIONS = [
@@ -94,8 +95,8 @@ export default function BesluitenPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.decision_type || !formData.content || !formData.gremium || !formData.decided_by_name) {
-      setFormError('Vul alle verplichte velden in.');
+    if (!formData.decision_type || !formData.content || !formData.gremium || !formData.decided_by_name || !formData.decided_by_role) {
+      setFormError('Vul alle verplichte velden in (inclusief rol).');
       return;
     }
 
@@ -103,8 +104,12 @@ export default function BesluitenPage() {
     setFormError(null);
 
     try {
+      // Auto-generate number if empty
+      const number = formData.number || `B-${String((decisions?.length || 0) + 1).padStart(3, '0')}`;
+
       await api.decisions.create({
         ...formData,
+        number,
         decided_at: new Date().toISOString(),
       });
       await mutate();
@@ -112,8 +117,7 @@ export default function BesluitenPage() {
       resetForm();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
-        setFormError(`Fout bij aanmaken: ${detail}`);
+        setFormError(`Fout bij aanmaken: ${formatApiError(err.body)}`);
       } else {
         setFormError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
       }

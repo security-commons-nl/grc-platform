@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import useSWR from 'swr';
 import { ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card } from '@/components/ui/card';
@@ -13,7 +14,8 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { useRisks } from '@/lib/hooks/use-risks';
 import { api, ApiError } from '@/lib/api-client';
-import type { RiskResponse } from '@/lib/api-types';
+import { formatApiError } from '@/lib/format-error';
+import type { RiskResponse, ScopeResponse } from '@/lib/api-types';
 
 const DOMAIN_OPTIONS = [
   { value: '', label: 'Selecteer domein...' },
@@ -49,11 +51,13 @@ function getRiskLevelBadge(score: number) {
 
 export default function RisicosPage() {
   const { data: risks, error, isLoading, mutate } = useRisks();
+  const { data: scopes } = useSWR<ScopeResponse[]>('/scopes/', () => api.scopes.list());
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
+    scope_id: '',
     domain: '',
     title: '',
     description: '',
@@ -61,15 +65,20 @@ export default function RisicosPage() {
     impact: '',
   });
 
+  const scopeOptions = [
+    { value: '', label: 'Selecteer scope...' },
+    ...(scopes || []).map((s) => ({ value: s.id, label: s.name })),
+  ];
+
   function resetForm() {
-    setFormData({ domain: '', title: '', description: '', likelihood: '', impact: '' });
+    setFormData({ scope_id: '', domain: '', title: '', description: '', likelihood: '', impact: '' });
     setFormError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.domain || !formData.title || !formData.likelihood || !formData.impact) {
-      setFormError('Vul alle verplichte velden in.');
+    if (!formData.scope_id || !formData.domain || !formData.title || !formData.likelihood || !formData.impact) {
+      setFormError('Vul alle verplichte velden in (inclusief scope).');
       return;
     }
 
@@ -78,6 +87,7 @@ export default function RisicosPage() {
 
     try {
       await api.risks.create({
+        scope_id: formData.scope_id,
         domain: formData.domain,
         title: formData.title,
         description: formData.description,
@@ -90,8 +100,7 @@ export default function RisicosPage() {
       resetForm();
     } catch (err) {
       if (err instanceof ApiError) {
-        const detail = (err.body as Record<string, unknown>)?.detail || JSON.stringify(err.body);
-        setFormError(`Fout bij aanmaken: ${detail}`);
+        setFormError(`Fout bij aanmaken: ${formatApiError(err.body)}`);
       } else {
         setFormError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -123,6 +132,12 @@ export default function RisicosPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <h3 className="text-base font-semibold text-neutral-900">Nieuw risico</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select
+                label="Scope *"
+                options={scopeOptions}
+                value={formData.scope_id}
+                onChange={(e) => setFormData({ ...formData, scope_id: e.target.value })}
+              />
               <Select
                 label="Domein *"
                 options={DOMAIN_OPTIONS}
