@@ -58,7 +58,9 @@ export function StepProgressGrid({
   for (const phase of phases) {
     stepsByPhase.set(
       phase,
-      steps.filter((s) => s.phase === phase),
+      steps
+        .filter((s) => s.phase === phase)
+        .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true })),
     );
   }
 
