@@ -44,8 +44,24 @@ export function StepProgressGrid({
   dependencies,
 }: StepProgressGridProps) {
   const router = useRouter();
+  // Determine which phases have activity (any execution started)
+  const activePhasesSet = new Set<number>();
+  for (const step of steps) {
+    const exec = executions.find((e) => e.step_id === step.id);
+    if (exec && exec.status !== 'niet_gestart') {
+      activePhasesSet.add(step.phase);
+    }
+  }
+  // If no phases are active, open fase 0 by default
+  if (activePhasesSet.size === 0) activePhasesSet.add(0);
+
+  // Collapse all phases that have no activity
+  const initialCollapsed = new Set<number>(
+    [0, 1, 2, 3].filter((p) => !activePhasesSet.has(p)),
+  );
+
   const [collapsedPhases, setCollapsedPhases] = useState<Set<number>>(
-    new Set(),
+    initialCollapsed,
   );
 
   const executionsByStepId = new Map<string, StepExecutionResponse>();
