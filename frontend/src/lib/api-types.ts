@@ -66,6 +66,7 @@ export interface StepOutputResponse {
   output_type: string;
   requirement: string;
   sort_order: number;
+  skip_warning?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -139,6 +140,7 @@ export interface StepReadiness {
   required_fulfilled: number;
   required_total: number;
   all_required_met: boolean;
+  recommended_unfulfilled: OutputReadinessItem[];
   dependencies_met: boolean;
   blocking_dependencies: string[];
   allowed_transitions: string[];

@@ -311,20 +311,22 @@ async def get_step_readiness(
 
     # Build output readiness items
     output_items = []
+    recommended_unfulfilled = []
     required_total = 0
     required_fulfilled = 0
     for output in sorted(step.outputs, key=lambda o: o.sort_order):
         f = fulfillment_by_output.get(output.id)
         fulfilled = f is not None
+        item = OutputReadinessItem(output=output, fulfilled=fulfilled, fulfillment=f)
+
         if output.requirement == "V":
             required_total += 1
             if fulfilled:
                 required_fulfilled += 1
-        output_items.append(OutputReadinessItem(
-            output=output,
-            fulfilled=fulfilled,
-            fulfillment=f,
-        ))
+        elif output.requirement == "A" and not fulfilled:
+            recommended_unfulfilled.append(item)
+
+        output_items.append(item)
 
     all_required_met = required_fulfilled == required_total
 
@@ -334,7 +336,7 @@ async def get_step_readiness(
     )
     dependencies_met = len(blocking_deps) == 0
 
-    # Compute allowed transitions
+    # Compute allowed transitions (only V-outputs block, A-outputs warn but don't block)
     base_transitions = VALID_TRANSITIONS.get(execution.status, [])
     allowed_transitions = []
     for t in base_transitions:
@@ -354,6 +356,7 @@ async def get_step_readiness(
         required_fulfilled=required_fulfilled,
         required_total=required_total,
         all_required_met=all_required_met,
+        recommended_unfulfilled=recommended_unfulfilled,
         dependencies_met=dependencies_met,
         blocking_dependencies=blocking_deps,
         allowed_transitions=allowed_transitions,

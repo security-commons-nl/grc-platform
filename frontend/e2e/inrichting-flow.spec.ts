@@ -72,8 +72,9 @@ test.describe('Inrichtingsflow — stap 1', () => {
     await expect(page.getByText('Stap 1')).toBeVisible({ timeout: 5_000 });
 
     await expect(page.getByText('Outputs')).toBeVisible();
-    await expect(page.getByText('Besluitmemo(V)')).toBeVisible();
-    await expect(page.getByText('Besluitlog #001')).toBeVisible();
+    // Check outputs are visible (text split across elements)
+    await expect(page.getByText('Besluitmemo').first()).toBeVisible();
+    await expect(page.getByText('Besluitlog #001').first()).toBeVisible();
   });
 
   test('besluitlog pagina werkt', async ({ page }) => {

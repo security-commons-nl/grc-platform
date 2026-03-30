@@ -285,20 +285,14 @@ async def test_transition_allowed_when_dependency_met(client: AsyncClient, test_
 
 @pytest.mark.asyncio
 async def test_transition_to_vastgesteld_blocked_without_outputs(client: AsyncClient, test_tenant, tenant_token):
-    """Cannot set a step to vastgesteld if required outputs are missing (when outputs are defined)."""
-    # Use a seeded step that has output definitions
+    """Step 1 (only A-outputs) can advance without fulfillments. Step with V-outputs cannot."""
+    # Step 1 has only decision outputs (now A/aanbevolen) — should NOT be blocked
     resp = await client.get(
         "/api/v1/steps/",
         headers={"Authorization": f"Bearer {tenant_token}"},
     )
-    steps_with_outputs = [s for s in resp.json() if len(s.get("outputs", [])) > 0]
-
-    if not steps_with_outputs:
-        pytest.skip("No seeded steps with outputs available")
-
-    # Use step 1 (no blocking dependencies)
-    step = next((s for s in steps_with_outputs if s["number"] == "1"), steps_with_outputs[0])
-    execution = await _create_execution(client, tenant_token, step["id"])
+    step1 = next(s for s in resp.json() if s["number"] == "1")
+    execution = await _create_execution(client, tenant_token, step1["id"])
 
     # Move through states
     await client.patch(
@@ -312,11 +306,11 @@ async def test_transition_to_vastgesteld_blocked_without_outputs(client: AsyncCl
         headers={"Authorization": f"Bearer {tenant_token}"},
     )
 
-    # Try in_review — should fail because no outputs are fulfilled
+    # Step 1 should advance to in_review even without fulfillments (only A-outputs)
     resp = await client.patch(
         f"/api/v1/steps/executions/{execution['id']}",
         json={"status": "in_review"},
         headers={"Authorization": f"Bearer {tenant_token}"},
     )
-    assert resp.status_code == 422
-    assert "outputs ontbreken" in resp.json()["detail"].lower()
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "in_review"

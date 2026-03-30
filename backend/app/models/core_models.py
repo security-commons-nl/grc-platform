@@ -611,6 +611,7 @@ class IMSStepOutput(Base):
         String(1), nullable=False, default="V"
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    skip_warning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )

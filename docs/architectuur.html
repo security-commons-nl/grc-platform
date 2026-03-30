@@ -103,7 +103,7 @@
 </head><body>
 <h1>IMS Platform — Technische Architectuur</h1>
 <p class="subtitle">Datamodel · API · Services · Tests</p>
-<p class="generated">Auto-generated op 2026-03-30 22:12 uit codebase</p>
+<p class="generated">Auto-generated op 2026-03-30 22:36 uit codebase</p>
 
 <div class="nav">
   <a href="#stats">Statistieken</a>
@@ -118,7 +118,7 @@
 <div class="grid">
   <div class="card stat"><div class="stat-value">36</div><div class="stat-label">Database tabellen</div></div>
   <div class="card stat"><div class="stat-value">157</div><div class="stat-label">API Endpoints</div></div>
-  <div class="card stat"><div class="stat-value">8</div><div class="stat-label">Migraties</div></div>
+  <div class="card stat"><div class="stat-value">9</div><div class="stat-label">Migraties</div></div>
   <div class="card stat"><div class="stat-value">128</div><div class="stat-label">Tests</div></div>
 </div>
 
@@ -294,8 +294,8 @@
 
           <div class="card">
             <div style="font-weight:600;font-family:monospace;color:var(--accent)">ims_step_outputs</div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">8 kolommen</div>
-            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>output_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>requirement</code></td><td style="color:var(--text-muted)">VARCHAR(1)</td></tr><tr><td><code>sort_order</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0">9 kolommen</div>
+            <table><tr><td><code>id</code> 🔑</td><td style="color:var(--text-muted)">UUID</td></tr><tr><td><code>step_id</code></td><td style="color:var(--text-muted)">UUID → <code>ims_steps.id</code></td></tr><tr><td><code>name</code></td><td style="color:var(--text-muted)">VARCHAR(200)</td></tr><tr><td><code>output_type</code></td><td style="color:var(--text-muted)">VARCHAR(20)</td></tr><tr><td><code>requirement</code></td><td style="color:var(--text-muted)">VARCHAR(1)</td></tr><tr><td><code>sort_order</code></td><td style="color:var(--text-muted)">INTEGER</td></tr><tr><td><code>skip_warning</code></td><td style="color:var(--text-muted)">TEXT (nullable)</td></tr><tr><td><code>created_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr><tr><td><code>updated_at</code></td><td style="color:var(--text-muted)">DATETIME</td></tr></table>
           </div>
 
           <div class="card">
@@ -508,6 +508,7 @@
 <tr><td><code>006_agent_conversations.py</code></td><td>Add agent conversation and message tables</td></tr>
 <tr><td><code>007_rename_terminology.py</code></td><td>Rename SIMS/TIMS to strategisch/tactisch gremium</td></tr>
 <tr><td><code>008_step_uitleg_voorbeeld.py</code></td><td>Add uitleg and voorbeeld_content to ims_steps</td></tr>
+<tr><td><code>009_decision_outputs_recommended.py</code></td><td>Decision outputs: V → A + skip_warning teksten</td></tr>
 </table>
 <h2 id="tests">Tests (128 totaal)</h2><div class="grid">
 

@@ -115,6 +115,7 @@ class StepOutputResponse(BaseModel):
     output_type: str
     requirement: str
     sort_order: int
+    skip_warning: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -162,6 +163,7 @@ class StepReadiness(BaseModel):
     required_fulfilled: int
     required_total: int
     all_required_met: bool
+    recommended_unfulfilled: List[OutputReadinessItem]
     dependencies_met: bool
     blocking_dependencies: List[UUID]
     allowed_transitions: List[str]

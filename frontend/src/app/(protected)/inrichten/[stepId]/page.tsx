@@ -57,6 +57,7 @@ export default function StepDetailPage({
   const [uploadType, setUploadType] = useState('pdf');
   const [linkingOutputId, setLinkingOutputId] = useState<string | null>(null);
   const [voorbeeldOpen, setVoorbeeldOpen] = useState(false);
+  const [pendingTransition, setPendingTransition] = useState<string | null>(null);
 
   const { data: step, isLoading: stepLoading } = useSWR<StepResponse>(
     `/steps/${stepId}`,
@@ -126,7 +127,23 @@ export default function StepDetailPage({
     }
   }
 
+  function handleTransitionClick(targetStatus: string) {
+    // Check if there are unfulfilled recommended outputs — show warning first
+    const hasRecommendedWarnings =
+      readiness &&
+      readiness.recommended_unfulfilled.length > 0 &&
+      targetStatus !== 'in_uitvoering' &&
+      targetStatus !== 'concept';
+
+    if (hasRecommendedWarnings) {
+      setPendingTransition(targetStatus);
+      return;
+    }
+    handleTransition(targetStatus);
+  }
+
   async function handleTransition(targetStatus: string) {
+    setPendingTransition(null);
     setIsUpdating(true);
     setError(null);
 
@@ -339,7 +356,7 @@ export default function StepDetailPage({
                                     ? 'bg-green-500'
                                     : output.requirement === 'V'
                                       ? 'bg-red-400'
-                                      : 'bg-neutral-300'
+                                      : 'bg-orange-400'
                                 }`}
                               />
                               <span
@@ -540,7 +557,7 @@ export default function StepDetailPage({
                       variant={action.variant}
                       size="md"
                       disabled={isUpdating}
-                      onClick={() => handleTransition(action.target)}
+                      onClick={() => handleTransitionClick(action.target)}
                     >
                       {isUpdating ? 'Bezig...' : action.label}
                     </Button>
@@ -552,6 +569,47 @@ export default function StepDetailPage({
                     {error}
                   </div>
                 )}
+              </div>
+            </Card>
+          )}
+
+          {/* Waarschuwing bij ontbrekende aanbevolen outputs */}
+          {pendingTransition && readiness && readiness.recommended_unfulfilled.length > 0 && (
+            <Card>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-orange-800">
+                  Let op: niet alle aanbevolen outputs zijn ingevuld
+                </h4>
+                <div className="space-y-2">
+                  {readiness.recommended_unfulfilled.map((item) => (
+                    <div
+                      key={item.output.id}
+                      className="rounded-md bg-orange-50 border border-orange-200 px-3 py-2 text-sm text-orange-800"
+                    >
+                      <p className="font-medium">{item.output.name}</p>
+                      {item.output.skip_warning && (
+                        <p className="mt-1 text-xs">{item.output.skip_warning}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={isUpdating}
+                    onClick={() => handleTransition(pendingTransition)}
+                  >
+                    {isUpdating ? 'Bezig...' : 'Toch doorgaan'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPendingTransition(null)}
+                  >
+                    Annuleren
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
