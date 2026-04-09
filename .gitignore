@@ -35,3 +35,6 @@ SERVER_ACCESS.md
 .idea/
 .claude/worktrees/
 frontend/test-results/
+frontend/node_modules/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
