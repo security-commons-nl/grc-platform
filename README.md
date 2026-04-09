@@ -1,8 +1,10 @@
-# IMS — Integrated Management System
+# GRC-platform
 
 > **Model-gedreven GRC-platform voor ISMS, PIMS en BCMS — met lokale AI, PDCA-workflow en Nederlandse compliance.**
+>
+> Internationaal ook bekend als een Integrated Management System (IMS).
 
-IMS is een Governance, Risk & Compliance-platform dat **normen, risico's, controls, audits en bewijs** centraal beheert. Gebouwd voor gemeenten en publieke organisaties die meerdere managementsystemen willen combineren in **een enkele bron van waarheid**.
+Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, risico's, controls, audits en bewijs** centraal beheert. Gebouwd voor gemeenten en publieke organisaties die meerdere managementsystemen willen combineren in **een enkele bron van waarheid**.
 
 ---
 
