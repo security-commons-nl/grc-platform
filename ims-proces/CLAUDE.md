@@ -16,24 +16,18 @@ Het IMS dekt drie domeinen:
 | `CONTEXT.md` | Centraal ontwerpregister: 22 stappen, 4 fasen, 18 AI agents, alle ontwerpbeslissingen |
 | `blueprint-handboek.md` | Generiek IMS Handboek template met placeholders (ISO HLS structuur) |
 
-## Relatie met IMS-tooling
+## Relatie met grc-platform
 
-`IMS-proces` is een zusterrepo van `IMS-tooling` (de GRC-machine). Samen vormen ze één platform.
+`IMS-proces` is onderdeel van `grc-platform` (de GRC-engine). Samen vormen ze één platform.
 
 ### Consolidatievisie
 
-**Einddoel:** IMS-tooling wordt gestript en aansluitend gemaakt bij IMS-proces. Het volledige IMS-proces (alle 4 fasen, alle 22 stappen) wordt ondersteund door tooling die uiteindelijk ook volledige GRC ondersteunt.
+**Einddoel:** het volledige IMS-proces (alle 4 fasen, alle 22 stappen) wordt ondersteund door één geïntegreerde GRC-engine.
 
-Concreet:
 - **IMS-proces** is leidend — het definieert de stappen, agents en documentgeneratie
-- **IMS-tooling** levert de GRC-engine: risico's, controls, assessments, PDCA, evidence
-- De inrichtingsmodus (IMS-proces) *is* de configuratie van de beheermodus (IMS-tooling)
-- Data die tijdens onboarding wordt ingevoerd vloeit direct door naar de GRC-tool — geen synchronisatie, één waarheid
-
-Bij consolidatie:
-1. IMS-tooling strippen tot de kern (GRC-engine)
-2. IMS-proces stuurt het volledige traject aan, incl. de GRC-engine
-3. Één geïntegreerd platform dat meegroeit met de gemeente
+- **GRC-engine** levert: risico's, controls, assessments, PDCA, evidence
+- De inrichtingsmodus *is* de configuratie van de beheermodus
+- Data die tijdens onboarding wordt ingevoerd vloeit direct door — geen synchronisatie, één waarheid
 
 ## Architectuur & conventies
 
@@ -75,10 +69,6 @@ Input verzamelen → AI agent genereert concept → Gremium reviewt → Output v
 | Geel | TIMS |
 | Oranje | SIMS |
 | Rood | Directieteam |
-
-## Eerste invulling
-
-Gemeente Leiden (en regio). Organisatiespecifieke context staat in de interne SharePoint-omgeving van de gemeente.
 
 ## Normatief kader
 

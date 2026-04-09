@@ -27,10 +27,6 @@ Implementatiemethodologie voor het inrichten van een Integrated Management Syste
 | `blueprint-handboek.md` | Generiek IMS Handboek template (ISO HLS) met placeholders |
 | `CLAUDE.md` | AI-sessiecontext voor dit project |
 
-## Relatie met IMS-tooling
+## Relatie met grc-platform
 
-Zusterrepo van [`IMS-tooling`](https://github.com/lugdunium/IMS-tooling) (de GRC-engine). IMS-proces definieert de stappen en agents; IMS-tooling levert risico's, controls, assessments en PDCA. Samen vormen ze één platform.
-
-## Eerste invulling
-
-Gemeente Leiden (en regio).
+Onderdeel van [`grc-platform`](https://github.com/security-commons-nl/grc-platform). IMS-proces definieert de stappen en agents; de GRC-engine levert risico's, controls, assessments en PDCA. Samen vormen ze één platform.
