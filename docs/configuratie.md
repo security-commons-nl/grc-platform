@@ -21,13 +21,39 @@ cp .env.example .env
 | `FIRST_ADMIN_EMAIL` | E-mailadres eerste beheerder | `beheer@jouworganisatie.nl` |
 | `FIRST_ADMIN_PASSWORD` | Wachtwoord eerste beheerder | Tijdelijk, direct wijzigen na eerste login |
 
-### Optioneel
+### AI (optioneel)
 
 | Variabele | Standaard | Beschrijving |
 |-----------|-----------|--------------|
-| `AI_ENABLED` | `false` | AI-ondersteuning inschakelen |
-| `OLLAMA_BASE_URL` | `http://ollama:11434` | URL naar Ollama-instantie |
-| `OLLAMA_MODEL` | `mistral` | Welk model Ollama gebruikt |
+| `AI_API_BASE` | `https://openrouter.ai/api/v1` | API-endpoint van de LLM-provider |
+| `AI_API_KEY` | — | API-sleutel van de LLM-provider |
+| `AI_MODEL_NAME` | `mistralai/mistral-small-latest` | Taalmodel |
+| `AI_EMBEDDING_MODEL` | `openai/text-embedding-3-small` | Embedding-model voor RAG |
+| `AI_MAX_TOKENS` | `4096` | Maximum tokens per LLM-aanroep |
+| `AI_TEMPERATURE` | `0.3` | Creativiteit van het model (0 = deterministisch) |
+| `LANGFUSE_SECRET_KEY` | — | Langfuse observability (optioneel) |
+| `LANGFUSE_PUBLIC_KEY` | — | Langfuse observability (optioneel) |
+| `LANGFUSE_HOST` | — | Langfuse host URL (optioneel) |
+
+**EU-conforme AI-configuratie**
+
+De standaardconfiguratie gebruikt OpenRouter (Amerikaans). Voor productie bij publieke organisaties zijn twee EU-conforme alternatieven beschikbaar:
+
+*Optie A: Mistral EU API (aanbevolen voor productie)*
+```env
+AI_API_BASE=https://api.mistral.ai/v1
+AI_API_KEY=<jouw-mistral-api-key>
+AI_MODEL_NAME=mistral-small-latest
+AI_EMBEDDING_MODEL=mistral-embed
+```
+
+*Optie B: Ollama lokaal (volledig air-gapped)*
+```env
+AI_API_BASE=http://localhost:11434/v1
+AI_API_KEY=ollama
+AI_MODEL_NAME=mistral
+AI_EMBEDDING_MODEL=nomic-embed-text
+```
 | `CORS_ORIGINS` | `http://localhost:3000` | Toegestane frontend-origins |
 | `LOG_LEVEL` | `INFO` | Logging-niveau (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 

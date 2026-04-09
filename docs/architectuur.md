@@ -7,10 +7,10 @@
 ## Vierlaagse architectuur
 
 ```
-Laag 1: MODEL (Data)     — PostgreSQL 16 + SQLAlchemy 2.0
-Laag 2: API   (Logica)   — FastAPI + JWT + RBAC + RLS
-Laag 3: TOOLS (UI)       — Next.js 15
-Laag 4: AI    (Support)  — Ollama / lokaal taalmodel
+Laag 1: MODEL (Data)       — PostgreSQL 16 + SQLAlchemy 2.0
+Laag 2: API   (Logica)     — FastAPI + JWT + RBAC + RLS
+Laag 3: TOOLS (UI)         — Next.js 15
+Laag 4: AI    (Agents/RAG) — OpenAI-compatible client (OpenRouter / Ollama / EU-hosted)
 ```
 
 Het principe: **logica zit in de API, niet in de UI**. De frontend is een dunne glasplaat. Dit maakt alternatieve clients (CLI, integraties, andere UI's) mogelijk zonder de businesslogica te dupliceren.
@@ -122,11 +122,58 @@ SWR voor server-state (data fetching + caching). React Context voor auth-state (
 
 ## AI (Laag 4)
 
-De AI-laag is adviserend en lokaal. Het platform ondersteunt Ollama met een lokaal gehost model (standaard Mistral).
+De AI-laag bestaat uit domeinagenten, een RAG-pipeline en een configureerbare LLM-client. AI is altijd adviserend: het platform genereert concepten en suggesties, maar beslissingen worden altijd door mensen genomen.
 
-De AI wordt ingeschakeld via `AI_ENABLED=true` in `.env`. Als de AI-service niet bereikbaar is, werkt het platform gewoon door — zonder AI-hints.
+### LLM-client
 
-Elke inrichtingsstap kan een contextuele hint ophalen die het model genereert op basis van de normatieve context van die stap (BIO 2.0, ISO 27001, etc.).
+`backend/app/services/llm_client.py` — OpenAI-compatible interface. Configureerbaar via `.env`:
+
+| Variabele | Standaard | Beschrijving |
+|-----------|-----------|--------------|
+| `AI_API_BASE` | `https://openrouter.ai/api/v1` | API-endpoint (OpenRouter, Ollama, Mistral EU, etc.) |
+| `AI_API_KEY` | — | API-sleutel |
+| `AI_MODEL_NAME` | `mistralai/mistral-small-latest` | Taalmodel |
+| `AI_EMBEDDING_MODEL` | `openai/text-embedding-3-small` | Embedding-model voor RAG |
+
+De standaardconfiguratie gebruikt OpenRouter. Voor EU-conforme deployments: zie [configuratie.md](configuratie.md).
+
+### Domeinagenten
+
+Per IMS-inrichtingsstap is er een gespecialiseerde agent. Elke agent:
+
+1. Laadt normatieve context via RAG (zie onder)
+2. Voert een gesprek met de gebruiker om de stap in te vullen
+3. Genereert concept-documenten op basis van het gesprek (JSON, gelabeld als `AI CONCEPT — verifieer handmatig`)
+4. Schrijft elke LLM-aanroep weg naar `AIAuditLog`
+
+| Agent | Verantwoordelijkheid |
+|-------|---------------------|
+| `commitment_agent` | Bestuurlijk draagvlak en mandatering |
+| `context_agent` | Organisatiecontext en scope |
+| `scope_agent` | Toepassingsgebied IMS |
+| `governance_agent` | Governance-structuur (SIMS/TIMS) |
+| `gap_agent` | Gap-analyse t.o.v. normenkaders |
+| `register_agent` | Registers (risico's, assets, verwerkingen) |
+| `controls_agent` | Maatregelen en controls |
+
+### RAG-pipeline
+
+`backend/app/services/rag/` — semantisch zoeken via pgvector cosine similarity.
+
+Twee kennislagen:
+- **Normatief** (`tenant_id IS NULL`) — gedeelde normteksten: BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG
+- **Organisatie** (tenant-scoped) — organisatiespecifieke documenten en eerder opgeleverde stap-outputs
+
+Bij elke agent-aanroep worden de top-3 meest relevante kennisfragmenten meegestuurd als context aan het model.
+
+### Auditbaarheid AI
+
+Elke LLM-aanroep wordt vastgelegd in `AIAuditLog`:
+- Welke agent, welke stap, welke tenant
+- Model-naam, prompt-tokens, completion-tokens
+- Gekoppeld aan het gegenereerde `AgentMessage`
+
+Optioneel: Langfuse-integratie voor volledige observability (`LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_HOST` in `.env`).
 
 ---
 
@@ -167,6 +214,6 @@ Alle tabellen hebben `created_at` en `updated_at` timestamps. Mutaties worden ni
 
 **Waarom Next.js en niet een SPA-framework?** Server-side rendering maakt het eenvoudiger om auth-state consistent te houden. De inrichtingswizard heeft veel server-rond-trips; SSR reduceert de waargenomen laadtijd.
 
-**Waarom lokale AI?** Publieke organisaties mogen veelal geen gevoelige data naar externe AI-diensten sturen. Lokale modellen via Ollama zijn een EU-conforme keuze die geen externe afhankelijkheid introduceert.
+**Waarom een configureerbare AI-provider?** De LLM-client is bewust provider-agnostisch. De standaardconfiguratie gebruikt OpenRouter (breed model-aanbod, snelste manier om te starten). Voor productie-deployments bij publieke organisaties zijn EU-conforme alternatieven aan te raden: [Mistral EU API](https://mistral.ai) (GDPR-compliant, EU-gehost) of Ollama lokaal. Geen vendor lock-in — alleen `AI_API_BASE` en `AI_MODEL_NAME` hoeven te wijzigen.
 
 **Waarom geen ORM-abstractie bovenop SQLAlchemy?** De RLS-implementatie vereist directe controle over databasesessies en transacties. Een extra ORM-laag zou dat bemoeilijken.
