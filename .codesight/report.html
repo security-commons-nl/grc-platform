@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>grc-platform — codesight report</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121a;--border:#1e1e2e;--text:#e0e0e8;--muted:#6b6b80;--accent:#6366f1;--accent2:#22d3ee;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;--pink:#ec4899}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:2rem;max-width:1400px;margin:0 auto;line-height:1.6}
+h1{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem}
+.subtitle{color:var(--muted);font-size:1rem;margin-bottom:2rem}
+.stack-badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:.85rem;color:var(--accent2);margin:0 4px 4px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:2rem 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center}
+.stat-value{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{color:var(--muted);font-size:.85rem;margin-top:.25rem}
+.token-hero{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid var(--accent);border-radius:16px;padding:2rem;margin:2rem 0;text-align:center}
+.token-saved{font-size:3rem;font-weight:900;color:var(--green)}
+.token-detail{color:var(--muted);font-size:.9rem;margin-top:.5rem}
+.section{margin:2.5rem 0}
+.section h2{font-size:1.4rem;font-weight:700;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;transition:border-color .2s}
+.card:hover{border-color:var(--accent)}
+.card-title{font-weight:700;font-size:1rem;margin-bottom:.5rem}
+.card-meta{color:var(--muted);font-size:.8rem}
+.tag{display:inline-block;background:rgba(99,102,241,.15);color:var(--accent);border-radius:4px;padding:1px 6px;font-size:.75rem;margin:1px}
+.tag-auth{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-db{background:rgba(34,211,238,.15);color:var(--accent2)}
+.tag-ai{background:rgba(236,72,153,.15);color:var(--pink)}
+.tag-payment{background:rgba(245,158,11,.15);color:var(--orange)}
+.tag-email{background:rgba(34,197,94,.15);color:var(--green)}
+.tag-queue{background:rgba(168,85,247,.15);color:#a855f7}
+.tag-cache{background:rgba(245,158,11,.15);color:var(--orange)}
+.method{font-weight:700;font-size:.8rem;padding:2px 6px;border-radius:4px;margin-right:6px}
+.method-GET{background:rgba(34,197,94,.2);color:var(--green)}
+.method-POST{background:rgba(99,102,241,.2);color:var(--accent)}
+.method-PUT{background:rgba(245,158,11,.2);color:var(--orange)}
+.method-PATCH{background:rgba(245,158,11,.2);color:var(--orange)}
+.method-DELETE{background:rgba(239,68,68,.2);color:var(--red)}
+.method-ALL{background:rgba(107,107,128,.2);color:var(--muted)}
+.route-path{font-family:'Fira Code',monospace;font-size:.9rem}
+.route-contract{color:var(--muted);font-size:.8rem;font-style:italic;margin-left:.5rem}
+.field{display:flex;gap:.5rem;padding:3px 0;font-size:.9rem}
+.field-name{font-family:monospace;color:var(--accent2)}
+.field-type{color:var(--muted);font-family:monospace}
+.field-flags{display:flex;gap:3px}
+.flag{font-size:.7rem;padding:0 4px;border-radius:3px;background:rgba(99,102,241,.1);color:var(--accent)}
+.flag-pk{background:rgba(245,158,11,.2);color:var(--orange)}
+.flag-fk{background:rgba(34,211,238,.2);color:var(--accent2)}
+.flag-unique{background:rgba(236,72,153,.2);color:var(--pink)}
+.hot-bar{height:8px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;margin-top:4px}
+.component-props{color:var(--muted);font-size:.85rem}
+.badge-client{background:rgba(34,197,94,.15);color:var(--green);font-size:.75rem;padding:1px 6px;border-radius:4px}
+.badge-server{background:rgba(99,102,241,.15);color:var(--accent);font-size:.75rem;padding:1px 6px;border-radius:4px}
+.env-required{color:var(--red);font-weight:600;font-size:.8rem}
+.env-default{color:var(--green);font-size:.8rem}
+.footer{text-align:center;color:var(--muted);margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);font-size:.85rem}
+.footer a{color:var(--accent);text-decoration:none}
+table{width:100%;border-collapse:collapse}
+table td,table th{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+table th{color:var(--muted);font-size:.8rem;font-weight:600;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<h1>grc-platform</h1>
+<div class="subtitle">AI Context Map — generated by codesight</div>
+
+<div>
+<span class="stack-badge">fastapi</span>
+<span class="stack-badge">sqlalchemy</span>
+<span class="stack-badge">react</span>
+<span class="stack-badge">python</span>
+<span class="stack-badge">microservices</span>
+</div>
+
+<div class="token-hero">
+  <div class="token-saved">~113.247 tokens saved</div>
+  <div class="token-detail">
+    Output: 11.033 tokens — Exploration cost without codesight: ~124.280 tokens — 166 files scanned
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-value">132</div><div class="stat-label">Routes</div></div>
+  <div class="stat"><div class="stat-value">36</div><div class="stat-label">Models</div></div>
+  <div class="stat"><div class="stat-value">32</div><div class="stat-label">Components</div></div>
+  <div class="stat"><div class="stat-value">75</div><div class="stat-label">Libraries</div></div>
+  <div class="stat"><div class="stat-value">29</div><div class="stat-label">Env Vars</div></div>
+  <div class="stat"><div class="stat-value">6</div><div class="stat-label">Middleware</div></div>
+  <div class="stat"><div class="stat-value">9</div><div class="stat-label">Import Links</div></div>
+</div>
+
+
+<div class="section">
+<h2>Routes</h2>
+<table>
+<tr><th>Method</th><th>Path</th><th>Contract</th><th>Tags</th><th>File</th></tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/{agent_name}/conversations <span class="route-contract">params: agent_name</span></td>
+  <td><span class="route-contract">out: ConversationResponse</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\agents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/conversations/{conversation_id} <span class="route-contract">params: conversation_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: ConversationResponse</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\agents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/conversations/{conversation_id}/messages <span class="route-contract">params: conversation_id</span></td>
+  <td><span class="route-contract">out: ConversationResponse</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\agents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/conversations/{conversation_id}/feedback <span class="route-contract">params: conversation_id</span></td>
+  <td><span class="route-contract">out: ConversationResponse</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\agents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/conversations/{conversation_id}/generate <span class="route-contract">params: conversation_id</span></td>
+  <td><span class="route-contract">out: ConversationResponse</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\agents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{assessment_id} <span class="route-contract">params: assessment_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: AssessmentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{assessment_id} <span class="route-contract">params: assessment_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{assessment_id} <span class="route-contract">params: assessment_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/findings/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/findings/{finding_id} <span class="route-contract">params: finding_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/findings/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: AssessmentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/findings/{finding_id} <span class="route-contract">params: finding_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/findings/{finding_id} <span class="route-contract">params: finding_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/corrective-actions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/corrective-actions/{action_id} <span class="route-contract">params: action_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/corrective-actions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: AssessmentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/corrective-actions/{action_id} <span class="route-contract">params: action_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/corrective-actions/{action_id} <span class="route-contract">params: action_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\assessments.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/dev-token <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: DevTokenRequest</span><span class="route-contract">out: TokenResponse</span></td>
+  <td><span class="tag tag-auth">auth</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\auth.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/agent-token <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: DevTokenRequest</span><span class="route-contract">out: TokenResponse</span></td>
+  <td><span class="tag tag-auth">auth</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\auth.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/me <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: CurrentUse</span><span class="route-contract">out: TokenResponse</span></td>
+  <td><span class="tag tag-auth">auth</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\auth.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{control_id} <span class="route-contract">params: control_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\controls.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{control_id} <span class="route-contract">params: control_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\controls.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{control_id} <span class="route-contract">params: control_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\controls.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{decision_id} <span class="route-contract">params: decision_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\decisions.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{document_id} <span class="route-contract">params: document_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{document_id} <span class="route-contract">params: document_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{document_id} <span class="route-contract">params: document_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/versions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/versions/{version_id} <span class="route-contract">params: version_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/versions/{version_id}/export <span class="route-contract">params: version_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/versions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: DocumentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/input-documents/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/input-documents/{input_doc_id} <span class="route-contract">params: input_doc_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/input-documents/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: DocumentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/input-documents/{input_doc_id} <span class="route-contract">params: input_doc_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/gap-analysis/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/gap-analysis/{gap_id} <span class="route-contract">params: gap_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/gap-analysis/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: DocumentCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/gap-analysis/{gap_id} <span class="route-contract">params: gap_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\documents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{evidence_id} <span class="route-contract">params: evidence_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\evidence.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{evidence_id} <span class="route-contract">params: evidence_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\evidence.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{evidence_id} <span class="route-contract">params: evidence_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\evidence.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path"> <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: AsyncSessio</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\health.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{incident_id} <span class="route-contract">params: incident_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\incidents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{incident_id} <span class="route-contract">params: incident_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\incidents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{incident_id} <span class="route-contract">params: incident_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\incidents.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{chunk_id} <span class="route-contract">params: chunk_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\knowledge.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{chunk_id} <span class="route-contract">params: chunk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\knowledge.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{chunk_id} <span class="route-contract">params: chunk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\knowledge.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{risk_id} <span class="route-contract">params: risk_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{risk_id} <span class="route-contract">params: risk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{risk_id} <span class="route-contract">params: risk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/links/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/links/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: RiskCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/links/{risk_id}/{control_id} <span class="route-contract">params: risk_id, control_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\risks.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{scope_id} <span class="route-contract">params: scope_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scopes.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{scope_id} <span class="route-contract">params: scope_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scopes.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{scope_id} <span class="route-contract">params: scope_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scopes.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/maturity-profiles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/maturity-profiles/{profile_id} <span class="route-contract">params: profile_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/maturity-profiles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: MaturityProfileCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/maturity-profiles/{profile_id} <span class="route-contract">params: profile_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/maturity-profiles/{profile_id} <span class="route-contract">params: profile_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/setup-scores/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/setup-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/setup-scores/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: MaturityProfileCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/setup-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/setup-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/grc-scores/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/grc-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/grc-scores/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: MaturityProfileCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/grc-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/grc-scores/{score_id} <span class="route-contract">params: score_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\scores.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{standard_id} <span class="route-contract">params: standard_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{standard_id} <span class="route-contract">params: standard_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{standard_id} <span class="route-contract">params: standard_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/requirements/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/requirements/{requirement_id} <span class="route-contract">params: requirement_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/requirements/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StandardCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/requirements/{requirement_id} <span class="route-contract">params: requirement_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/requirements/{requirement_id} <span class="route-contract">params: requirement_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/mappings/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/mappings/{mapping_id} <span class="route-contract">params: mapping_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/mappings/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StandardCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/mappings/{mapping_id} <span class="route-contract">params: mapping_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/mappings/{mapping_id} <span class="route-contract">params: mapping_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/normenkader/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/normenkader/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StandardCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/normenkader/{nk_id} <span class="route-contract">params: nk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/normenkader/{nk_id} <span class="route-contract">params: nk_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/ingestions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/ingestions/{ingestion_id} <span class="route-contract">params: ingestion_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/ingestions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StandardCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/ingestions/{ingestion_id} <span class="route-contract">params: ingestion_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/ingestions/{ingestion_id} <span class="route-contract">params: ingestion_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\standards.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{step_id} <span class="route-contract">params: step_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{step_id} <span class="route-contract">params: step_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{step_id} <span class="route-contract">params: step_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/dependencies/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/dependencies/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StepCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/dependencies/{dep_id} <span class="route-contract">params: dep_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/executions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/executions/{execution_id} <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/executions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: StepCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/executions/{execution_id} <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/executions/{execution_id} <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/executions/{execution_id}/readiness <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/executions/{execution_id}/fulfillments <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/executions/{execution_id}/fulfillments <span class="route-contract">params: execution_id</span></td>
+  <td><span class="route-contract">in: StepCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/fulfillments/{fulfillment_id} <span class="route-contract">params: fulfillment_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\steps.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/{tenant_id} <span class="route-contract">params: tenant_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/{tenant_id} <span class="route-contract">params: tenant_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/{tenant_id} <span class="route-contract">params: tenant_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/regions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/regions/{region_id} <span class="route-contract">params: region_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/regions/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: TenantCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/regions/{region_id} <span class="route-contract">params: region_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/regions/{region_id} <span class="route-contract">params: region_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/users/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/users/{user_id} <span class="route-contract">params: user_id</span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/users/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: TenantCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-PATCH">PATCH</span></td>
+  <td class="route-path">/users/{user_id} <span class="route-contract">params: user_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/users/{user_id} <span class="route-contract">params: user_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/user-tenant-roles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/user-tenant-roles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: TenantCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/user-tenant-roles/{role_id} <span class="route-contract">params: role_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-GET">GET</span></td>
+  <td class="route-path">/user-region-roles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-POST">POST</span></td>
+  <td class="route-path">/user-region-roles/ <span class="route-contract">params: </span></td>
+  <td><span class="route-contract">in: TenantCreate</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+<tr>
+  <td><span class="method method-DELETE">DELETE</span></td>
+  <td class="route-path">/user-region-roles/{role_id} <span class="route-contract">params: role_id</span></td>
+  <td><span class="route-contract">in: UUID</span><span class="route-contract">out: list</span></td>
+  <td><span class="tag tag-auth">auth</span><span class="tag tag-db">db</span></td>
+  <td class="card-meta">backend\app\api\v1\endpoints\tenants.py</td>
+</tr>
+</table>
+</div>
+
+
+<div class="section">
+<h2>Schema</h2>
+<div class="grid">
+<div class="card">
+  <div class="card-title">Region <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">centrum_tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">Tenant <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">region_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_active</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">User <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">external_id</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-unique">unique</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">email</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_active</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">UserTenantRole <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">role</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">UserRegionRole <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">region_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">role</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">AIAuditLog <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">agent_name</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">model</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">prompt_tokens</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">completion_tokens</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">langfuse_trace_id</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">feedback</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">feedback_comment</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStep <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">number</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">phase</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">waarom_nu</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">uitleg</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">voorbeeld_content</span>
+    <span class="field-type">JSONB</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">required_gremium</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_optional</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  <div class="card-meta" style="margin-top:6px">Relations: outputs: IMSStepOutput</div>
+</div>
+<div class="card">
+  <div class="card-title">IMSStepDependency <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">depends_on_step_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">dependency_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStepExecution <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">cyclus_id</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">started_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">completed_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">skipped</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">skip_reason</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">skip_logged_by</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStepOutput <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">output_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">requirement</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">sort_order</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">skip_warning</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  <div class="card-meta" style="margin-top:6px">Relations: step: IMSStep</div>
+</div>
+<div class="card">
+  <div class="card-title">IMSStepOutputFulfillment <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_output_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">decision_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">document_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">fulfilled_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">fulfilled_by</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSDecision <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">number</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">decision_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">content</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">grondslag</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">gremium</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">decided_by_name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">decided_by_role</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">decided_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">valid_until</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">motivation</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">alternatives</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">iso_clause</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">supersedes_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSDocument <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">document_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">visibility</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">withdrawn_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSDocumentVersion <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">document_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">version_number</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">content_json</span>
+    <span class="field-type">JSONB</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">generated_by_agent</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">vastgesteld_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">vastgesteld_by_name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">vastgesteld_by_role</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">decision_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStepInputDocument <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">storage_path</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">uploaded_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">uploaded_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSGapAnalysisResult <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">input_document_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">field_reference</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">ai_suggestion</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">uncertainty</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">validated</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">validated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">validated_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStandard <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">version</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">published_at</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">superseded_by_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSRequirement <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">standard_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">code</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">description</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_mandatory</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSRequirementMapping <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_requirement_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">target_requirement_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">norm_version_source</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">confidence_score</span>
+    <span class="field-type">Numeric</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_by</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">verified</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">orphaned</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSTenantNormenkader <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">standard_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">adopted_at</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_active</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">decision_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSStandardIngestion <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">uploaded_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_path</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">detected_standard_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">detected_version</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">parsed_requirements_json</span>
+    <span class="field-type">JSONB</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">reviewed_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">reviewed_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSScope <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">name</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">parent_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">is_critical</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">verwerkt_pii</span>
+    <span class="field-type">Boolean</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">ext_verwerking_ref</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSRisk <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">scope_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">description</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">likelihood</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">impact</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">risk_score</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">financial_impact_eur</span>
+    <span class="field-type">Numeric</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">risk_level</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">owner_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">cyclus_id</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">treatment_decision_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSControl <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">requirement_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">description</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">owner_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">implementation_status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">implementation_date</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSRiskControlLink <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">risk_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-pk">pk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">control_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-pk">pk</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSAssessment <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">assessment_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">scope_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">planned_at</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">started_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">completed_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">cyclus_id</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">document_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSFinding <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">assessment_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">description</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">severity</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">requirement_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSCorrectiveAction <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">finding_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">risk_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">description</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">owner_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">due_date</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">completed_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSEvidence <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">control_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">evidence_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">storage_path</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">collected_at</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">valid_until</span>
+    <span class="field-type">Date</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">collected_by_user_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSIncident <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">title</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">incident_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">severity</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">reported_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">resolved_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">external_ticket_id</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">corrective_action_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSMaturityProfile <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">existing_registers</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">existing_analyses</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">coordination_capacity</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">linemanagement_structure</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">recommended_option</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSSetupScore <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">cyclus_year</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">score_pct</span>
+    <span class="field-type">Numeric</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">steps_completed</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">steps_total</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">confirmed_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">calculated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSGRCScore <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">domain</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">cyclus_year</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">score_pct</span>
+    <span class="field-type">Numeric</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">components_json</span>
+    <span class="field-type">JSONB</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">calculated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">IMSKnowledgeChunk <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">layer</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_type</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">source_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">chunk_index</span>
+    <span class="field-type">Integer</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">content</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">embedding</span>
+    <span class="field-type">Any</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">model_used</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  
+</div>
+<div class="card">
+  <div class="card-title">AgentConversation <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">tenant_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">step_execution_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">agent_name</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">status</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">updated_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  <div class="card-meta" style="margin-top:6px">Relations: messages: AgentMessage</div>
+</div>
+<div class="card">
+  <div class="card-title">AgentMessage <span class="card-meta">sqlalchemy</span></div>
+  <div class="field">
+    <span class="field-name">id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-pk">pk</span><span class="flag flag-default">default</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">conversation_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">role</span>
+    <span class="field-type">String</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">content</span>
+    <span class="field-type">Text</span>
+    <span class="field-flags"></span>
+  </div>
+<div class="field">
+    <span class="field-name">metadata_json</span>
+    <span class="field-type">JSONB</span>
+    <span class="field-flags"><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">audit_log_id</span>
+    <span class="field-type">UUID</span>
+    <span class="field-flags"><span class="flag flag-fk">fk</span><span class="flag flag-nullable">nullable</span></span>
+  </div>
+<div class="field">
+    <span class="field-name">created_at</span>
+    <span class="field-type">DateTime</span>
+    <span class="field-flags"><span class="flag flag-default">default</span></span>
+  </div>
+  <div class="card-meta" style="margin-top:6px">Relations: conversation: AgentConversation</div>
+</div>
+</div>
+</div>
+
+
+<div class="section">
+<h2>Components</h2>
+<div class="grid">
+<div class="card">
+  <div class="card-title">GebruikersPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\admin\gebruikers\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">TenantPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\admin\tenant\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">AssessmentsPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\assessments\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">BevindingenPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\bevindingen\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">BewijsPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\bewijs\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">ControlsPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\controls\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">IncidentenPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\incidenten\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">BeheerDashboardPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">RisicosPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\beheer\risicos\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">BesluitenPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\inrichten\besluiten\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">DocumentenPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\inrichten\documenten\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">InrichtenOverzichtPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\inrichten\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">StepDetailPage <span class="badge-client">client</span></div>
+  <div class="component-props">props: params</div>
+  <div class="card-meta">frontend\src\app\(protected)\inrichten\[stepId]\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">ProtectedLayout <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\(protected)\layout.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">RootLayout </div>
+  
+  <div class="card-meta">frontend\src\app\layout.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">LoginPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\login\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">RootPage <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\app\page.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">ChatIsland <span class="badge-client">client</span></div>
+  <div class="component-props">props: stepNumber, executionId</div>
+  <div class="card-meta">frontend\src\components\ai\chat-island.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">ChatPanel <span class="badge-client">client</span></div>
+  <div class="component-props">props: conversation, onClose, onUpdate</div>
+  <div class="card-meta">frontend\src\components\ai\chat-panel.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">RiskMatrix <span class="badge-client">client</span></div>
+  <div class="component-props">props: mode, value</div>
+  <div class="card-meta">frontend\src\components\beheer\risk-matrix.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">DecisionLogTable <span class="badge-client">client</span></div>
+  <div class="component-props">props: decisions</div>
+  <div class="card-meta">frontend\src\components\inrichten\decision-log-table.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">DocumentVersionList <span class="badge-client">client</span></div>
+  <div class="component-props">props: documents</div>
+  <div class="card-meta">frontend\src\components\inrichten\document-version-list.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">StepCard <span class="badge-client">client</span></div>
+  <div class="component-props">props: step, execution, isBlocked, onClick</div>
+  <div class="card-meta">frontend\src\components\inrichten\step-card.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">StepProgressGrid <span class="badge-client">client</span></div>
+  <div class="component-props">props: steps, executions, dependencies</div>
+  <div class="card-meta">frontend\src\components\inrichten\step-progress-grid.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">Header <span class="badge-client">client</span></div>
+  <div class="component-props">props: title</div>
+  <div class="card-meta">frontend\src\components\layout\header.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">PageWrapper </div>
+  <div class="component-props">props: title, description, actions</div>
+  <div class="card-meta">frontend\src\components\layout\page-wrapper.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">ScoreBar </div>
+  <div class="component-props">props: value, label, size</div>
+  <div class="card-meta">frontend\src\components\shared\score-bar.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">StatusBadge </div>
+  <div class="component-props">props: status</div>
+  <div class="card-meta">frontend\src\components\shared\status-badge.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">WaaromTooltip </div>
+  <div class="component-props">props: text</div>
+  <div class="card-meta">frontend\src\components\shared\waarom-tooltip.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">EmptyState </div>
+  <div class="component-props">props: icon, title, description, actionLabel, onAction</div>
+  <div class="card-meta">frontend\src\components\ui\empty-state.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">LoadingSkeleton </div>
+  <div class="component-props">props: className, lines</div>
+  <div class="card-meta">frontend\src\components\ui\loading-skeleton.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">AuthProvider <span class="badge-client">client</span></div>
+  
+  <div class="card-meta">frontend\src\providers\auth-provider.tsx</div>
+</div>
+</div>
+</div>
+
+
+<div class="section">
+<h2>Dependency Hot Files</h2>
+<div class="grid">
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\lib\hooks\use-api.ts</div>
+  <div class="card-meta">imported by 4 files</div>
+  <div class="hot-bar" style="width:100%"></div>
+</div>
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\components\inrichten\step-card.tsx</div>
+  <div class="card-meta">imported by 1 files</div>
+  <div class="hot-bar" style="width:25%"></div>
+</div>
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\components\ui\button.tsx</div>
+  <div class="card-meta">imported by 1 files</div>
+  <div class="hot-bar" style="width:25%"></div>
+</div>
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\lib\auth.ts</div>
+  <div class="card-meta">imported by 1 files</div>
+  <div class="hot-bar" style="width:25%"></div>
+</div>
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\lib\constants.ts</div>
+  <div class="card-meta">imported by 1 files</div>
+  <div class="hot-bar" style="width:25%"></div>
+</div>
+<div class="card">
+  <div class="card-title" style="font-size:.9rem">frontend\src\lib\api-types.ts</div>
+  <div class="card-meta">imported by 1 files</div>
+  <div class="hot-bar" style="width:25%"></div>
+</div>
+</div>
+</div>
+
+
+<div class="section">
+<h2>Environment Variables</h2>
+<table>
+<tr><th>Variable</th><th>Status</th><th>Source</th></tr>
+<tr>
+  <td><code>AI_API_BASE</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>AI_API_KEY</code></td>
+  <td><span class="env-required">required</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>AI_EMBEDDING_MODEL</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>AI_MAX_TOKENS</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>AI_MODEL_NAME</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>AI_TEMPERATURE</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>ALLOWED_ORIGINS</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>API_URL</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>DEFAULT_TENANT_ID</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>ENVIRONMENT</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>JWT_ACCESS_TOKEN_EXPIRE_MINUTES</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>JWT_ALGORITHM</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>JWT_EXPIRE_MINUTES</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>JWT_REFRESH_TOKEN_EXPIRE_DAYS</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>JWT_SECRET</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>JWT_SECRET_KEY</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>LANGFUSE_HOST</code></td>
+  <td><span class="env-required">required</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>LANGFUSE_PUBLIC_KEY</code></td>
+  <td><span class="env-required">required</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>LANGFUSE_SECRET_KEY</code></td>
+  <td><span class="env-required">required</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>NEXT_PUBLIC_API_URL</code></td>
+  <td><span class="env-required">required</span></td>
+  <td class="card-meta">frontend\src\lib\constants.ts</td>
+</tr>
+<tr>
+  <td><code>PGADMIN_DEFAULT_EMAIL</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>PGADMIN_DEFAULT_PASSWORD</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_APP_PASSWORD</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_APP_USER</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_DB</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_PASSWORD</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_PORT</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_SERVER</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+<tr>
+  <td><code>POSTGRES_USER</code></td>
+  <td><span class="env-default">has default</span></td>
+  <td class="card-meta">.env.example</td>
+</tr>
+</table>
+</div>
+
+
+<div class="section">
+<h2>Middleware</h2>
+<div class="grid">
+<div class="card">
+  <div class="card-title">auth <span class="tag tag-auth">auth</span></div>
+  <div class="card-meta">backend\app\api\v1\endpoints\auth.py</div>
+</div>
+<div class="card">
+  <div class="card-title">auth <span class="tag tag-auth">auth</span></div>
+  <div class="card-meta">backend\app\core\auth.py</div>
+</div>
+<div class="card">
+  <div class="card-title">auth.spec <span class="tag tag-auth">auth</span></div>
+  <div class="card-meta">frontend\e2e\auth.spec.ts</div>
+</div>
+<div class="card">
+  <div class="card-title">auth <span class="tag tag-auth">auth</span></div>
+  <div class="card-meta">frontend\src\lib\auth.ts</div>
+</div>
+<div class="card">
+  <div class="card-title">auth-provider <span class="tag tag-auth">auth</span></div>
+  <div class="card-meta">frontend\src\providers\auth-provider.tsx</div>
+</div>
+<div class="card">
+  <div class="card-title">generate-docs <span class="tag tag-validation">validation</span></div>
+  <div class="card-meta">generate-docs.py</div>
+</div>
+</div>
+</div>
+
+<div class="footer">
+  Generated by <a href="https://github.com/Houseofmvps/codesight">codesight</a> — see your codebase clearly
+</div>
+
+</body>
+</html>

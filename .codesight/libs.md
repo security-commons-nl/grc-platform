@@ -1,0 +1,306 @@
+# Libraries
+
+- `backend\alembic\env.py` — function run_migrations_offline: () -> None, function run_migrations_online: () -> None
+- `backend\alembic\versions\001_initial_schema.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\002_enable_rls.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\003_seed_reference_data.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\004_step_outputs.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\005_seed_step_outputs.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\006_agent_conversations.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\007_rename_terminology.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\008_step_uitleg_voorbeeld.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\alembic\versions\009_decision_outputs_recommended.py` — function upgrade: () -> None, function downgrade: () -> None
+- `backend\app\api\v1\endpoints\auth.py`
+  - function create_dev_token: (data)
+  - class DevTokenRequest
+  - class AgentTokenRequest
+  - class TokenResponse
+- `backend\app\api\v1\endpoints\risks.py` — function calculate_risk_level: (score) -> str
+- `backend\app\core\auth.py`
+  - function create_token: (data, expires_delta) -> str
+  - function decode_token: (token) -> TokenData
+  - function require_role: (*roles)
+  - class TokenData
+  - class CurrentUser
+- `backend\app\core\config.py` — class Settings
+- `backend\app\core\db.py` — function get_db: ()
+- `backend\app\main.py` — function lifespan: (app)
+- `backend\app\models\core_models.py`
+  - class Base
+  - class TenantType
+  - class TenantRoleEnum
+  - class RegionRoleEnum
+  - class DomainEnum
+  - class AIFeedbackEnum
+  - _...73 more_
+- `backend\app\schemas\agents.py`
+  - class ConversationStartRequest
+  - class MessageCreate
+  - class MessageResponse
+  - class ConversationResponse
+  - class GeneratedDocumentItem
+  - class GenerateDocumentsResponse
+  - _...1 more_
+- `backend\app\schemas\assessments.py`
+  - class AssessmentCreate
+  - class AssessmentUpdate
+  - class AssessmentResponse
+  - class FindingCreate
+  - class FindingUpdate
+  - class FindingResponse
+  - _...3 more_
+- `backend\app\schemas\controls.py`
+  - class ControlCreate
+  - class ControlUpdate
+  - class ControlResponse
+- `backend\app\schemas\decisions.py` — class DecisionCreate, class DecisionResponse
+- `backend\app\schemas\documents.py`
+  - class DocumentCreate
+  - class DocumentUpdate
+  - class DocumentResponse
+  - class DocumentVersionCreate
+  - class DocumentVersionResponse
+  - class StepInputDocumentCreate
+  - _...5 more_
+- `backend\app\schemas\evidence.py`
+  - class EvidenceCreate
+  - class EvidenceUpdate
+  - class EvidenceResponse
+- `backend\app\schemas\incidents.py`
+  - class IncidentCreate
+  - class IncidentUpdate
+  - class IncidentResponse
+- `backend\app\schemas\knowledge.py`
+  - class KnowledgeChunkCreate
+  - class KnowledgeChunkUpdate
+  - class KnowledgeChunkResponse
+- `backend\app\schemas\risks.py`
+  - class RiskCreate
+  - class RiskUpdate
+  - class RiskResponse
+  - class RiskControlLinkCreate
+  - class RiskControlLinkResponse
+- `backend\app\schemas\scopes.py`
+  - class ScopeCreate
+  - class ScopeUpdate
+  - class ScopeResponse
+- `backend\app\schemas\scores.py`
+  - class MaturityProfileCreate
+  - class MaturityProfileUpdate
+  - class MaturityProfileResponse
+  - class SetupScoreCreate
+  - class SetupScoreUpdate
+  - class SetupScoreResponse
+  - _...3 more_
+- `backend\app\schemas\standards.py`
+  - class StandardCreate
+  - class StandardUpdate
+  - class StandardResponse
+  - class RequirementCreate
+  - class RequirementUpdate
+  - class RequirementResponse
+  - _...9 more_
+- `backend\app\schemas\steps.py`
+  - class StepCreate
+  - class StepUpdate
+  - class StepResponse
+  - class StepDependencyCreate
+  - class StepDependencyResponse
+  - class StepExecutionCreate
+  - _...7 more_
+- `backend\app\schemas\tenants.py`
+  - class TenantCreate
+  - class TenantUpdate
+  - class TenantResponse
+  - class RegionCreate
+  - class RegionUpdate
+  - class RegionResponse
+  - _...7 more_
+- `backend\app\services\agents\base_agent.py` — class BaseAgent
+- `backend\app\services\agents\commitment_agent.py` — class CommitmentAgent
+- `backend\app\services\agents\context_agent.py` — class ContextAgent
+- `backend\app\services\agents\controls_agent.py` — class ControlsAgent
+- `backend\app\services\agents\gap_agent.py` — class GapAgent
+- `backend\app\services\agents\governance_agent.py` — class GovernanceAgent
+- `backend\app\services\agents\register_agent.py` — class RegisterAgent
+- `backend\app\services\agents\registry.py` — function get_agent_for_step: (step_number) -> BaseAgent | None, function get_agent_by_name: (agent_name) -> BaseAgent | None
+- `backend\app\services\agents\scope_agent.py` — class ScopeAgent
+- `backend\app\services\document_export.py` — function content_json_to_markdown: (content_json) -> str, function content_json_to_html: (content_json) -> str
+- `backend\app\services\document_processing\gap_analysis.py` — function analyze_document: (document_text, step_execution_id, input_document_id, tenant_id, db) -> list[IMSGapAnalysisResult]
+- `backend\app\services\document_processing\parser.py`
+  - function parse_pdf: (file_path) -> str
+  - function parse_docx: (file_path) -> str
+  - function parse_markdown: (file_path) -> str
+  - function parse_document: (file_path, source_type) -> str
+- `backend\app\services\llm_client.py`
+  - function get_client: () -> AsyncOpenAI
+  - function chat_completion: (messages, model, temperature, max_tokens) -> dict
+  - function chat_completion_stream: (messages, model, temperature, max_tokens) -> AsyncGenerator[str, None]
+  - function create_embedding: (text, model) -> list[float]
+- `backend\app\services\rag\embedding_service.py` — function chunk_text: (text, chunk_size, overlap) -> list[str], function generate_embedding: (text) -> list[float]
+- `backend\app\services\rag\ingestion_service.py` — function ingest_text: (content, source_type, source_id, tenant_id, layer, model_used, db) -> list[IMSKnowledgeChunk]
+- `backend\app\services\rag\retrieval_service.py` — function search_knowledge: (query, tenant_id, db, layer, top_k) -> list[IMSKnowledgeChunk]
+- `backend\tests\conftest.py`
+  - function make_token: (user_id, tenant_id, role, domain, token_type, agent_name)
+  - function engine: ()
+  - function clean_tables: (engine)
+  - function client: (engine)
+  - function admin_token: ()
+  - function test_tenant: (client, admin_token)
+  - _...4 more_
+- `backend\tests\test_agents.py`
+  - function test_start_conversation: (client, test_tenant, tenant_token)
+  - function test_start_conversation_resume_existing: (client, test_tenant, tenant_token)
+  - function test_start_conversation_wrong_agent: (client, test_tenant, tenant_token)
+  - function test_start_conversation_unknown_agent: (client, test_tenant, tenant_token)
+  - function test_get_conversation: (client, test_tenant, tenant_token)
+  - function test_get_conversation_not_found: (client, tenant_token)
+  - _...7 more_
+- `backend\tests\test_assessments.py`
+  - function test_create_assessment: (client, test_tenant, tenant_token)
+  - function test_create_assessment_types: (client, test_tenant, tenant_token)
+  - function test_list_assessments: (client, test_tenant, tenant_token)
+  - function test_create_finding: (client, test_tenant, tenant_token)
+  - function test_create_corrective_action_from_finding: (client, test_tenant, tenant_token)
+  - function test_create_corrective_action_from_risk: (client, test_tenant, tenant_token)
+  - _...1 more_
+- `backend\tests\test_auth.py`
+  - function test_dev_token: (client)
+  - function test_me_authenticated: (client)
+  - function test_me_unauthenticated: (client)
+  - function test_role_hierarchy: (client, test_tenant, tenant_token)
+  - function test_viewer_cannot_create: (client, test_tenant, viewer_token)
+  - function test_agent_token_requires_admin: (client, test_tenant)
+  - _...1 more_
+- `backend\tests\test_controls.py`
+  - function test_create_control: (client, test_tenant, tenant_token)
+  - function test_create_control_with_requirement: (client, test_tenant, tenant_token)
+  - function test_update_implementation_status: (client, test_tenant, tenant_token)
+  - function test_list_controls: (client, test_tenant, tenant_token)
+  - function test_delete_control_cascades_links: (client, test_tenant, tenant_token)
+  - function test_control_not_found: (client, admin_token)
+- `backend\tests\test_decisions.py`
+  - function test_create_decision: (client, test_tenant, tenant_token)
+  - function test_create_restrisico_acceptatie_sims: (client, test_tenant, tenant_token)
+  - function test_reject_restrisico_wrong_gremium: (client, test_tenant, tenant_token)
+  - function test_reject_beleidsafwijking_wrong_gremium: (client, test_tenant, tenant_token)
+  - function test_decision_immutability_no_patch: (client, test_tenant, tenant_token)
+  - function test_decision_immutability_no_delete: (client, test_tenant, tenant_token)
+  - _...3 more_
+- `backend\tests\test_documents.py`
+  - function test_create_document: (client, test_tenant, tenant_token)
+  - function test_list_documents: (client, test_tenant, tenant_token)
+  - function test_add_document_version_immutable: (client, test_tenant, tenant_token)
+  - function test_list_document_versions: (client, test_tenant, tenant_token)
+  - function test_create_step_input_document: (client, test_tenant, test_user, tenant_token)
+  - function test_create_gap_analysis_result: (client, test_tenant, test_user, tenant_token)
+  - _...1 more_
+- `backend\tests\test_evidence.py`
+  - function test_create_evidence: (client, test_tenant, tenant_token)
+  - function test_create_evidence_with_valid_until: (client, test_tenant, tenant_token)
+  - function test_list_evidence_by_control: (client, test_tenant, tenant_token)
+  - function test_evidence_not_found: (client, admin_token)
+- `backend\tests\test_incidents.py`
+  - function test_create_incident: (client, test_tenant, tenant_token)
+  - function test_incident_with_corrective_action: (client, test_tenant, tenant_token)
+  - function test_update_incident_status: (client, test_tenant, tenant_token)
+  - function test_list_incidents: (client, test_tenant, tenant_token)
+  - function test_incident_not_found: (client, admin_token)
+- `backend\tests\test_knowledge.py`
+  - function test_create_knowledge_chunk: (client, test_tenant, tenant_token)
+  - function test_create_normatief_chunk_no_tenant: (client, admin_token)
+  - function test_list_knowledge_filter_layer: (client, test_tenant, tenant_token)
+  - function test_knowledge_chunk_not_found: (client, admin_token)
+  - function test_update_knowledge_chunk: (client, test_tenant, tenant_token)
+  - function test_delete_knowledge_chunk: (client, test_tenant, tenant_token)
+- `backend\tests\test_risks.py`
+  - function test_create_risk_auto_score: (client, test_tenant, tenant_token)
+  - function test_risk_level_groen: (client, test_tenant, tenant_token)
+  - function test_risk_level_geel: (client, test_tenant, tenant_token)
+  - function test_risk_level_rood: (client, test_tenant, tenant_token)
+  - function test_update_risk_recalculates_level: (client, test_tenant, tenant_token)
+  - function test_list_risks_filter: (client, test_tenant, tenant_token)
+  - _...3 more_
+- `backend\tests\test_scopes.py`
+  - function test_create_scope_organisatie: (client, test_tenant, tenant_token)
+  - function test_create_scope_hierarchy: (client, test_tenant, tenant_token)
+  - function test_scope_verwerkt_pii: (client, test_tenant, tenant_token)
+  - function test_list_scopes_filter: (client, test_tenant, tenant_token)
+  - function test_scope_not_found: (client, admin_token)
+- `backend\tests\test_scores.py`
+  - function test_create_maturity_profile: (client, test_tenant, tenant_token)
+  - function test_list_maturity_profiles: (client, test_tenant, tenant_token)
+  - function test_create_setup_score: (client, test_tenant, tenant_token)
+  - function test_list_setup_scores: (client, test_tenant, tenant_token)
+  - function test_create_grc_score: (client, test_tenant, tenant_token)
+  - function test_list_grc_scores: (client, test_tenant, tenant_token)
+- `backend\tests\test_seed_data.py`
+  - function test_steps_are_seeded: (client)
+  - function test_steps_have_correct_phases: (client)
+  - function test_fase3_steps_are_optional: (client)
+  - function test_step_dependencies_exist: (client)
+  - function test_standards_are_seeded: (client)
+  - function test_step_1_details: (client)
+- `backend\tests\test_standards.py`
+  - function test_create_standard: (client, admin_token)
+  - function test_list_standards: (client, admin_token)
+  - function test_create_requirement: (client, admin_token)
+  - function test_create_requirement_mapping: (client, admin_token)
+  - function test_create_tenant_normenkader: (client, test_tenant, tenant_token)
+  - function test_create_standard_ingestion: (client, test_tenant, test_user, tenant_token)
+  - _...1 more_
+- `backend\tests\test_steps.py`
+  - function test_create_step: (client, admin_token)
+  - function test_list_steps: (client, admin_token)
+  - function test_list_steps_filter_phase: (client, admin_token)
+  - function test_create_step_execution: (client, test_tenant, tenant_token)
+  - function test_step_execution_valid_transition: (client, test_tenant, tenant_token)
+  - function test_step_execution_invalid_transition: (client, test_tenant, tenant_token)
+  - _...2 more_
+- `backend\tests\test_step_outputs.py`
+  - function test_list_steps_includes_outputs: (client, admin_token)
+  - function test_get_step_includes_outputs: (client, admin_token)
+  - function test_readiness_no_fulfillments: (client, test_tenant, tenant_token)
+  - function test_readiness_not_found: (client, admin_token)
+  - function test_fulfillment_create_and_list: (client, test_tenant, tenant_token)
+  - function test_fulfillment_requires_exactly_one_link: (client, test_tenant, tenant_token)
+  - _...4 more_
+- `backend\tests\test_tenants.py`
+  - function test_create_tenant: (client, admin_token)
+  - function test_create_tenant_centrum: (client, admin_token)
+  - function test_list_tenants: (client, test_tenant, tenant_token)
+  - function test_get_tenant: (client, test_tenant, tenant_token)
+  - function test_tenant_not_found: (client, admin_token)
+  - function test_update_tenant: (client, test_tenant, tenant_token)
+  - _...7 more_
+- `frontend\src\lib\api-client.ts` — class ApiError, const api
+- `frontend\src\lib\auth.ts`
+  - function getToken: () => string | null
+  - function setToken: (token) => void
+  - function clearToken: () => void
+  - function getUser: () => CurrentUser | null
+  - function isAuthenticated: () => boolean
+- `frontend\src\lib\constants.ts`
+  - function hasMinRole: (userRole, requiredRole) => boolean
+  - const API_BASE_URL
+  - const ROLE_HIERARCHY: Record<string, number>
+  - const ROLE_LABELS: Record<string, string>
+  - const STATUS_LABELS: Record<string, string>
+  - const STATUS_COLORS: Record<string, string>
+- `frontend\src\lib\format-error.ts` — function formatApiError: (body) => string
+- `frontend\src\lib\hooks\use-api.ts` — function useApi: (key, path?) => void
+- `frontend\src\lib\hooks\use-controls.ts` — function useControls: () => void
+- `frontend\src\lib\hooks\use-risks.ts` — function useRisks: () => void
+- `frontend\src\lib\hooks\use-scores.ts` — function useSetupScores: () => void
+- `frontend\src\lib\hooks\use-steps.ts`
+  - function useSteps: () => void
+  - function useStepExecutions: () => void
+  - function useStepDependencies: () => void
+- `generate-docs.py`
+  - function get_steps_and_outputs: ()
+  - function get_outputs: ()
+  - function get_agents: ()
+  - function get_models: ()
+  - function get_routes: ()
+  - function get_migrations: ()
+  - _...5 more_

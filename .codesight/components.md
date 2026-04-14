@@ -1,0 +1,34 @@
+# Components
+
+- **GebruikersPage** [client] — `frontend\src\app\(protected)\admin\gebruikers\page.tsx`
+- **TenantPage** [client] — `frontend\src\app\(protected)\admin\tenant\page.tsx`
+- **AssessmentsPage** [client] — `frontend\src\app\(protected)\beheer\assessments\page.tsx`
+- **BevindingenPage** [client] — `frontend\src\app\(protected)\beheer\bevindingen\page.tsx`
+- **BewijsPage** [client] — `frontend\src\app\(protected)\beheer\bewijs\page.tsx`
+- **ControlsPage** [client] — `frontend\src\app\(protected)\beheer\controls\page.tsx`
+- **IncidentenPage** [client] — `frontend\src\app\(protected)\beheer\incidenten\page.tsx`
+- **BeheerDashboardPage** [client] — `frontend\src\app\(protected)\beheer\page.tsx`
+- **RisicosPage** [client] — `frontend\src\app\(protected)\beheer\risicos\page.tsx`
+- **BesluitenPage** [client] — `frontend\src\app\(protected)\inrichten\besluiten\page.tsx`
+- **DocumentenPage** [client] — `frontend\src\app\(protected)\inrichten\documenten\page.tsx`
+- **InrichtenOverzichtPage** [client] — `frontend\src\app\(protected)\inrichten\page.tsx`
+- **StepDetailPage** [client] — props: params — `frontend\src\app\(protected)\inrichten\[stepId]\page.tsx`
+- **ProtectedLayout** [client] — `frontend\src\app\(protected)\layout.tsx`
+- **RootLayout** — `frontend\src\app\layout.tsx`
+- **LoginPage** [client] — `frontend\src\app\login\page.tsx`
+- **RootPage** [client] — `frontend\src\app\page.tsx`
+- **ChatIsland** [client] — props: stepNumber, executionId — `frontend\src\components\ai\chat-island.tsx`
+- **ChatPanel** [client] — props: conversation, onClose, onUpdate — `frontend\src\components\ai\chat-panel.tsx`
+- **RiskMatrix** [client] — props: mode, value — `frontend\src\components\beheer\risk-matrix.tsx`
+- **DecisionLogTable** [client] — props: decisions — `frontend\src\components\inrichten\decision-log-table.tsx`
+- **DocumentVersionList** [client] — props: documents — `frontend\src\components\inrichten\document-version-list.tsx`
+- **StepCard** [client] — props: step, execution, isBlocked, onClick — `frontend\src\components\inrichten\step-card.tsx`
+- **StepProgressGrid** [client] — props: steps, executions, dependencies — `frontend\src\components\inrichten\step-progress-grid.tsx`
+- **Header** [client] — props: title — `frontend\src\components\layout\header.tsx`
+- **PageWrapper** — props: title, description, actions — `frontend\src\components\layout\page-wrapper.tsx`
+- **ScoreBar** — props: value, label, size — `frontend\src\components\shared\score-bar.tsx`
+- **StatusBadge** — props: status — `frontend\src\components\shared\status-badge.tsx`
+- **WaaromTooltip** — props: text — `frontend\src\components\shared\waarom-tooltip.tsx`
+- **EmptyState** — props: icon, title, description, actionLabel, onAction — `frontend\src\components\ui\empty-state.tsx`
+- **LoadingSkeleton** — props: className, lines — `frontend\src\components\ui\loading-skeleton.tsx`
+- **AuthProvider** [client] — `frontend\src\providers\auth-provider.tsx`
