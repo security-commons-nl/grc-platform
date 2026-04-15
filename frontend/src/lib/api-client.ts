@@ -258,14 +258,14 @@ export const api = {
       }),
   },
   findings: {
-    list: () => apiFetch<FindingResponse[]>('/findings/'),
-    get: (id: string) => apiFetch<FindingResponse>(`/findings/${id}`),
+    list: () => apiFetch<FindingResponse[]>('/assessments/findings/'),
+    get: (id: string) => apiFetch<FindingResponse>(`/assessments/findings/${id}`),
   },
   correctiveActions: {
-    list: () => apiFetch<CorrectiveActionResponse[]>('/corrective-actions/'),
-    get: (id: string) => apiFetch<CorrectiveActionResponse>(`/corrective-actions/${id}`),
+    list: () => apiFetch<CorrectiveActionResponse[]>('/assessments/corrective-actions/'),
+    get: (id: string) => apiFetch<CorrectiveActionResponse>(`/assessments/corrective-actions/${id}`),
     create: (data: Record<string, unknown>) =>
-      apiFetch<CorrectiveActionResponse>('/corrective-actions/', {
+      apiFetch<CorrectiveActionResponse>('/assessments/corrective-actions/', {
         method: 'POST',
         body: JSON.stringify(data),
       }),

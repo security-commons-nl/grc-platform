@@ -44,8 +44,8 @@ function severityBadge(severity: string) {
 
 export default function BevindingenPage() {
   const { data: findings, error, isLoading } = useApi<FindingResponse[]>(
-    '/findings/',
-    '/findings/',
+    '/assessments/findings/',
+    '/assessments/findings/',
   );
 
   const [severityFilter, setSeverityFilter] = useState('');
