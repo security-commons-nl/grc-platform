@@ -14,7 +14,6 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { useControls } from '@/lib/hooks/use-controls';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
-import { formatApiError } from '@/lib/format-error';
 import type { ControlResponse } from '@/lib/api-types';
 
 const DOMAIN_OPTIONS = [
