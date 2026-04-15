@@ -1,0 +1,13 @@
+services:
+  frontend:
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/next.config.ts:/app/next.config.ts
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/postcss.config.mjs:/app/postcss.config.mjs
+      - ./frontend/eslint.config.mjs:/app/eslint.config.mjs
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
