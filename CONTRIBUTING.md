@@ -1,14 +1,30 @@
 # Bijdragen aan grc-platform
 
-Bedankt voor je interesse. Deze repo volgt de organisatiebrede richtlijnen van security-commons-nl:
+Iets delen of verbeteren? Drie manieren, van makkelijk naar technisch.
 
-- [CONTRIBUTING.md (org-wide)](https://github.com/security-commons-nl/.github/blob/main/CONTRIBUTING.md)
-- [DOCUMENTATION-STANDARD.md](https://github.com/security-commons-nl/.github/blob/main/DOCUMENTATION-STANDARD.md)
-- [PRINCIPLES.md](https://github.com/security-commons-nl/.github/blob/main/PRINCIPLES.md)
+## 1. Iets aanbieden of melden — geen Git-ervaring nodig
 
-## Project-specifieke werkwijze
+→ [**Bijdrage aanbieden**](https://github.com/security-commons-nl/grc-platform/issues/new?template=bijdrage-aanbieden.md)
+  Ervaring met ISMS/PIMS/BCMS-inrichting, een use case of verbetervoorstel.
 
-Zie [docs/development.md](docs/development.md) voor de volledige ontwikkelaarsgids: commands, architectuur, data-modellen, auth, UI-principes en ontwerpprincipes.
+→ [**Fout of verbetering**](https://github.com/security-commons-nl/grc-platform/issues/new?template=fout-of-verbetering.md)
+  Iets klopt niet, kan beter, of mist.
+
+Vul alleen de vragen in die voor jou relevant zijn — we helpen je met de rest.
+
+**Geen GitHub-account?** [Maak er gratis een](https://github.com/signup) (2 minuten), of vraag iemand in je netwerk om namens jou te posten.
+
+## 2. Meediscussiëren
+
+→ [**Discussions**](https://github.com/orgs/security-commons-nl/discussions)
+
+Voor vragen, ervaringen en ideeën zonder directe actie.
+
+## 3. Voor ontwikkelaars — code aanleveren
+
+### Volledige ontwikkelaarsgids
+
+Zie [docs/development.md](docs/development.md) voor commands, architectuur, data-modellen, auth, UI-principes en ontwerpprincipes.
 
 ### Tests draaien
 
@@ -16,15 +32,13 @@ Zie [docs/development.md](docs/development.md) voor de volledige ontwikkelaarsgi
 docker-compose exec api pytest --tb=short
 ```
 
-### Documentatie genereren
+### Kernregels
 
-```bash
-python generate-docs.py
-```
-Dit produceert `docs/platform-overzicht.html` en `docs/architectuur.html` uit de codebase — niet handmatig bewerken.
+- **Elke bouwsteen heeft een test.** Geen code zonder eval.
+- **Gedragswijzigingen** die zichtbaar zijn voor gebruikers → update `docs/gebruik.md`, `docs/architectuur.md` of `docs/configuratie.md`.
+- **EU Data Sovereignty:** geen externe AI-APIs zonder juridische clearance.
+- **Documentatie auto-genereren:** `python generate-docs.py` produceert `docs/platform-overzicht.html` en `docs/architectuur.html` uit de codebase — niet handmatig bewerken.
 
-### PRs
+---
 
-- Elke bouwsteen heeft een test. Geen code zonder eval.
-- Gedragswijzigingen die zichtbaar zijn voor gebruikers vereisen update van `docs/gebruik.md`, `docs/architectuur.md` of `docs/configuratie.md`.
-- EU Data Sovereignty: geen externe AI-APIs zonder juridische clearance.
+**Organisatiebrede richtlijnen**: [security-commons-nl/.github](https://github.com/security-commons-nl/.github/blob/main/CONTRIBUTING.md)
