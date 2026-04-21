@@ -1,28 +1,28 @@
-# CLAUDE.md
+# grc-platform — ontwikkelaarsgids
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Gids voor contributors die aan deze codebase werken.
 
-## Project Overview
+## Project
 
-IMS (Integrated Management System) is a Governance, Risk, and Compliance (GRC) platform for ISMS, PIMS, and BCMS. Core philosophy: **"The Model leads. The API guards. Tools execute. AI supports."**
+IMS (Integrated Management System) is een Governance, Risk, and Compliance (GRC) platform voor ISMS, PIMS, en BCMS. Kernfilosofie: **"The Model leads. The API guards. Tools execute. AI supports."**
 
 ## Commands
 
-### Running the Application
+### Applicatie draaien
 ```bash
-# Start all containers (db, api, frontend)
+# Start alle containers (db, api, frontend)
 docker-compose up -d --build
 
-# Run database migrations (3 migraties: schema → RLS → seed data)
+# Database-migraties (3 migraties: schema → RLS → seed data)
 docker-compose exec api alembic upgrade head
 
-# Access points:
-# - Frontend: http://localhost:3000
-# - API Docs (Swagger): http://localhost:8000/docs (development only)
-# - Health check: http://localhost:8000/api/v1/health
+# Endpoints:
+# - Frontend:          http://localhost:3000
+# - API-docs (Swagger): http://localhost:8000/docs (development only)
+# - Health check:       http://localhost:8000/api/v1/health
 ```
 
-### Running Tests
+### Tests draaien
 ```bash
 # Volledige suite (105 tests)
 docker-compose exec api pytest --tb=short
@@ -31,7 +31,7 @@ docker-compose exec api pytest --tb=short
 docker-compose exec api pytest tests/test_risks.py -v
 ```
 
-### Local Development
+### Lokale development
 ```bash
 # Backend
 cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
@@ -40,26 +40,16 @@ cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
 cd frontend && npm install && npm run dev
 ```
 
-## Workflow
+## Architectuur
 
-**Na elke code-wijziging: ALTIJD zelf committen en pushen naar origin.** Niet vragen, gewoon doen.
+### 4-laagse scheiding
 
-```bash
-git add <files> && git commit -m "..." && git push origin main
-```
-
-- `origin` = GitHub — **altijd automatisch pushen na wijzigingen**
-
-## Architecture
-
-### 4-Layer Strict Separation
-
-1. **Layer 1 (Model)**: SQLAlchemy 2.0 models in `backend/app/models/core_models.py` — single source of truth
-2. **Layer 2 (API)**: FastAPI in `backend/app/api/` — gatekeeper enforcing RBAC and validation
+1. **Layer 1 (Model)**: SQLAlchemy 2.0 modellen in `backend/app/models/core_models.py` — single source of truth
+2. **Layer 2 (API)**: FastAPI in `backend/app/api/` — gatekeeper die RBAC en validatie afdwingt
 3. **Layer 3 (Tools)**: Next.js 15 frontend in `frontend/` — geen business logic
 4. **Layer 4 (AI)**: Mistral via Scaleway (EU) of lokaal Ollama
 
-### Backend Structure
+### Backend structuur
 ```
 backend/
 ├── Dockerfile
@@ -88,7 +78,7 @@ backend/
         └── core_models.py  # 32 SQLAlchemy 2.0 models, 6 domeinen
 ```
 
-### Frontend Structure
+### Frontend structuur
 ```
 frontend/
 ├── Dockerfile
@@ -131,7 +121,7 @@ frontend/
     └── providers/          # Auth, tenant, SWR providers
 ```
 
-### Data Model Domains (6 domeinen, 32 tabellen)
+### Data-modellen (6 domeinen, 32 tabellen)
 
 - **Platform-breed**: tenants, regions, users, user_tenant_roles, user_region_roles, ai_audit_logs
 - **Inrichtingsmodus**: ims_steps, ims_step_dependencies, ims_step_executions, ims_decisions, ims_documents, ims_document_versions, ims_step_input_documents, ims_gap_analysis_results
@@ -140,23 +130,23 @@ frontend/
 - **Scores**: ims_maturity_profiles, ims_setup_scores, ims_grc_scores
 - **RAG-store**: ims_knowledge_chunks (pgvector, twee lagen: normatief + organisatie)
 
-### Authentication & Authorization
+### Authenticatie & autorisatie
 
 - **JWT** met dev-token (development) en agent-token (service accounts)
 - **RBAC**: 6 rollen met hiërarchie: admin > strategisch_lid > tactisch_lid > discipline_eigenaar > lijnmanager > viewer
 - **RLS**: Row Level Security op 21 tenant-scoped tabellen
 - **OIDC-ready**: auth-laag is voorbereid op externe identity providers
 
-### Configuration
+### Configuratie
 
-Environment variables via `.env` file:
+Environment variables via `.env`:
 - Database: `POSTGRES_SERVER`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 - AI: `AI_API_BASE`, `AI_MODEL_NAME`
 - Auth: `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`
 - CORS: `ALLOWED_ORIGINS` (default: `http://localhost:3000`)
 - Environment: `ENVIRONMENT` (development/production)
 
-### UI Design Principles (K14)
+### UI-principes (K14)
 
 - **Geen dropdowns voor statuswijzigingen** — gebruik directe actieknoppen
 - **Role-aware**: elke view gefilterd op gebruikersrol
@@ -164,41 +154,12 @@ Environment variables via `.env` file:
 - **Complexity ceiling**: max 5 vragen per wizard-scherm
 - **AI is altijd adviserend**: AI-concepten altijd gelabeld als "concept"
 
-## Design Principles
+## Ontwerpprincipes
 
-- **EU Data Sovereignty**: AI defaults to localhost. Never configure external AI APIs without explicit legal clearance.
-- **RBAC Enforcement**: All access via JWT met tenant_id + role. RLS als defense-in-depth.
-- **Immutable audit trail**: ims_decisions en ims_document_versions hebben geen UPDATE/DELETE.
-- **Rosetta Stone Pattern**: RequirementMapping enables cross-framework mapping (BIO-ISO27001) with AI confidence scores.
+- **EU Data Sovereignty**: AI defaults naar localhost. Externe AI-APIs alleen met expliciete juridische clearance.
+- **RBAC-afdwinging**: alle toegang via JWT met tenant_id + role. RLS als defense-in-depth.
+- **Onveranderlijke audit trail**: `ims_decisions` en `ims_document_versions` hebben geen UPDATE/DELETE.
+- **Rosetta Stone-patroon**: `RequirementMapping` maakt cross-framework mapping (BIO↔ISO27001) mogelijk met AI confidence scores.
 - **Database leading**: documenten zijn gegenereerde views van DB-data, niet opgeslagen bestanden.
 - **Elke bouwsteen heeft een eval**: geen code zonder test.
 - **Documentatie is auto-generated**: `python generate-docs.py` genereert `docs/platform-overzicht.html` (functioneel) + `docs/architectuur.html` (technisch) uit de codebase. Nooit handmatig HTML bewerken.
-
-
-# AI Context (auto-generated by codesight)
-
-This is a python project using fastapi with sqlalchemy.
-It is a microservices repo with workspaces: backend (backend), frontend (frontend).
-
-The API has 132 routes. See .codesight/routes.md for the full route map with methods, paths, and tags.
-The database has 36 models. See .codesight/schema.md for the full schema with fields, types, and relations.
-The UI has 32 components. See .codesight/components.md for the full list with props.
-Middleware includes: auth, validation.
-
-High-impact files (most imported, changes here affect many other files):
-- frontend\src\lib\hooks\use-api.ts (imported by 4 files)
-- frontend\src\components\inrichten\step-card.tsx (imported by 1 files)
-- frontend\src\components\ui\button.tsx (imported by 1 files)
-- frontend\src\lib\auth.ts (imported by 1 files)
-- frontend\src\lib\constants.ts (imported by 1 files)
-- frontend\src\lib\api-types.ts (imported by 1 files)
-
-Required environment variables (no defaults):
-- AI_API_KEY (.env.example)
-- LANGFUSE_HOST (.env.example)
-- LANGFUSE_PUBLIC_KEY (.env.example)
-- LANGFUSE_SECRET_KEY (.env.example)
-- NEXT_PUBLIC_API_URL (frontend\src\lib\constants.ts)
-
-Read .codesight/wiki/index.md for orientation (WHERE things live). Then read actual source files before implementing. Wiki articles are navigation aids, not implementation guides.
-Read .codesight/CODESIGHT.md for the complete AI context map including all routes, schema, components, libraries, config, middleware, and dependency graph.

@@ -40,5 +40,11 @@ frontend/node_modules/
 frontend/.next/
 frontend/tsconfig.tsbuildinfo
 
-# AI tooling
+# AI-tooling (lokaal per ontwikkelaar, niet delen)
+.claude/
 .codesight/
+CLAUDE.md
+AGENTS.md
+codex.md
+.cursorrules
+.github/copilot-instructions.md
