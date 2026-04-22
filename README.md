@@ -111,6 +111,12 @@ De v0-codebase (Reflex frontend, 100+ SQLModel entiteiten) is gearchiveerd op br
 
 ---
 
+## Bijdragen
+
+Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor hoe je iets kan delen, melden of verbeteren — met of zonder Git-ervaring.
+
+---
+
 ## Principes
 
 Dit project volgt de [architectuur- en communityprincipes](https://github.com/security-commons-nl/.github/blob/main/PRINCIPLES.md) van security-commons-nl: EU-soevereiniteit, AI altijd adviserend, auditbaarheid by design, least privilege en open source als standaard.
