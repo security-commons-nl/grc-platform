@@ -4,6 +4,11 @@
 >
 > Internationaal ook bekend als een Integrated Management System (IMS).
 
+
+[![Bijdragen](https://img.shields.io/badge/📝_Bijdragen-Open_een_bericht-238636?style=for-the-badge)](../../issues/new/choose) [![Discussions](https://img.shields.io/badge/💬_Discussions-Meepraten-0969da?style=for-the-badge)](../../discussions)
+
+👉 **Iets delen, feedback geven of een vraag stellen?** Klik op een van de knoppen hierboven — geen Git-ervaring nodig. Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor meer opties.
+
 Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, risico's, controls, audits en bewijs** centraal beheert. Gebouwd voor gemeenten en publieke organisaties die meerdere managementsystemen willen combineren in **een enkele bron van waarheid**.
 
 ---
