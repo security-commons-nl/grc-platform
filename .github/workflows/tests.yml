@@ -11,6 +11,23 @@ jobs:
     name: Backend tests (pytest)
     runs-on: ubuntu-latest
 
+    # PostgreSQL met pgvector als service. Matcht productie (PostgreSQL 16 +
+    # pgvector-extensie voor embeddings in ims_knowledge_chunks).
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ims
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: backend
@@ -28,14 +45,33 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Create ims_test database + enable pgvector
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ims -c "CREATE DATABASE ims_test;"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ims_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Run database migrations against ims_test
         env:
-          # SQLite in-memory — geen PostgreSQL nodig voor unit tests
           POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ims_test
-          JWT_SECRET: test-secret-key-not-for-production
+          JWT_SECRET_KEY: test-secret-key-not-for-production
+          AI_API_BASE: http://localhost:11434/v1
+          AI_MODEL_NAME: mistral
+        run: alembic upgrade head
+
+      - name: Run tests
+        env:
+          # conftest.py doet settings.DATABASE_URL.replace("/ims", "/ims_test"),
+          # dus POSTGRES_DB=ims hier zorgt dat tests naar ims_test wijzen.
+          POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ims
+          JWT_SECRET_KEY: test-secret-key-not-for-production
           AI_API_BASE: http://localhost:11434/v1
           AI_MODEL_NAME: mistral
         run: pytest --tb=short -q
