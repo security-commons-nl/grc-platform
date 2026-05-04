@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    name: Frontend lint + build
+    name: Frontend build
     runs-on: ubuntu-latest
 
     defaults:
@@ -34,8 +34,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      # Lint tijdelijk uitgeschakeld — eslint 10.3.0 + eslint-config-next
+      # crashen op 'contextOrFilename.getFilename is not a function'.
+      # Aanzetten zodra eslint-plugin-react compat met eslint 10.3+ heeft.
+      # - name: Lint
+      #   run: npm run lint
 
       - name: Build
         env:
