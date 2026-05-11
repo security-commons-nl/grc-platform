@@ -148,17 +148,20 @@ ALLOWED_ORIGINS=https://grc.jouwdomein.nl
 
 ## Backups
 
-De PostgreSQL-data staat in een Docker-volume (`grc_postgres_data`). Back-up strategie:
+De PostgreSQL-data staat in een Docker-volume (`grc_postgres_data`). Het platform levert kant-en-klare scripts voor backup, restore en pipeline-verificatie:
 
 ```bash
-# Dagelijkse dump
-docker-compose exec db pg_dump -U postgres ims > backup-$(date +%Y%m%d).sql
+# Dagelijkse backup met retentie (7 dagelijks + 4 wekelijks)
+./scripts/backup-postgres.sh
 
-# Herstellen
-docker-compose exec -T db psql -U postgres ims < backup-20260401.sql
+# Restore vanuit een specifieke dump
+./scripts/restore-postgres.sh backups/daily/grc-20260512-030000.sql.gz
+
+# End-to-end pipeline-test (verifieert dat backup + restore werken)
+./scripts/test-backup-restore.sh
 ```
 
-Automatiseer dit via cron of een backuptool. Bewaar minimaal 7 dagelijkse en 4 wekelijkse backups.
+Volledige strategie inclusief cron-configuratie, off-site backups en het maandelijkse test-ritueel: [`backup.md`](backup.md).
 
 ---
 
