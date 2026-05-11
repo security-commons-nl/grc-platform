@@ -1,0 +1,38 @@
+# Productie-overlay voor docker-compose.
+#
+# Gebruik:
+#   docker-compose -f docker-compose.yml -f examples/caddy/docker-compose.prod.yml up -d --build
+#
+# Plaats het Caddyfile naast deze file (of pas het pad onder volumes aan).
+# Volledige uitleg: docs/deployment-caddy.md
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./examples/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - frontend
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 50
+
+  # Services zijn alleen via Caddy bereikbaar — geen directe host-binding
+  api:
+    ports: !reset []
+
+  frontend:
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:

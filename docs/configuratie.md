@@ -113,21 +113,18 @@ Het platform ondersteunt meerdere organisaties vanuit één installatie. Nieuwe 
 
 ## HTTPS
 
-In productie moet het platform achter een reverse proxy draaien die HTTPS afhandelt. Aanbevolen: **Caddy** (automatische certificaatverlenging via Let's Encrypt).
+In productie moet het platform achter een reverse proxy draaien die HTTPS afhandelt. Aanbevolen: **Caddy** (automatische certificaatverlenging via Let's Encrypt, zero-config security defaults).
 
-Minimale Caddy-configuratie:
+Volledige deployment-instructies inclusief Caddyfile-voorbeelden, productie-`docker-compose.prod.yml`, security headers en troubleshooting staan in [`deployment-caddy.md`](deployment-caddy.md). Werkende voorbeeldbestanden in [`examples/caddy/`](../examples/caddy/).
 
-```
-jouwdomein.nl {
-    reverse_proxy localhost:3000
-}
+Minimaal vereiste `.env`-wijzigingen voor productie:
 
-api.jouwdomein.nl {
-    reverse_proxy localhost:8000
-}
+```env
+ENVIRONMENT=production
+ALLOWED_ORIGINS=https://grc.jouwdomein.nl
 ```
 
-Zet `CORS_ORIGINS=https://jouwdomein.nl` in `.env` zodat de API requests van de frontend accepteert.
+`ENVIRONMENT=production` schakelt automatisch `/docs` (Swagger UI) en `/auth/dev-token` uit.
 
 ---
 

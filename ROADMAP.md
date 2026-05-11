@@ -24,7 +24,7 @@ Twee modules zijn nu in actieve ontwikkeling. Andere modules zijn bewust geparke
 Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard maken.**
 
 - [x] Klikbaar likelihood-impact matrix-grid in risicoregister (vervangt dropdowns; heatmap boven tabel) — M2
-- [ ] HTTPS via Caddy reverse proxy (documentatie) — M0
+- [x] HTTPS via Caddy reverse proxy (documentatie) — M0 — zie [`docs/deployment-caddy.md`](docs/deployment-caddy.md)
 - [ ] Rate limiting op API-endpoints — M0
 - [ ] Geautomatiseerde backup-strategie PostgreSQL — M0
 - [ ] Monitoring en observability (Langfuse reeds ondersteund) — M0
