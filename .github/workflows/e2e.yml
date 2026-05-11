@@ -36,6 +36,10 @@ jobs:
           # Override the AI key with empty — agent tests will be skipped in e2e flow
           # (e2e specs use dev-token login, not agent calls)
           sed -i 's/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=test-secret-key-for-e2e-only/' .env
+          # Disable rate limiting during e2e — Playwright fires many /auth/dev-token
+          # calls in quick succession from the same IP and will otherwise hit the
+          # 10/minute auth limit halfway through the suite.
+          sed -i 's/^RATE_LIMIT_ENABLED=.*/RATE_LIMIT_ENABLED=false/' .env
 
       - name: Start stack with docker compose
         run: |

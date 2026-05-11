@@ -46,11 +46,8 @@ async def clean_tables(engine):
         # Clean tenant/user data but preserve reference data:
         # - ims_standards (seeded by migration 003 + 011)
         # - ims_requirements van NIST RMF (seeded by migration 011)
-        await conn.execute(text("DELETE FROM ims_requirement_mappings"))
-        await conn.execute(text(
-            "DELETE FROM ims_requirements WHERE standard_id NOT IN "
-            "(SELECT id FROM ims_standards WHERE name = 'NIST AI RMF')"
-        ))
+        # TRUNCATE eerst — CASCADE haalt ims_controls.requirement_id-verwijzingen
+        # weg, daarna kunnen requirements veilig met DELETE worden opgeschoond.
         await conn.execute(text(
             "TRUNCATE TABLE "
             "agent_messages, agent_conversations, "
@@ -63,6 +60,11 @@ async def clean_tables(engine):
             "ims_step_output_fulfillments, ims_decisions, ims_step_executions, "
             "user_region_roles, user_tenant_roles, users, tenants, regions "
             "CASCADE"
+        ))
+        await conn.execute(text("DELETE FROM ims_requirement_mappings"))
+        await conn.execute(text(
+            "DELETE FROM ims_requirements WHERE standard_id NOT IN "
+            "(SELECT id FROM ims_standards WHERE name = 'NIST AI RMF')"
         ))
         # Clean up test-created steps AFTER truncating FKs (executions, fulfillments, etc.)
         await conn.execute(text(
