@@ -13,7 +13,6 @@ import { DocumentVersionList } from '@/components/inrichten/document-version-lis
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
-import { formatApiError } from '@/lib/format-error';
 import type { DocumentResponse } from '@/lib/api-types';
 
 const DOC_TYPE_OPTIONS = [

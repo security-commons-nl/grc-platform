@@ -1,0 +1,29 @@
+# Caddyfile — GRC-platform productie-deployment (Variant A, single domain)
+#
+# Vervang `grc.jouwdomein.nl` door je eigen domein.
+# Caddy haalt automatisch een Let's Encrypt-certificaat op bij de eerste request.
+#
+# Volledige uitleg: docs/deployment-caddy.md
+
+grc.jouwdomein.nl {
+    encode gzip
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    # API requests
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Frontend (alles overig)
+    handle {
+        reverse_proxy frontend:3000
+    }
+}

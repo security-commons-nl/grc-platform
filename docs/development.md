@@ -24,12 +24,33 @@ docker-compose exec api alembic upgrade head
 
 ### Tests draaien
 ```bash
-# Volledige suite (105 tests)
+# Backend — pytest tegen echte PostgreSQL (geen mocks)
 docker-compose exec api pytest --tb=short
 
 # Eén domein
 docker-compose exec api pytest tests/test_risks.py -v
+
+# Frontend — Playwright e2e (vereist draaiende stack op localhost:3000)
+cd frontend && npm run test:e2e
+
+# Smoke-test van een productie-deployment
+./scripts/smoke-test-deployment.sh https://grc.jouwdomein.nl
 ```
+
+### Test-discipline
+
+Een van de kernprincipes van dit project: **elke bouwsteen heeft een eval — geen code zonder test.** Concreet:
+
+| Type wijziging | Test-eis | Locatie |
+|----------------|----------|---------|
+| Nieuwe of gewijzigde API-endpoint | pytest in `backend/tests/test_<domein>.py` — async tegen echte PostgreSQL | `backend/tests/` |
+| Nieuwe UI-flow (auth, route-flow, role-gated rendering) | Playwright spec in `frontend/e2e/` | `frontend/e2e/` |
+| Nieuwe deployment-eigenschap (security header, prod-flag, etc.) | Assertie in `scripts/smoke-test-deployment.sh` | `scripts/` |
+| Nieuw datamodel | Alembic-migratie + pytest dat de migratie verifieert | `backend/alembic/versions/` + `backend/tests/` |
+
+CI draait deze tests automatisch: `.github/workflows/tests.yml` (backend pytest), `.github/workflows/e2e.yml` (Playwright tegen volledige docker-stack), `.github/workflows/frontend.yml` (Next.js build).
+
+Backend-tests gebruiken **geen mocks** voor de database — ze draaien tegen een echte `ims_test` PostgreSQL met pgvector. Dit voorkomt dat tests slagen terwijl een migratie of RLS-policy in productie zou breken.
 
 ### Lokale development
 ```bash

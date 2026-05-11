@@ -110,7 +110,9 @@ export default function StepDetailPage({
     setIsUpdating(true);
     setError(null);
     try {
-      const payload: Record<string, string> = { step_output_id: outputId };
+      const payload: { step_output_id: string; decision_id?: string; document_id?: string } = {
+        step_output_id: outputId,
+      };
       if (outputType === 'decision') {
         payload.decision_id = linkedId;
       } else {

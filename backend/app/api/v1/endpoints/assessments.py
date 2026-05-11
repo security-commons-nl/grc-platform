@@ -5,12 +5,29 @@ from uuid import UUID
 
 from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
-from app.models.core_models import IMSAssessment, IMSFinding, IMSCorrectiveAction
+from app.models.core_models import IMSAssessment, IMSFinding, IMSCorrectiveAction, IMSAISystem
 from app.schemas.assessments import (
     AssessmentCreate, AssessmentUpdate, AssessmentResponse,
     FindingCreate, FindingUpdate, FindingResponse,
     CorrectiveActionCreate, CorrectiveActionUpdate, CorrectiveActionResponse,
 )
+
+
+async def _ensure_ai_system_in_tenant(
+    db: AsyncSession, ai_system_id: UUID, tenant_id: UUID
+) -> None:
+    """Verifieer dat een ai_system_id in dezelfde tenant zit. Voorkomt
+    cross-tenant koppelingen via vrije UUID-input."""
+    result = await db.execute(
+        select(IMSAISystem).where(
+            IMSAISystem.id == ai_system_id,
+            IMSAISystem.tenant_id == tenant_id,
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=404, detail="ai_system_id not found in this tenant"
+        )
 
 router = APIRouter()
 
@@ -23,6 +40,7 @@ async def list_assessments(
     assessment_type: str | None = None,
     status: str | None = None,
     domain: str | None = None,
+    ai_system_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
     current_user: CurrentUser = Depends(get_current_user),
@@ -35,6 +53,8 @@ async def list_assessments(
         query = query.where(IMSAssessment.status == status)
     if domain:
         query = query.where(IMSAssessment.domain == domain)
+    if ai_system_id:
+        query = query.where(IMSAssessment.ai_system_id == ai_system_id)
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -59,6 +79,17 @@ async def create_assessment(
     current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
     db: AsyncSession = Depends(get_db),
 ):
+    if data.ai_system_id is not None:
+        await _ensure_ai_system_in_tenant(db, data.ai_system_id, current_user.tenant_id)
+
+    # ai_conformity assessments moeten gekoppeld zijn aan een AI-systeem —
+    # anders ontbreekt de scope (welk systeem wordt beoordeeld?)
+    if data.assessment_type == "ai_conformity" and data.ai_system_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="ai_conformity assessment requires ai_system_id",
+        )
+
     assessment = IMSAssessment(tenant_id=current_user.tenant_id, **data.model_dump())
     db.add(assessment)
     await db.flush()

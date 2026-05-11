@@ -22,6 +22,8 @@ class TokenData(BaseModel):
     domain: Optional[str] = None  # ISMS, PIMS, BCMS, or None (all)
     token_type: str = "user"  # "user" or "agent"
     agent_name: Optional[str] = None  # only for agent tokens
+    scope: Optional[list[str]] = None  # NHI: fine-grained capabilities for agent tokens
+    ai_system_id: Optional[UUID] = None  # NHI: link to ims_ai_systems entry
 
 
 class CurrentUser(BaseModel):
@@ -31,6 +33,8 @@ class CurrentUser(BaseModel):
     domain: Optional[str] = None
     token_type: str = "user"
     agent_name: Optional[str] = None
+    scope: Optional[list[str]] = None
+    ai_system_id: Optional[UUID] = None
 
 
 def create_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -48,6 +52,7 @@ def create_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
 def decode_token(token: str) -> TokenData:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        ai_system_id_raw = payload.get("ai_system_id")
         return TokenData(
             sub=UUID(payload["sub"]),
             tenant_id=UUID(payload["tenant_id"]),
@@ -55,6 +60,8 @@ def decode_token(token: str) -> TokenData:
             domain=payload.get("domain"),
             token_type=payload.get("token_type", "user"),
             agent_name=payload.get("agent_name"),
+            scope=payload.get("scope"),
+            ai_system_id=UUID(ai_system_id_raw) if ai_system_id_raw else None,
         )
     except (JWTError, KeyError, ValueError) as e:
         raise HTTPException(
@@ -88,7 +95,36 @@ async def get_current_user(
         domain=token_data.domain,
         token_type=token_data.token_type,
         agent_name=token_data.agent_name,
+        scope=token_data.scope,
+        ai_system_id=token_data.ai_system_id,
     )
+
+
+def require_scope(*required_scopes: str):
+    """Dependency that requires an agent token with specific scopes.
+
+    Use for endpoints designed to be called by AI agents (NHI). Tokens
+    of `token_type=user` bypass this check (humans get their permissions
+    from RBAC roles). Agent tokens must have all required scopes in
+    their `scope` claim.
+
+    Example:
+        @router.post("/risks/", dependencies=[Depends(require_scope("risks:write"))])
+    """
+    async def dependency(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if current_user.token_type != "agent":
+            # Human users authenticated via role checks elsewhere
+            return current_user
+        token_scopes = set(current_user.scope or [])
+        missing = [s for s in required_scopes if s not in token_scopes]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Agent token missing required scope(s): {', '.join(missing)}",
+            )
+        return current_user
+
+    return dependency
 
 
 def require_role(*roles: str):

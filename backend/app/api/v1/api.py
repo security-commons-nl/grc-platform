@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
-    agents, auth, health, tenants, steps, decisions, documents,
+    agents, ai_hitl, ai_systems, auth, health, tenants, steps, decisions, documents,
     standards, scopes, risks, controls, assessments,
     evidence, incidents, scores, knowledge,
 )
@@ -22,3 +22,5 @@ api_router.include_router(incidents.router, prefix="/incidents", tags=["incident
 api_router.include_router(scores.router, prefix="/scores", tags=["scores"])
 api_router.include_router(knowledge.router, prefix="/knowledge", tags=["knowledge"])
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
+api_router.include_router(ai_systems.router, prefix="/ai-systems", tags=["ai-governance"])
+api_router.include_router(ai_hitl.router, prefix="/ai-hitl-checkpoints", tags=["ai-governance"])

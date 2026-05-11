@@ -17,6 +17,7 @@ class AssessmentCreate(BaseModel):
     status: str = "gepland"
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
+    ai_system_id: Optional[UUID] = None  # M4: alleen voor assessment_type='ai_conformity'
 
 
 class AssessmentUpdate(BaseModel):
@@ -29,6 +30,7 @@ class AssessmentUpdate(BaseModel):
     status: Optional[str] = None
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
+    ai_system_id: Optional[UUID] = None
 
 
 class AssessmentResponse(BaseModel):
@@ -43,6 +45,7 @@ class AssessmentResponse(BaseModel):
     status: str
     cyclus_id: Optional[int]
     document_id: Optional[UUID]
+    ai_system_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
 

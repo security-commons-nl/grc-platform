@@ -14,7 +14,6 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { useApi } from '@/lib/hooks/use-api';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
-import { formatApiError } from '@/lib/format-error';
 import type { IncidentResponse } from '@/lib/api-types';
 
 const TYPE_OPTIONS = [

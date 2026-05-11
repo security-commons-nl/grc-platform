@@ -111,39 +111,57 @@ Het platform ondersteunt meerdere organisaties vanuit één installatie. Nieuwe 
 
 ---
 
+## Rate limiting
+
+Het platform past rate limiting toe per client-IP. Drie environment-variabelen sturen dit gedrag:
+
+| Variabele | Standaard | Beschrijving |
+|-----------|-----------|--------------|
+| `RATE_LIMIT_ENABLED` | `true` | Schakel rate limiting volledig uit (bv. tijdens debugsessies in development). |
+| `RATE_LIMIT_DEFAULT` | `100/minute` | Globaal limit voor alle endpoints zonder specifiek limit. |
+| `RATE_LIMIT_AUTH` | `10/minute` | Strenger limit op `/api/v1/auth/dev-token` en `/api/v1/auth/agent-token`. |
+
+Het `/api/v1/health` endpoint is uitgesloten van rate limiting zodat load balancers en monitoring het onbeperkt kunnen aanroepen.
+
+**Achter Caddy of een andere reverse proxy:** zorg dat Uvicorn met `--forwarded-allow-ips` draait of dat Starlette's `ProxyHeadersMiddleware` actief is, zodat `X-Forwarded-For` correct doorkomt en rate limits per echte client-IP worden toegepast (niet per proxy-IP). Zie [`deployment-caddy.md`](deployment-caddy.md).
+
+**Storage:** standaard in-memory — geschikt voor single-instance deployments. Voor load-balanced deployments met meerdere API-instances is een gedeelde store (Redis) nodig; dit kan later geconfigureerd worden via `SLOWAPI_STORAGE_URI`.
+
+---
+
 ## HTTPS
 
-In productie moet het platform achter een reverse proxy draaien die HTTPS afhandelt. Aanbevolen: **Caddy** (automatische certificaatverlenging via Let's Encrypt).
+In productie moet het platform achter een reverse proxy draaien die HTTPS afhandelt. Aanbevolen: **Caddy** (automatische certificaatverlenging via Let's Encrypt, zero-config security defaults).
 
-Minimale Caddy-configuratie:
+Volledige deployment-instructies inclusief Caddyfile-voorbeelden, productie-`docker-compose.prod.yml`, security headers en troubleshooting staan in [`deployment-caddy.md`](deployment-caddy.md). Werkende voorbeeldbestanden in [`examples/caddy/`](../examples/caddy/).
 
-```
-jouwdomein.nl {
-    reverse_proxy localhost:3000
-}
+Minimaal vereiste `.env`-wijzigingen voor productie:
 
-api.jouwdomein.nl {
-    reverse_proxy localhost:8000
-}
+```env
+ENVIRONMENT=production
+ALLOWED_ORIGINS=https://grc.jouwdomein.nl
 ```
 
-Zet `CORS_ORIGINS=https://jouwdomein.nl` in `.env` zodat de API requests van de frontend accepteert.
+`ENVIRONMENT=production` schakelt automatisch `/docs` (Swagger UI) en `/auth/dev-token` uit.
 
 ---
 
 ## Backups
 
-De PostgreSQL-data staat in een Docker-volume (`grc_postgres_data`). Back-up strategie:
+De PostgreSQL-data staat in een Docker-volume (`grc_postgres_data`). Het platform levert kant-en-klare scripts voor backup, restore en pipeline-verificatie:
 
 ```bash
-# Dagelijkse dump
-docker-compose exec db pg_dump -U postgres ims > backup-$(date +%Y%m%d).sql
+# Dagelijkse backup met retentie (7 dagelijks + 4 wekelijks)
+./scripts/backup-postgres.sh
 
-# Herstellen
-docker-compose exec -T db psql -U postgres ims < backup-20260401.sql
+# Restore vanuit een specifieke dump
+./scripts/restore-postgres.sh backups/daily/grc-20260512-030000.sql.gz
+
+# End-to-end pipeline-test (verifieert dat backup + restore werken)
+./scripts/test-backup-restore.sh
 ```
 
-Automatiseer dit via cron of een backuptool. Bewaar minimaal 7 dagelijkse en 4 wekelijkse backups.
+Volledige strategie inclusief cron-configuratie, off-site backups en het maandelijkse test-ritueel: [`backup.md`](backup.md).
 
 ---
 

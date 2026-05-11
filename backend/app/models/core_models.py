@@ -177,6 +177,7 @@ class StandardDomainEnum(str, enum.Enum):
     ISMS = "ISMS"
     PIMS = "PIMS"
     BCMS = "BCMS"
+    AIMS = "AIMS"  # AI Management System — voor NIST AI RMF en EU AI Act-frameworks
     all = "all"
 
 
@@ -236,6 +237,7 @@ class AssessmentTypeEnum(str, enum.Enum):
     self_assessment = "self_assessment"
     bc_oefening = "bc_oefening"
     gap_analysis = "gap_analysis"
+    ai_conformity = "ai_conformity"  # EU AI Act art. 43 conformiteitsbeoordeling
     management_review = "management_review"
 
 
@@ -1141,6 +1143,11 @@ class IMSAssessment(Base):
     document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_documents.id"), nullable=True
     )
+    # M4 AI Governance: link an assessment to a registered AI system
+    # (only meaningful for assessment_type == 'ai_conformity')
+    ai_system_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_ai_systems.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -1482,4 +1489,102 @@ class AgentMessage(Base):
 
     conversation: Mapped["AgentConversation"] = relationship(
         "AgentConversation", back_populates="messages"
+    )
+
+
+class AIHITLCheckpoint(Base):
+    """Human-In-The-Loop checkpoint voor een AI-uitvoer (M4 — AI Governance).
+
+    Legt vast wanneer een mens een AI-output heeft goedgekeurd, afgewezen of
+    aangepast. Append-only: geen UPDATE/DELETE, alleen INSERT. Meerdere
+    checkpoints per audit-log zijn mogelijk (revisierondes).
+
+    Vereist door EU AI Act art. 14 (menselijk toezicht) voor hoog-risico
+    AI-systemen.
+    """
+
+    __tablename__ = "ai_hitl_checkpoints"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    audit_log_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ai_audit_logs.id"), nullable=False
+    )
+    reviewer_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+
+    # Decision values: approved, rejected, modified, pending
+    # (pending = checkpoint geopend maar nog geen beslissing genomen)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+
+
+class IMSAISystem(Base):
+    """AI-systemenregister (M4 — AI Governance).
+
+    Catalogus van AI-toepassingen per organisatie met EU AI Act-risico-
+    classificatie en NIST AI RMF-status. Eerste bouwsteen van de AI
+    Governance Module — zie docs/ai-governance-uitbreiding.md.
+    """
+
+    __tablename__ = "ims_ai_systems"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    vendor: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
+    # Type van het AI-systeem.
+    # Waarden: chatbot, decision_support, content_generation, classification,
+    #          monitoring, automation, other
+    system_type: Mapped[str] = mapped_column(String(30), nullable=False, default="other")
+
+    # EU AI Act risicoclassificatie (verordening 2024/1689).
+    # Waarden: unacceptable, high, limited, minimal, not_classified
+    eu_ai_act_risk: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="not_classified"
+    )
+
+    # NIST AI RMF-status volgens de vier kernfuncties.
+    # Waarden: govern, map, measure, manage, not_started
+    nist_ai_rmf_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="not_started"
+    )
+
+    # Levenscyclus-status van het AI-systeem in de organisatie.
+    # Waarden: planned, building, deployed, retired
+    deployment_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="planned"
+    )
+
+    responsible_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    deployed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
     )
