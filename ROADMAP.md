@@ -37,7 +37,7 @@ Uitbreiding met AI-governance functionaliteit. Aansluiting op EU AI Act (verorde
 
 - [x] AI-systemenregister — catalogiseer alle AI-toepassingen per organisatie — M4 — tabel `ims_ai_systems`, CRUD-endpoints onder `/api/v1/ai-systems`, RLS-geïsoleerd
 - [ ] EU AI Act risicoclassificatie per AI-systeem (verboden / hoog-risico / beperkt / minimaal) — M4
-- [ ] NIST AI RMF als normenkader naast BIO 2.0 en ISO 27001 — M1 / M4
+- [x] NIST AI RMF als normenkader naast BIO 2.0 en ISO 27001 — M1 / M4 — Alembic 011 voegt het normenkader (v1.0, domain `AIMS`) + 4 kernfunctie-requirements (GOVERN, MAP, MEASURE, MANAGE) toe
 - [ ] AI Conformiteitsbeoordeling als assessment-type — M2 / M4
 - [ ] Non-Human Identity (NHI) support — agent-tokens met beperkte scope en TTL — M0 / M4
 - [ ] AI-audit log uitbreiding — HITL-checkpoints en menselijk toezicht registratie — M0 / M4

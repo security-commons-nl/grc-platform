@@ -177,6 +177,7 @@ class StandardDomainEnum(str, enum.Enum):
     ISMS = "ISMS"
     PIMS = "PIMS"
     BCMS = "BCMS"
+    AIMS = "AIMS"  # AI Management System — voor NIST AI RMF en EU AI Act-frameworks
     all = "all"
 
 
