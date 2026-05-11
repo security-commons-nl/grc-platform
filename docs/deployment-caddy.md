@@ -199,21 +199,25 @@ Caddy haalt bij de eerste request automatisch een Let's Encrypt-certificaat op. 
 
 ## Verifiëren
 
+Geautomatiseerde smoke-test:
+
+```bash
+./scripts/smoke-test-deployment.sh https://grc.jouwdomein.nl
+```
+
+Het script verifieert HTTPS-bereikbaarheid, security headers, dat `/api/docs` (Swagger) uit staat in productie, dat `/auth/dev-token` is uitgeschakeld, en dat `/api/v1/health` antwoordt. Exit-code 0 bij succes, 1 bij één of meer falende checks.
+
+Handmatige checks (voor diagnose):
+
 ```bash
 # TLS-versies en cipher
 curl -vI https://grc.jouwdomein.nl 2>&1 | grep -E "(SSL|TLS|HTTP/)"
 
-# Security headers controleren
+# Security headers
 curl -sI https://grc.jouwdomein.nl | grep -E "(Strict-Transport|X-Content|Referrer|Permissions)"
 
 # API health
 curl https://grc.jouwdomein.nl/api/v1/health
-# of bij Variant B:
-curl https://api.grc.jouwdomein.nl/api/v1/health
-
-# Bevestig dat /docs uit staat
-curl -i https://grc.jouwdomein.nl/api/docs
-# verwacht: 404 Not Found
 ```
 
 ---
