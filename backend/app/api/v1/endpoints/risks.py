@@ -9,7 +9,9 @@ from app.models.core_models import IMSRisk, IMSRiskControlLink
 from app.schemas.risks import (
     RiskCreate, RiskUpdate, RiskResponse,
     RiskControlLinkCreate, RiskControlLinkResponse,
+    RiskSimulationResponse, SimulationStatistics, SimulationPercentiles,
 )
+from app.services.simulation import simulate_risk
 
 router = APIRouter()
 
@@ -135,6 +137,89 @@ async def delete_risk(
         await db.delete(link)
     await db.delete(risk)
     await db.flush()
+
+
+# ── M5: Risicokwantificatie ────────────────────────────────────────────────
+
+
+@router.post("/{risk_id}/simulate", response_model=RiskSimulationResponse)
+async def simulate_risk_endpoint(
+    risk_id: UUID,
+    iterations: int = Query(10000, ge=1000, le=1000000),
+    seed: int | None = Query(None, description="Optional seed for reproducibility"),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Monte Carlo-simulatie op de financiële impact van een risico.
+
+    Het risico moet een distributie hebben gezet (`impact_distribution` =
+    'uniform' of 'triangular') en de bijbehorende parameters:
+      - uniform: financial_impact_min_eur + financial_impact_max_eur
+      - triangular: financial_impact_min_eur + financial_impact_eur (mode)
+                    + financial_impact_max_eur
+
+    Returnt percentielen (P5..P99), gemiddelde, standaarddeviatie, en
+    Value-at-Risk op 95% en 99% niveau.
+    """
+    result = await db.execute(
+        select(IMSRisk).where(
+            IMSRisk.id == risk_id,
+            IMSRisk.tenant_id == current_user.tenant_id,
+        )
+    )
+    risk = result.scalar_one_or_none()
+    if not risk:
+        raise HTTPException(status_code=404, detail="Risico niet gevonden")
+
+    if not risk.impact_distribution or risk.impact_distribution == "single":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Risico heeft geen distributie geconfigureerd. Zet "
+                "impact_distribution op 'uniform' of 'triangular' en vul de "
+                "bijbehorende min/max(/mode) velden in."
+            ),
+        )
+
+    min_v = float(risk.financial_impact_min_eur) if risk.financial_impact_min_eur is not None else None
+    max_v = float(risk.financial_impact_max_eur) if risk.financial_impact_max_eur is not None else None
+    mode_v = float(risk.financial_impact_eur) if risk.financial_impact_eur is not None else None
+
+    try:
+        sim = simulate_risk(
+            distribution=risk.impact_distribution,
+            min_value=min_v,
+            max_value=max_v,
+            mode=mode_v,
+            iterations=iterations,
+            seed=seed,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return RiskSimulationResponse(
+        risk_id=risk.id,
+        distribution=sim.distribution,
+        parameters=sim.parameters,
+        iterations=sim.iterations,
+        statistics=SimulationStatistics(
+            mean=sim.mean,
+            std=sim.std,
+            min=sim.sample_min,
+            max=sim.sample_max,
+        ),
+        percentiles=SimulationPercentiles(
+            p5=sim.percentile(5),
+            p25=sim.percentile(25),
+            p50=sim.percentile(50),
+            p75=sim.percentile(75),
+            p95=sim.percentile(95),
+            p99=sim.percentile(99),
+        ),
+        expected_loss=sim.mean,
+        var_95=sim.percentile(95),
+        var_99=sim.percentile(99),
+    )
 
 
 # ── Risk-Control Links ─────────────────────────────────────────────────────

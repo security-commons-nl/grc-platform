@@ -1049,6 +1049,20 @@ class IMSRisk(Base):
     financial_impact_eur: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(15, 2), nullable=True
     )
+    # M5 — Risicokwantificatie (scope-beperkt). Optionele range + distributie
+    # voor Monte Carlo-simulatie. Als impact_distribution NULL of 'single' is,
+    # wordt alleen financial_impact_eur gebruikt (point estimate). Voor
+    # 'uniform' / 'triangular' zijn min en max verplicht; voor 'triangular'
+    # fungeert financial_impact_eur als de mode.
+    financial_impact_min_eur: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(15, 2), nullable=True
+    )
+    financial_impact_max_eur: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(15, 2), nullable=True
+    )
+    impact_distribution: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )
     risk_level: Mapped[str] = mapped_column(String(10), nullable=False)
     status: Mapped[RiskStatusEnum] = mapped_column(String(20), nullable=False)
     owner_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
