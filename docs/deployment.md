@@ -256,7 +256,7 @@ docker compose exec api alembic upgrade head
 - **Backup-encryptie:** off-site backups met `gpg --symmetric` of restic
 - **VPN-only beheer:** sta SSH alleen toe vanuit een VPN-netwerk
 
-Een uitgebreidere checklist staat in [`security-hardening.md`](security-hardening.md) *(in voorbereiding)*.
+Een uitgebreidere checklist staat in [`security-hardening.md`](security-hardening.md) (10 categorieën met statussen ✅ ingebouwd / 🛠️ zelf doen / 💡 aanbevolen extra) + geautomatiseerd verifieerbaar via `./scripts/security-check.sh`.
 
 ---
 

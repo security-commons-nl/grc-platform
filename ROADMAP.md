@@ -29,7 +29,7 @@ Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard ma
 - [x] Geautomatiseerde backup-strategie PostgreSQL — M0 — zie [`docs/backup.md`](docs/backup.md), `scripts/backup-postgres.sh` + restore + end-to-end pipeline-test
 - [x] Monitoring en observability — M0 — zie [`docs/monitoring.md`](docs/monitoring.md): `/health/details` endpoint, structured JSON logging in productie, Langfuse-config-detectie, alerting-drempels
 - [x] Deployment-documentatie voor IT-beheerders — M0 — zie [`docs/deployment.md`](docs/deployment.md) (5-fasen handleiding: voorbereiden, installeren, initialiseren, verifiëren, onderhouden)
-- [ ] Security hardening checklist — M0
+- [x] Security hardening checklist — M0 — zie [`docs/security-hardening.md`](docs/security-hardening.md) (10 categorieën, statussen ✅/🛠️/💡) + geautomatiseerde `scripts/security-check.sh`
 
 ### Spoor 2 — AI Governance Module (M4)
 
