@@ -15,7 +15,7 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 | **M2** | GRC-engine | ✅ Operationeel | Verplicht |
 | **M3** | IMS-inrichtingswizard | ✅ Operationeel | Optioneel |
 | **M4** | AI Governance | ✅ Operationeel | Optioneel |
-| **M5** | Risicokwantificatie | ❌ Niet gepland | Optioneel |
+| **M5** | Risicokwantificatie | ✅ Operationeel (scope-beperkt) | Optioneel |
 | **M6** | Inter-org samenwerking | 🔮 Roadmap | Optioneel |
 
 ### Afhankelijkheidsdiagram

@@ -61,16 +61,28 @@ Schaalbaar naar meerdere organisaties en regio's.
 
 ---
 
-## Open scope-beslissing — M5 Risicokwantificatie
+## M5 Risicokwantificatie — scope-beperkt
 
-**Status: scope-keuze in voorbereiding, geen bouw-werk.**
+**Status: kern operationeel, uitbreidingen bewust uitgesteld.**
 
-Functionaliteit voor kwantitatief risicomanagement (financiële ranges, kansverdelingen, Monte Carlo, koppeling aan P&C-cyclus en organisatiedoelen, organisatie-units onder tenant) is **niet gepland**. Twee redenen:
+Kwantitatief risicomanagement is toegevoegd in een doelbewust beperkte vorm:
 
-1. **Andere persona** dan de huidige doelgroep — controller / concernadviseur risicomanagement i.p.v. CISO / ISO / TIMS-lid.
-2. **Architectuurspanning** — sommige bijhorende eisen (configureerbaarheid zonder maatwerk, kwantitatieve modellering) wijken af van het huidige ontwerpprincipe "Database leading, schema vast".
+- [x] Financiële impact-range (`financial_impact_min_eur`, `financial_impact_max_eur`) — M5 — Alembic 014
+- [x] Distributie-veld op risico (uniform, triangular) — M5
+- [x] Monte Carlo-simulatie-endpoint `POST /api/v1/risks/{id}/simulate` met percentielen, VaR-95/99, expected loss — M5
+- [x] Reproduceerbaarheid via optionele `seed`-parameter — M5
 
-Voordat hier ontwikkelwerk op start moet er een keuze liggen: past M5 binnen de scope van dit platform, of is dit een ander product? Zie [`docs/modules.md`](docs/modules.md) sectie M5. Discussie via [Discussions](../../discussions).
+Volledige documentatie: [`docs/risico-kwantificatie.md`](docs/risico-kwantificatie.md).
+
+**Bewust niet in deze iteratie** — uitbreiden zodra er bredere klantvraag is:
+
+- [ ] Organisatie-units (team / cluster / afdeling) onder tenant
+- [ ] Planning-en-control-cyclus en organisatiedoelen als first-class entiteiten
+- [ ] Lognormal-distributie en andere extra verdelingstypes
+- [ ] Aggregatie/portfolio-simulatie over meerdere risico's
+- [ ] Correlaties tussen gerelateerde risico's
+
+Voor uitbreidingen: open een GitHub Discussion met de concrete use case.
 
 ---
 
