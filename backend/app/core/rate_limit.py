@@ -10,7 +10,10 @@ X-Forwarded-For correct doorkomt en rate limits per echte client-IP
 worden toegepast (niet per Caddy-IP).
 """
 
+from fastapi import Request
+from starlette.responses import JSONResponse
 from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.core.config import settings
@@ -24,6 +27,43 @@ limiter = Limiter(
     # slowapi 0.1.9 + FastAPI/Starlette ASGI middleware order causes an
     # "parameter `response` must be an instance of starlette.responses.Response"
     # error when the route doesn't take an explicit response parameter.
-    # 429 responses still get Retry-After via the default exception handler.
+    # We compensate by setting Retry-After in our own exception handler below.
     headers_enabled=False,
 )
+
+
+def _parse_retry_after_seconds(detail: str) -> int:
+    """Parse a slowapi limit string like '10 per 1 minute' into a Retry-After
+    value in seconds. Fallback to 60 if parsing fails."""
+    parts = detail.lower().split()
+    try:
+        idx = parts.index("per")
+        amount = int(parts[idx + 1])
+        unit = parts[idx + 2]
+        if unit.startswith("second"):
+            return amount
+        if unit.startswith("minute"):
+            return amount * 60
+        if unit.startswith("hour"):
+            return amount * 3600
+        if unit.startswith("day"):
+            return amount * 86400
+    except (ValueError, IndexError):
+        pass
+    return 60
+
+
+def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Custom 429 handler that always sets Retry-After.
+
+    Required because we disabled slowapi's automatic header injection
+    (see headers_enabled=False above). Without this, clients have no
+    machine-readable hint when to retry.
+    """
+    retry_after = _parse_retry_after_seconds(str(exc.detail))
+    response = JSONResponse(
+        status_code=429,
+        content={"detail": f"Rate limit exceeded: {exc.detail}"},
+    )
+    response.headers["Retry-After"] = str(retry_after)
+    return response
