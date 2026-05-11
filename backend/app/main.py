@@ -7,7 +7,11 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.core.logging_config import configure_logging
 from app.core.rate_limit import limiter
+
+
+configure_logging()
 
 
 @asynccontextmanager

@@ -109,8 +109,9 @@ check_status_in "/api/docs" "404" "401" "403"
 check_status_in "/api/v1/auth/dev-token" "403" "404" "405"
 echo ""
 
-echo "[4] Health endpoint"
+echo "[4] Health endpoints"
 check_status "/api/v1/health" "200"
+check_status "/api/v1/health/details" "200"
 echo ""
 
 echo "Result: ${checks} checks, ${failures} failure(s)."

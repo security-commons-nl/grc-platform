@@ -27,7 +27,7 @@ Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard ma
 - [x] HTTPS via Caddy reverse proxy (documentatie) — M0 — zie [`docs/deployment-caddy.md`](docs/deployment-caddy.md)
 - [x] Rate limiting op API-endpoints — M0 — `slowapi` met instelbare limits per `.env` (`RATE_LIMIT_DEFAULT`, `RATE_LIMIT_AUTH`); auth-endpoints strenger; `/health` exempt
 - [x] Geautomatiseerde backup-strategie PostgreSQL — M0 — zie [`docs/backup.md`](docs/backup.md), `scripts/backup-postgres.sh` + restore + end-to-end pipeline-test
-- [ ] Monitoring en observability (Langfuse reeds ondersteund) — M0
+- [x] Monitoring en observability — M0 — zie [`docs/monitoring.md`](docs/monitoring.md): `/health/details` endpoint, structured JSON logging in productie, Langfuse-config-detectie, alerting-drempels
 - [ ] Deployment-documentatie voor IT-beheerders — M0
 - [ ] Security hardening checklist — M0
 
