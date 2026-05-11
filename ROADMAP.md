@@ -40,7 +40,7 @@ Uitbreiding met AI-governance functionaliteit. Aansluiting op EU AI Act (verorde
 - [x] NIST AI RMF als normenkader naast BIO 2.0 en ISO 27001 — M1 / M4 — Alembic 011 voegt het normenkader (v1.0, domain `AIMS`) + 4 kernfunctie-requirements (GOVERN, MAP, MEASURE, MANAGE) toe
 - [x] AI Conformiteitsbeoordeling als assessment-type — M2 / M4 — `assessment_type='ai_conformity'` + `ai_system_id` FK op `ims_assessments` (Alembic 012), filter op AI-systeem in list endpoint, validatie dat conformiteit altijd aan een geregistreerd AI-systeem gekoppeld is
 - [x] Non-Human Identity (NHI) support — agent-tokens met beperkte scope en TTL — M0 / M4 — `scope`-claim (lijst capabilities), default TTL 60 min (max 24h), koppeling aan `ai_system_id` met cross-tenant verificatie, `require_scope()` dependency
-- [ ] AI-audit log uitbreiding — HITL-checkpoints en menselijk toezicht registratie — M0 / M4
+- [x] AI-audit log uitbreiding — HITL-checkpoints en menselijk toezicht registratie — M0 / M4 — append-only `ai_hitl_checkpoints` tabel (UPDATE/DELETE ingetrokken), endpoint `/api/v1/ai-hitl-checkpoints`, reviewer afgeleid uit JWT om impersonatie te voorkomen
 
 Detailvoorstel: [`docs/ai-governance-uitbreiding.md`](docs/ai-governance-uitbreiding.md).
 

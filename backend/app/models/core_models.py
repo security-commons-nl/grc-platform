@@ -1492,6 +1492,42 @@ class AgentMessage(Base):
     )
 
 
+class AIHITLCheckpoint(Base):
+    """Human-In-The-Loop checkpoint voor een AI-uitvoer (M4 — AI Governance).
+
+    Legt vast wanneer een mens een AI-output heeft goedgekeurd, afgewezen of
+    aangepast. Append-only: geen UPDATE/DELETE, alleen INSERT. Meerdere
+    checkpoints per audit-log zijn mogelijk (revisierondes).
+
+    Vereist door EU AI Act art. 14 (menselijk toezicht) voor hoog-risico
+    AI-systemen.
+    """
+
+    __tablename__ = "ai_hitl_checkpoints"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    audit_log_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ai_audit_logs.id"), nullable=False
+    )
+    reviewer_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+
+    # Decision values: approved, rejected, modified, pending
+    # (pending = checkpoint geopend maar nog geen beslissing genomen)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+
+
 class IMSAISystem(Base):
     """AI-systemenregister (M4 — AI Governance).
 
