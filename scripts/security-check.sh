@@ -49,18 +49,26 @@ else
     pass "POSTGRES_PASSWORD is not the default"
   fi
 
-  if grep -qE '^JWT_SECRET_KEY=changeme' "$ENV_FILE"; then
+  # JWT_SECRET_KEY: three states — missing, default, or set. Combine
+  # missing-check + value-check so the messages stay consistent (no more
+  # "not the default" + "too short (0 chars)" contradictions when the
+  # variable is simply absent).
+  if ! grep -qE '^JWT_SECRET_KEY=' "$ENV_FILE"; then
+    if grep -qE '^JWT_SECRET=' "$ENV_FILE"; then
+      fail "JWT_SECRET_KEY missing — found legacy variable name 'JWT_SECRET' instead. Rename to JWT_SECRET_KEY (backend/app/core/config.py expects the new name)."
+    else
+      fail "JWT_SECRET_KEY not set in .env"
+    fi
+  elif grep -qE '^JWT_SECRET_KEY=changeme' "$ENV_FILE"; then
     fail "JWT_SECRET_KEY still has default value 'changeme'"
   else
-    pass "JWT_SECRET_KEY is not the default"
-  fi
-
-  # Lengte JWT_SECRET_KEY moet minimaal 32 zijn (~64 hex)
-  jwt_len=$(grep -E '^JWT_SECRET_KEY=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" | wc -c)
-  if [ "$jwt_len" -lt 32 ]; then
-    fail "JWT_SECRET_KEY too short (${jwt_len} chars, minimum 32)"
-  else
-    pass "JWT_SECRET_KEY length OK (${jwt_len} chars)"
+    jwt_value=$(grep -E '^JWT_SECRET_KEY=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r' | tr -d '\n')
+    jwt_len=${#jwt_value}
+    if [ "$jwt_len" -lt 32 ]; then
+      fail "JWT_SECRET_KEY too short (${jwt_len} chars, minimum 32 — generate via 'openssl rand -hex 32')"
+    else
+      pass "JWT_SECRET_KEY length OK (${jwt_len} chars)"
+    fi
   fi
 
   if grep -qE '^ENVIRONMENT=production' "$ENV_FILE"; then
