@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pydantic import BaseModel
+
 from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
 from app.models.core_models import IMSAISystem
@@ -19,8 +21,45 @@ from app.schemas.ai_systems import (
     AISystemResponse,
     AISystemUpdate,
 )
+from app.services.eu_ai_act_classifier import suggest_risk
 
 router = APIRouter()
+
+
+class ClassifyRequest(BaseModel):
+    system_type: str
+    description: str = ""
+    use_case: str = ""
+
+
+class ClassifySuggestion(BaseModel):
+    suggested_risk: str
+    reasoning: str
+    triggered_by: list[str]
+
+
+@router.post("/classify-suggestion", response_model=ClassifySuggestion)
+async def classify_suggestion(
+    data: ClassifyRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Suggereer een EU AI Act-risicocategorie op basis van beschrijving.
+
+    **Advies-only.** De suggestie moet door een menselijke beoordelaar
+    worden bevestigd en handmatig op het AI-systeem gezet worden.
+    Het advies is deterministisch (keyword-based) zodat het zelf auditbaar
+    is — geen LLM in de loop voor deze classificatie.
+    """
+    suggestion = suggest_risk(
+        system_type=data.system_type,
+        description=data.description,
+        use_case=data.use_case,
+    )
+    return ClassifySuggestion(
+        suggested_risk=suggestion.suggested_risk,
+        reasoning=suggestion.reasoning,
+        triggered_by=suggestion.triggered_by,
+    )
 
 
 @router.get("/", response_model=list[AISystemResponse])

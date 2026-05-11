@@ -36,7 +36,7 @@ Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard ma
 Uitbreiding met AI-governance functionaliteit. Aansluiting op EU AI Act (verordening 2024/1689) en NIST AI RMF. **Module-focus: M4 bouwen.**
 
 - [x] AI-systemenregister — catalogiseer alle AI-toepassingen per organisatie — M4 — tabel `ims_ai_systems`, CRUD-endpoints onder `/api/v1/ai-systems`, RLS-geïsoleerd
-- [ ] EU AI Act risicoclassificatie per AI-systeem (verboden / hoog-risico / beperkt / minimaal) — M4
+- [x] EU AI Act risicoclassificatie per AI-systeem (verboden / hoog-risico / beperkt / minimaal) — M4 — `eu_ai_act_risk` veld op `ims_ai_systems` (Alembic 010); deterministische classifier in `app/services/eu_ai_act_classifier.py`; advies-endpoint `/api/v1/ai-systems/classify-suggestion`; criteria-documentatie [`docs/eu-ai-act-classification.md`](docs/eu-ai-act-classification.md)
 - [x] NIST AI RMF als normenkader naast BIO 2.0 en ISO 27001 — M1 / M4 — Alembic 011 voegt het normenkader (v1.0, domain `AIMS`) + 4 kernfunctie-requirements (GOVERN, MAP, MEASURE, MANAGE) toe
 - [x] AI Conformiteitsbeoordeling als assessment-type — M2 / M4 — `assessment_type='ai_conformity'` + `ai_system_id` FK op `ims_assessments` (Alembic 012), filter op AI-systeem in list endpoint, validatie dat conformiteit altijd aan een geregistreerd AI-systeem gekoppeld is
 - [x] Non-Human Identity (NHI) support — agent-tokens met beperkte scope en TTL — M0 / M4 — `scope`-claim (lijst capabilities), default TTL 60 min (max 24h), koppeling aan `ai_system_id` met cross-tenant verificatie, `require_scope()` dependency

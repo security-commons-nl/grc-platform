@@ -14,7 +14,7 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 | **M1** | Normen & Mapping | ✅ Operationeel | Verplicht |
 | **M2** | GRC-engine | ✅ Operationeel | Verplicht |
 | **M3** | IMS-inrichtingswizard | ✅ Operationeel | Optioneel |
-| **M4** | AI Governance | 🚧 In bouw | Optioneel |
+| **M4** | AI Governance | ✅ Operationeel | Optioneel |
 | **M5** | Risicokwantificatie | ❌ Niet gepland | Optioneel |
 | **M6** | Inter-org samenwerking | 🔮 Roadmap | Optioneel |
 
@@ -80,11 +80,20 @@ Operationele GRC. Risico's met likelihood-impact-matrix, controls gekoppeld aan 
 
 ---
 
-## M4 — AI Governance (in bouw)
+## M4 — AI Governance
 
 AI-systemenregister, EU AI Act-risicoclassificatie, NIST AI RMF als normenkader (uitbreiding van M1), AI Conformiteitsbeoordeling als assessment-type, HITL-checkpoints in audit log, Non-Human Identity-tokens met beperkte scope.
 
-**Status:** AI-systemenregister operationeel (`ims_ai_systems`, endpoints onder `/api/v1/ai-systems`). Resterende bouwstenen (NIST RMF als normenkader, Conformiteitsbeoordeling-assessment-type, NHI-uitbreiding) zijn in voorbereiding. Detailvoorstel: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md).
+**Status:** alle zes bouwstenen operationeel.
+
+- `ims_ai_systems` register (CRUD onder `/api/v1/ai-systems`)
+- NIST AI RMF 1.0 als `AIMS`-domein normenkader met 4 kernfunctie-requirements
+- `assessment_type='ai_conformity'` met verplichte koppeling aan AI-systeem
+- Append-only `ai_hitl_checkpoints` voor menselijk-toezicht-audittrail (EU AI Act art. 14)
+- NHI agent-tokens met scope-claim, TTL ≤ 24h, optionele koppeling aan AI-systeem
+- Deterministische EU AI Act classifier met advies-endpoint en uitlegregels
+
+Detail: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md) (voorstel-doc) en [`docs/eu-ai-act-classification.md`](eu-ai-act-classification.md) (criteria).
 
 **Use case:** organisaties met AI-systemen die onder EU AI Act (verordening 2024/1689) vallen.
 
