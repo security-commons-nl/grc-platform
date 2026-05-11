@@ -43,6 +43,14 @@ async def engine():
 async def clean_tables(engine):
     async with engine.begin() as conn:
         # Truncate user/tenant data but NOT reference data (ims_steps, ims_step_dependencies, ims_step_outputs, ims_standards)
+        # Clean tenant/user data but preserve reference data:
+        # - ims_standards (seeded by migration 003 + 011)
+        # - ims_requirements van NIST RMF (seeded by migration 011)
+        await conn.execute(text("DELETE FROM ims_requirement_mappings"))
+        await conn.execute(text(
+            "DELETE FROM ims_requirements WHERE standard_id NOT IN "
+            "(SELECT id FROM ims_standards WHERE name = 'NIST AI RMF')"
+        ))
         await conn.execute(text(
             "TRUNCATE TABLE "
             "agent_messages, agent_conversations, "
@@ -50,8 +58,8 @@ async def clean_tables(engine):
             "ims_knowledge_chunks, ims_grc_scores, ims_setup_scores, ims_maturity_profiles, "
             "ims_incidents, ims_evidence, ims_corrective_actions, ims_findings, "
             "ims_assessments, ims_risk_control_links, ims_controls, ims_risks, ims_scopes, "
-            "ims_standard_ingestions, ims_tenant_normenkader, ims_requirement_mappings, "
-            "ims_requirements, ims_document_versions, ims_documents, "
+            "ims_standard_ingestions, ims_tenant_normenkader, "
+            "ims_document_versions, ims_documents, "
             "ims_step_output_fulfillments, ims_decisions, ims_step_executions, "
             "user_region_roles, user_tenant_roles, users, tenants, regions "
             "CASCADE"
@@ -161,3 +169,18 @@ async def test_user(client, test_tenant, tenant_token):
 async def viewer_token(test_tenant):
     """A token with viewer role (read-only)."""
     return make_token(tenant_id=test_tenant["id"], role="viewer")
+
+
+@pytest_asyncio.fixture
+async def user_token(test_user):
+    """A token tied to a user that ACTUALLY exists in the users table.
+
+    Use this when a test calls an endpoint that inserts a foreign key
+    reference to users (e.g. AI HITL checkpoints, where reviewer_user_id
+    must exist). Most tests can use tenant_token, but FK-creating
+    endpoints need a real user."""
+    return make_token(
+        user_id=test_user["id"],
+        tenant_id=test_user["tenant_id"],
+        role="admin",
+    )

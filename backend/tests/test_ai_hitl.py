@@ -42,7 +42,7 @@ async def audit_log_id(engine, test_tenant):
 
 @pytest.mark.asyncio
 async def test_create_hitl_checkpoint_approved(
-    client, tenant_token, audit_log_id
+    client, user_token, audit_log_id
 ):
     """Een gebruiker kan een AI-uitvoer goedkeuren."""
     r = await client.post(
@@ -52,7 +52,7 @@ async def test_create_hitl_checkpoint_approved(
             "decision": "approved",
             "reason": "Output is correct en compliant met BIO-eisen",
         },
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 201, r.text
     body = r.json()
@@ -64,7 +64,7 @@ async def test_create_hitl_checkpoint_approved(
 
 @pytest.mark.asyncio
 async def test_create_hitl_checkpoint_rejected_with_reason(
-    client, tenant_token, audit_log_id
+    client, user_token, audit_log_id
 ):
     """Afwijzing kan met reden."""
     r = await client.post(
@@ -74,14 +74,14 @@ async def test_create_hitl_checkpoint_rejected_with_reason(
             "decision": "rejected",
             "reason": "Hallucinerend over BIO-controlnummers",
         },
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 201
     assert r.json()["reason"] == "Hallucinerend over BIO-controlnummers"
 
 
 @pytest.mark.asyncio
-async def test_invalid_decision_value_rejected(client, tenant_token, audit_log_id):
+async def test_invalid_decision_value_rejected(client, user_token, audit_log_id):
     """Decision moet uit approved/rejected/modified/pending komen."""
     r = await client.post(
         "/api/v1/ai-hitl-checkpoints/",
@@ -89,13 +89,13 @@ async def test_invalid_decision_value_rejected(client, tenant_token, audit_log_i
             "audit_log_id": str(audit_log_id),
             "decision": "looks-ok-i-guess",
         },
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_unknown_audit_log_id_rejected(client, tenant_token):
+async def test_unknown_audit_log_id_rejected(client, user_token):
     """Een audit_log_id dat niet in de tenant bestaat geeft 404."""
     r = await client.post(
         "/api/v1/ai-hitl-checkpoints/",
@@ -103,14 +103,14 @@ async def test_unknown_audit_log_id_rejected(client, tenant_token):
             "audit_log_id": str(uuid.uuid4()),
             "decision": "approved",
         },
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_multiple_checkpoints_per_audit_log_allowed(
-    client, tenant_token, audit_log_id
+    client, user_token, audit_log_id
 ):
     """Revisierondes: meerdere checkpoints op dezelfde audit-log zijn toegestaan
     (eerst 'pending', later 'approved' bv.)."""
@@ -118,13 +118,13 @@ async def test_multiple_checkpoints_per_audit_log_allowed(
         r = await client.post(
             "/api/v1/ai-hitl-checkpoints/",
             json={"audit_log_id": str(audit_log_id), "decision": decision},
-            headers={"Authorization": f"Bearer {tenant_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
         assert r.status_code == 201, f"decision={decision}: {r.text}"
 
     r = await client.get(
         f"/api/v1/ai-hitl-checkpoints/?audit_log_id={audit_log_id}",
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 200
     assert len(r.json()) == 3
@@ -132,19 +132,19 @@ async def test_multiple_checkpoints_per_audit_log_allowed(
 
 @pytest.mark.asyncio
 async def test_list_checkpoints_filter_by_decision(
-    client, tenant_token, audit_log_id
+    client, user_token, audit_log_id
 ):
     """Filter op decision."""
     for decision in ("approved", "approved", "rejected"):
         await client.post(
             "/api/v1/ai-hitl-checkpoints/",
             json={"audit_log_id": str(audit_log_id), "decision": decision},
-            headers={"Authorization": f"Bearer {tenant_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
     r = await client.get(
         "/api/v1/ai-hitl-checkpoints/?decision=approved",
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 200
     decisions = [c["decision"] for c in r.json()]
@@ -165,7 +165,7 @@ async def test_viewer_cannot_create_checkpoint(client, viewer_token, audit_log_i
 
 @pytest.mark.asyncio
 async def test_reviewer_is_authenticated_user_not_payload(
-    client, tenant_token, audit_log_id
+    client, user_token, audit_log_id
 ):
     """De reviewer_user_id wordt afgeleid uit het JWT-token, niet uit
     het request payload — voorkomt impersonatie."""
@@ -176,7 +176,7 @@ async def test_reviewer_is_authenticated_user_not_payload(
             "decision": "approved",
             "reviewer_user_id": str(uuid.uuid4()),  # poging tot spoofing
         },
-        headers={"Authorization": f"Bearer {tenant_token}"},
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert r.status_code == 201
     body = r.json()
