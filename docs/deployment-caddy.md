@@ -195,6 +195,10 @@ Caddy haalt bij de eerste request automatisch een Let's Encrypt-certificaat op. 
 2. Poorten 80 en 443 publiek bereikbaar zijn (firewall / port-forward / cloud security group)
 3. Het domein in de Caddyfile een geldig FQDN is
 
+### X-Forwarded-For en rate limiting
+
+Caddy voegt automatisch `X-Forwarded-For` en `X-Forwarded-Proto` headers toe. Voor accurate rate limiting per *echte* client-IP (niet de Caddy-container-IP) moet Uvicorn deze headers vertrouwen. Pas indien nodig de api-service in `docker-compose.prod.yml` aan zodat uvicorn start met `--forwarded-allow-ips="*"` (veilig binnen het Docker-netwerk omdat alleen Caddy van buitenaf bereikbaar is). Standaard accepteert Uvicorn 0.30+ proxy-headers van `127.0.0.1` — voor Docker-netwerk-IP's moet dit expliciet opener.
+
 ---
 
 ## Verifiëren

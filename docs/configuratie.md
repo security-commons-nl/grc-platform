@@ -111,6 +111,24 @@ Het platform ondersteunt meerdere organisaties vanuit één installatie. Nieuwe 
 
 ---
 
+## Rate limiting
+
+Het platform past rate limiting toe per client-IP. Drie environment-variabelen sturen dit gedrag:
+
+| Variabele | Standaard | Beschrijving |
+|-----------|-----------|--------------|
+| `RATE_LIMIT_ENABLED` | `true` | Schakel rate limiting volledig uit (bv. tijdens debugsessies in development). |
+| `RATE_LIMIT_DEFAULT` | `100/minute` | Globaal limit voor alle endpoints zonder specifiek limit. |
+| `RATE_LIMIT_AUTH` | `10/minute` | Strenger limit op `/api/v1/auth/dev-token` en `/api/v1/auth/agent-token`. |
+
+Het `/api/v1/health` endpoint is uitgesloten van rate limiting zodat load balancers en monitoring het onbeperkt kunnen aanroepen.
+
+**Achter Caddy of een andere reverse proxy:** zorg dat Uvicorn met `--forwarded-allow-ips` draait of dat Starlette's `ProxyHeadersMiddleware` actief is, zodat `X-Forwarded-For` correct doorkomt en rate limits per echte client-IP worden toegepast (niet per proxy-IP). Zie [`deployment-caddy.md`](deployment-caddy.md).
+
+**Storage:** standaard in-memory — geschikt voor single-instance deployments. Voor load-balanced deployments met meerdere API-instances is een gedeelde store (Redis) nodig; dit kan later geconfigureerd worden via `SLOWAPI_STORAGE_URI`.
+
+---
+
 ## HTTPS
 
 In productie moet het platform achter een reverse proxy draaien die HTTPS afhandelt. Aanbevolen: **Caddy** (automatische certificaatverlenging via Let's Encrypt, zero-config security defaults).

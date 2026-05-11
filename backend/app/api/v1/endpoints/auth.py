@@ -2,11 +2,12 @@ from datetime import timedelta
 from uuid import UUID
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
 from app.core.auth import create_token, CurrentUser, get_current_user, require_role
 from app.core.config import settings
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -31,7 +32,8 @@ class TokenResponse(BaseModel):
 
 
 @router.post("/dev-token", response_model=TokenResponse)
-async def create_dev_token(data: DevTokenRequest):
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def create_dev_token(request: Request, data: DevTokenRequest):
     """Generate a development JWT token. Only available when ENVIRONMENT=development."""
     if settings.ENVIRONMENT != "development":
         raise HTTPException(
@@ -57,7 +59,9 @@ async def create_dev_token(data: DevTokenRequest):
 
 
 @router.post("/agent-token", response_model=TokenResponse)
+@limiter.limit(settings.RATE_LIMIT_AUTH)
 async def create_agent_token(
+    request: Request,
     data: AgentTokenRequest,
     current_user: CurrentUser = Depends(require_role("admin")),
 ):

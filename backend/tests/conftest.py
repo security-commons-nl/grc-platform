@@ -13,8 +13,23 @@ from app.main import app
 from app.core.db import get_db
 from app.core.config import settings
 from app.core.auth import create_token
+from app.core.rate_limit import limiter
 
 TEST_DATABASE_URL = settings.DATABASE_URL.replace("/ims", "/ims_test")
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_rate_limiter():
+    """Default: rate limiting OFF in tests so the 105+ existing tests
+    can freely hammer endpoints. Tests that specifically verify rate-
+    limit behaviour (test_rate_limit.py) re-enable the limiter via the
+    `with_rate_limit` fixture."""
+    limiter.reset()
+    original_enabled = limiter.enabled
+    limiter.enabled = False
+    yield
+    limiter.enabled = original_enabled
+    limiter.reset()
 
 
 @pytest_asyncio.fixture(scope="session")

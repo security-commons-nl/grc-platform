@@ -25,7 +25,7 @@ Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard ma
 
 - [x] Klikbaar likelihood-impact matrix-grid in risicoregister (vervangt dropdowns; heatmap boven tabel) — M2
 - [x] HTTPS via Caddy reverse proxy (documentatie) — M0 — zie [`docs/deployment-caddy.md`](docs/deployment-caddy.md)
-- [ ] Rate limiting op API-endpoints — M0
+- [x] Rate limiting op API-endpoints — M0 — `slowapi` met instelbare limits per `.env` (`RATE_LIMIT_DEFAULT`, `RATE_LIMIT_AUTH`); auth-endpoints strenger; `/health` exempt
 - [ ] Geautomatiseerde backup-strategie PostgreSQL — M0
 - [ ] Monitoring en observability (Langfuse reeds ondersteund) — M0
 - [ ] Deployment-documentatie voor IT-beheerders — M0
