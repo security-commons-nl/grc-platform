@@ -73,16 +73,22 @@ async def clean_tables(engine):
     yield
 
 
-def make_token(user_id=None, tenant_id=None, role="admin", domain=None, token_type="user", agent_name=None):
+def make_token(user_id=None, tenant_id=None, role="admin", domain=None,
+               token_type="user", agent_name=None, scope=None, ai_system_id=None):
     """Helper to create JWT tokens for tests."""
-    return create_token({
+    payload = {
         "sub": str(user_id or uuid.uuid4()),
         "tenant_id": str(tenant_id or uuid.uuid4()),
         "role": role,
         "domain": domain,
         "token_type": token_type,
         "agent_name": agent_name,
-    })
+    }
+    if scope is not None:
+        payload["scope"] = scope
+    if ai_system_id is not None:
+        payload["ai_system_id"] = str(ai_system_id)
+    return create_token(payload)
 
 
 @pytest_asyncio.fixture
