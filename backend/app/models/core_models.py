@@ -237,6 +237,7 @@ class AssessmentTypeEnum(str, enum.Enum):
     self_assessment = "self_assessment"
     bc_oefening = "bc_oefening"
     gap_analysis = "gap_analysis"
+    ai_conformity = "ai_conformity"  # EU AI Act art. 43 conformiteitsbeoordeling
     management_review = "management_review"
 
 
@@ -1141,6 +1142,11 @@ class IMSAssessment(Base):
     cyclus_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_documents.id"), nullable=True
+    )
+    # M4 AI Governance: link an assessment to a registered AI system
+    # (only meaningful for assessment_type == 'ai_conformity')
+    ai_system_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ims_ai_systems.id"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
