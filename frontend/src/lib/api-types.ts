@@ -206,6 +206,8 @@ export interface DecisionResponse {
 
 // ── Risks ───────────────────────────────────────────────────────────────────
 
+export type ImpactDistribution = 'single' | 'uniform' | 'triangular' | null;
+
 export interface RiskResponse {
   id: string;
   tenant_id: string;
@@ -217,6 +219,10 @@ export interface RiskResponse {
   impact: number;
   risk_score: number;
   financial_impact_eur?: number | null;
+  // M5 — Risicokwantificatie
+  financial_impact_min_eur?: number | null;
+  financial_impact_max_eur?: number | null;
+  impact_distribution?: ImpactDistribution;
   risk_level: string;
   status: string;
   owner_user_id?: string | null;
@@ -224,6 +230,32 @@ export interface RiskResponse {
   treatment_decision_id?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// M5 — Monte Carlo simulation response
+
+export interface RiskSimulationResponse {
+  risk_id: string;
+  distribution: 'uniform' | 'triangular';
+  parameters: Record<string, number>;
+  iterations: number;
+  statistics: {
+    mean: number;
+    std: number;
+    min: number;
+    max: number;
+  };
+  percentiles: {
+    p5: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    p95: number;
+    p99: number;
+  };
+  expected_loss: number;
+  var_95: number;
+  var_99: number;
 }
 
 // ── Controls ────────────────────────────────────────────────────────────────

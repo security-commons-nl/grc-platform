@@ -13,10 +13,17 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { RiskMatrix } from '@/components/beheer/risk-matrix';
+import { SimulationResults } from '@/components/beheer/simulation-results';
 import { useRisks } from '@/lib/hooks/use-risks';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
-import type { RiskResponse, ScopeResponse } from '@/lib/api-types';
+import type { RiskResponse, RiskSimulationResponse, ScopeResponse } from '@/lib/api-types';
+
+const DISTRIBUTION_OPTIONS = [
+  { value: '', label: 'Geen (alleen point estimate)' },
+  { value: 'uniform', label: 'Uniform (min/max)' },
+  { value: 'triangular', label: 'Triangular (min / meest waarschijnlijk / max)' },
+];
 
 const DOMAIN_OPTIONS = [
   { value: '', label: 'Selecteer domein...' },
@@ -64,7 +71,19 @@ export default function RisicosPage() {
     description: '',
     likelihood: '',
     impact: '',
+    // M5 — kwantitatieve impact (optioneel)
+    financial_impact_eur: '',
+    financial_impact_min_eur: '',
+    financial_impact_max_eur: '',
+    impact_distribution: '',
   });
+  const [showQuantitative, setShowQuantitative] = useState(false);
+
+  // M5 — simulatie state
+  const [simulationResult, setSimulationResult] = useState<RiskSimulationResponse | null>(null);
+  const [simulationRiskTitle, setSimulationRiskTitle] = useState<string>('');
+  const [simulatingRiskId, setSimulatingRiskId] = useState<string | null>(null);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
 
   const scopeOptions = [
     { value: '', label: 'Selecteer scope...' },
@@ -72,8 +91,33 @@ export default function RisicosPage() {
   ];
 
   function resetForm() {
-    setFormData({ scope_id: '', domain: '', title: '', description: '', likelihood: '', impact: '' });
+    setFormData({
+      scope_id: '', domain: '', title: '', description: '', likelihood: '', impact: '',
+      financial_impact_eur: '', financial_impact_min_eur: '', financial_impact_max_eur: '',
+      impact_distribution: '',
+    });
+    setShowQuantitative(false);
     setFormError(null);
+  }
+
+  async function handleSimulate(risk: RiskResponse) {
+    setSimulatingRiskId(risk.id);
+    setSimulationError(null);
+    try {
+      const result = await api.risks.simulate(risk.id, { iterations: 10000 });
+      setSimulationResult(result);
+      setSimulationRiskTitle(risk.title);
+      // Scroll naar resultaat
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setSimulationError(`Simulatie mislukt: ${formatApiError(err.body)}`);
+      } else {
+        setSimulationError(`Onbekende fout: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } finally {
+      setSimulatingRiskId(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -87,7 +131,7 @@ export default function RisicosPage() {
     setFormError(null);
 
     try {
-      await api.risks.create({
+      const payload: Record<string, unknown> = {
         scope_id: formData.scope_id,
         domain: formData.domain,
         title: formData.title,
@@ -95,7 +139,21 @@ export default function RisicosPage() {
         likelihood: Number(formData.likelihood),
         impact: Number(formData.impact),
         status: 'open',
-      });
+      };
+      // M5 — optionele kwantitatieve velden alleen meesturen als ingevuld
+      if (formData.financial_impact_eur) {
+        payload.financial_impact_eur = Number(formData.financial_impact_eur);
+      }
+      if (formData.financial_impact_min_eur) {
+        payload.financial_impact_min_eur = Number(formData.financial_impact_min_eur);
+      }
+      if (formData.financial_impact_max_eur) {
+        payload.financial_impact_max_eur = Number(formData.financial_impact_max_eur);
+      }
+      if (formData.impact_distribution) {
+        payload.impact_distribution = formData.impact_distribution;
+      }
+      await api.risks.create(payload);
       await mutate();
       setShowForm(false);
       resetForm();
@@ -126,6 +184,20 @@ export default function RisicosPage() {
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Fout bij laden van risico's: {error.message || 'Onbekende fout'}
         </div>
+      )}
+
+      {simulationError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {simulationError}
+        </div>
+      )}
+
+      {simulationResult && (
+        <SimulationResults
+          result={simulationResult}
+          riskTitle={simulationRiskTitle}
+          onDismiss={() => setSimulationResult(null)}
+        />
       )}
 
       {showForm && (
@@ -183,6 +255,52 @@ export default function RisicosPage() {
                 {getRiskLevelBadge(Number(formData.likelihood) * Number(formData.impact))}
               </div>
             )}
+
+            {/* M5 — Kwantitatieve impact (optioneel, collapsible) */}
+            <div className="border-t border-neutral-200 pt-3">
+              <button
+                type="button"
+                className="text-sm font-medium text-primary-700 hover:text-primary-800"
+                onClick={() => setShowQuantitative(!showQuantitative)}
+              >
+                {showQuantitative ? '−' : '+'} Kwantitatieve impact (optioneel)
+              </button>
+              {showQuantitative && (
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Select
+                    label="Distributie"
+                    options={DISTRIBUTION_OPTIONS}
+                    value={formData.impact_distribution}
+                    onChange={(e) => setFormData({ ...formData, impact_distribution: e.target.value })}
+                  />
+                  <Input
+                    type="number"
+                    label="Meest waarschijnlijk (€) — mode bij triangular"
+                    value={formData.financial_impact_eur}
+                    onChange={(e) => setFormData({ ...formData, financial_impact_eur: e.target.value })}
+                    placeholder="bv. 25000"
+                  />
+                  <Input
+                    type="number"
+                    label="Minimum schade (€)"
+                    value={formData.financial_impact_min_eur}
+                    onChange={(e) => setFormData({ ...formData, financial_impact_min_eur: e.target.value })}
+                    placeholder="bv. 10000"
+                  />
+                  <Input
+                    type="number"
+                    label="Maximum schade (€)"
+                    value={formData.financial_impact_max_eur}
+                    onChange={(e) => setFormData({ ...formData, financial_impact_max_eur: e.target.value })}
+                    placeholder="bv. 100000"
+                  />
+                  <p className="sm:col-span-2 text-xs text-neutral-500">
+                    Met een distributie kun je Monte Carlo-simulatie uitvoeren via de "Simuleer"-knop in de tabel.
+                    Triangular vereist alle drie de bedragen; uniform alleen min en max.
+                  </p>
+                </div>
+              )}
+            </div>
             {formError && (
               <p className="text-sm text-red-600">{formError}</p>
             )}
@@ -233,10 +351,15 @@ export default function RisicosPage() {
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">Kans x Impact = Score</th>
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">Niveau</th>
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Kwantitatief</th>
                 </tr>
               </thead>
               <tbody>
-                {risks.map((risk: RiskResponse) => (
+                {risks.map((risk: RiskResponse) => {
+                  const hasDistribution =
+                    risk.impact_distribution === 'uniform' ||
+                    risk.impact_distribution === 'triangular';
+                  return (
                   <tr key={risk.id} className="border-b border-neutral-100 hover:bg-neutral-50">
                     <td className="px-4 py-3 font-medium text-neutral-900">{risk.title}</td>
                     <td className="px-4 py-3">
@@ -251,8 +374,23 @@ export default function RisicosPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={risk.status} />
                     </td>
+                    <td className="px-4 py-3">
+                      {hasDistribution ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={simulatingRiskId === risk.id}
+                          onClick={() => handleSimulate(risk)}
+                        >
+                          {simulatingRiskId === risk.id ? 'Simuleren...' : 'Simuleer'}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-neutral-400">geen distributie</span>
+                      )}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
