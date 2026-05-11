@@ -99,15 +99,19 @@ Detail: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md) (voo
 
 ---
 
-## M5 — Risicokwantificatie (open beslissing)
+## M5 — Risicokwantificatie (operationeel, scope-beperkt)
 
-Financiële impact in open ranges (min/max) en kansverdelingen, verwachte-waarde en bandbreedte-berekeningen, Monte Carlo-simulaties, koppeling aan planning-en-control-cyclus en organisatiedoelen, organisatie-units (team/cluster) onder tenant.
+Financiële impact in min/max-ranges + Monte Carlo-simulatie als aanvulling op de kwalitatieve likelihood × impact-matrix.
 
-**Status:** **niet gepland.** Functionaliteit wijkt af van de huidige kwalitatieve risk-modellering (`likelihood × impact`-matrix). Vergt schema-uitbreiding op `ims_risks` (range-velden, distributie-type), nieuwe service-module `app/services/simulation/`, datamodel voor org-units en P&C-cyclus.
+**Status:** kern operationeel:
+- `ims_risks` uitgebreid met `financial_impact_min_eur`, `financial_impact_max_eur`, `impact_distribution` (Alembic 014)
+- Service `app/services/simulation/monte_carlo.py` met uniform en triangular distributies (NumPy)
+- Endpoint `POST /api/v1/risks/{id}/simulate` met percentielen, VaR-95/99 en expected loss
+- Reproduceerbaarheid via optionele `seed`-parameter
 
 **Use case:** organisaties met kwantitatieve risk-discipline (FAIR-achtig) — controllers, concernadviseurs risicomanagement.
 
-**Open vraag:** past dit binnen de scope van het platform of is dit een ander product? Discussie via [Discussions](../../discussions).
+**Bewust nog niet in deze iteratie:** organisatie-units, planning-en-control-cyclus, lognormal-distributie, portfolio-aggregatie, correlaties tussen risico's. Zie [`docs/risico-kwantificatie.md`](risico-kwantificatie.md) sectie "Wat NIET in M5 zit".
 
 ---
 
