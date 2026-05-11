@@ -222,6 +222,17 @@ export const api = {
       }),
     delete: (id: string) =>
       apiFetch<void>(`/risks/${id}`, { method: 'DELETE' }),
+    // M5 — Monte Carlo simulation
+    simulate: (id: string, opts: { iterations?: number; seed?: number } = {}) => {
+      const params = new URLSearchParams();
+      if (opts.iterations) params.set('iterations', String(opts.iterations));
+      if (opts.seed !== undefined) params.set('seed', String(opts.seed));
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      return apiFetch<import('./api-types').RiskSimulationResponse>(
+        `/risks/${id}/simulate${qs}`,
+        { method: 'POST' },
+      );
+    },
   },
   controls: {
     list: () => apiFetch<ControlResponse[]>('/controls/'),
