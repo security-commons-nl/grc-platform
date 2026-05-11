@@ -1483,3 +1483,65 @@ class AgentMessage(Base):
     conversation: Mapped["AgentConversation"] = relationship(
         "AgentConversation", back_populates="messages"
     )
+
+
+class IMSAISystem(Base):
+    """AI-systemenregister (M4 — AI Governance).
+
+    Catalogus van AI-toepassingen per organisatie met EU AI Act-risico-
+    classificatie en NIST AI RMF-status. Eerste bouwsteen van de AI
+    Governance Module — zie docs/ai-governance-uitbreiding.md.
+    """
+
+    __tablename__ = "ims_ai_systems"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    vendor: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
+    # Type van het AI-systeem.
+    # Waarden: chatbot, decision_support, content_generation, classification,
+    #          monitoring, automation, other
+    system_type: Mapped[str] = mapped_column(String(30), nullable=False, default="other")
+
+    # EU AI Act risicoclassificatie (verordening 2024/1689).
+    # Waarden: unacceptable, high, limited, minimal, not_classified
+    eu_ai_act_risk: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="not_classified"
+    )
+
+    # NIST AI RMF-status volgens de vier kernfuncties.
+    # Waarden: govern, map, measure, manage, not_started
+    nist_ai_rmf_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="not_started"
+    )
+
+    # Levenscyclus-status van het AI-systeem in de organisatie.
+    # Waarden: planned, building, deployed, retired
+    deployment_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="planned"
+    )
+
+    responsible_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    deployed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )

@@ -46,7 +46,7 @@ async def clean_tables(engine):
         await conn.execute(text(
             "TRUNCATE TABLE "
             "agent_messages, agent_conversations, "
-            "ai_audit_logs, ims_gap_analysis_results, ims_step_input_documents, "
+            "ai_audit_logs, ims_ai_systems, ims_gap_analysis_results, ims_step_input_documents, "
             "ims_knowledge_chunks, ims_grc_scores, ims_setup_scores, ims_maturity_profiles, "
             "ims_incidents, ims_evidence, ims_corrective_actions, ims_findings, "
             "ims_assessments, ims_risk_control_links, ims_controls, ims_risks, ims_scopes, "

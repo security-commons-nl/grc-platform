@@ -35,7 +35,7 @@ Klaar voor productie-gebruik bij gemeenten. **Module-focus: M0 productie-hard ma
 
 Uitbreiding met AI-governance functionaliteit. Aansluiting op EU AI Act (verordening 2024/1689) en NIST AI RMF. **Module-focus: M4 bouwen.**
 
-- [ ] AI-systemenregister — catalogiseer alle AI-toepassingen per organisatie — M4
+- [x] AI-systemenregister — catalogiseer alle AI-toepassingen per organisatie — M4 — tabel `ims_ai_systems`, CRUD-endpoints onder `/api/v1/ai-systems`, RLS-geïsoleerd
 - [ ] EU AI Act risicoclassificatie per AI-systeem (verboden / hoog-risico / beperkt / minimaal) — M4
 - [ ] NIST AI RMF als normenkader naast BIO 2.0 en ISO 27001 — M1 / M4
 - [ ] AI Conformiteitsbeoordeling als assessment-type — M2 / M4

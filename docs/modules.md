@@ -14,7 +14,7 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 | **M1** | Normen & Mapping | ✅ Operationeel | Verplicht |
 | **M2** | GRC-engine | ✅ Operationeel | Verplicht |
 | **M3** | IMS-inrichtingswizard | ✅ Operationeel | Optioneel |
-| **M4** | AI Governance | 🔮 Roadmap | Optioneel |
+| **M4** | AI Governance | 🚧 In bouw | Optioneel |
 | **M5** | Risicokwantificatie | ❌ Niet gepland | Optioneel |
 | **M6** | Inter-org samenwerking | 🔮 Roadmap | Optioneel |
 
@@ -80,11 +80,11 @@ Operationele GRC. Risico's met likelihood-impact-matrix, controls gekoppeld aan 
 
 ---
 
-## M4 — AI Governance (gepland)
+## M4 — AI Governance (in bouw)
 
 AI-systemenregister, EU AI Act-risicoclassificatie, NIST AI RMF als normenkader (uitbreiding van M1), AI Conformiteitsbeoordeling als assessment-type, HITL-checkpoints in audit log, Non-Human Identity-tokens met beperkte scope.
 
-**Status:** niet gebouwd. Detailvoorstel: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md).
+**Status:** AI-systemenregister operationeel (`ims_ai_systems`, endpoints onder `/api/v1/ai-systems`). Resterende bouwstenen (NIST RMF als normenkader, Conformiteitsbeoordeling-assessment-type, NHI-uitbreiding) zijn in voorbereiding. Detailvoorstel: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md).
 
 **Use case:** organisaties met AI-systemen die onder EU AI Act (verordening 2024/1689) vallen.
 
