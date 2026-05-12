@@ -30,10 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // TODO(RFC 0003 follow-up): vervang door `useSyncExternalStore` op
+  // localStorage zodat token-state niet via setState-in-effect loopt.
+  // Voor nu acceptabel: één-malige initialisatie bij mount.
   useEffect(() => {
     const u = getUser();
+    /* eslint-disable react-hooks/set-state-in-effect */
     setUser(u);
     setIsLoading(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const login = useCallback(

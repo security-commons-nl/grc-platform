@@ -17,11 +17,13 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 
 | Categorie | Aantal |
 |-----------|--------|
-| Databasetabellen | 32 |
-| Alembic-migraties | 3 (schema, RLS, seed data) |
-| API-routers | 15 |
-| Backend tests | 105 |
-| Frontend routes | 16 |
+| Databasetabellen | 33 |
+| Alembic-migraties | 15 (schema, RLS, AI Governance, M5-risicokwantificatie + simulatie-historie) |
+| API-routers | 17 |
+| Backend tests | 220+ (pytest) |
+| Frontend unit tests | 20 (Vitest + RTL + MSW) |
+| Frontend e2e tests | 5 specs (Playwright — auth, navigation, inrichting, M5-simulatie, M4-ai-systemen) |
+| Frontend routes | 19 |
 | RBAC-rollen | 6 |
 | RLS-policies | 21 tabellen |
 | Seed-stappen | 24 (22 uniek + 2a/2b, 3a/3b) |
@@ -40,7 +42,8 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 | **Frontend** | Next.js 15 + TypeScript + TailwindCSS v4 |
 | **Auth** | JWT (HS256), OIDC-ready |
 | **Containers** | Docker Compose (db, api, frontend) |
-| **Tests** | pytest + httpx async |
+| **Tests** | pytest + httpx async (backend); Vitest + React Testing Library + MSW (frontend unit); Playwright (e2e) |
+| **Visualisatie** | recharts (Monte Carlo histogram, percentielen) |
 
 ---
 

@@ -108,7 +108,7 @@ export default function BeheerDashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-neutral-900">{openRisks}</p>
-              <p className="text-xs text-neutral-500">Open risico's</p>
+              <p className="text-xs text-neutral-500">Open risico&apos;s</p>
             </div>
           </div>
         </Card>

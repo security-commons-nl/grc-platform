@@ -28,20 +28,21 @@ export function ChatIsland({ stepNumber, executionId }: ChatIslandProps) {
   const [isStarting, setIsStarting] = useState(false);
 
   const agentName = STEP_AGENT_MAP[stepNumber];
-  if (!agentName) return null;
 
   const {
     data: conversation,
     mutate: mutateConversation,
   } = useSWR<AgentConversationResponse>(
-    isOpen ? `/agents/conversation/${executionId}/${agentName}` : null,
+    isOpen && agentName ? `/agents/conversation/${executionId}/${agentName}` : null,
     async () => {
-      const conv = await api.agents.startConversation(agentName, {
+      const conv = await api.agents.startConversation(agentName!, {
         step_execution_id: executionId,
       });
       return conv;
     },
   );
+
+  if (!agentName) return null;
 
   async function handleOpen() {
     if (isOpen) {

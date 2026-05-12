@@ -104,7 +104,10 @@ export default function RisicosPage() {
     setSimulatingRiskId(risk.id);
     setSimulationError(null);
     try {
-      const result = await api.risks.simulate(risk.id, { iterations: 10000 });
+      const result = await api.risks.simulate(risk.id, {
+        iterations: 10000,
+        includeSamples: true,
+      });
       setSimulationResult(result);
       setSimulationRiskTitle(risk.title);
       // Scroll naar resultaat
@@ -182,7 +185,7 @@ export default function RisicosPage() {
     >
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Fout bij laden van risico's: {error.message || 'Onbekende fout'}
+          Fout bij laden van risico&apos;s: {error.message || 'Onbekende fout'}
         </div>
       )}
 
@@ -295,7 +298,7 @@ export default function RisicosPage() {
                     placeholder="bv. 100000"
                   />
                   <p className="sm:col-span-2 text-xs text-neutral-500">
-                    Met een distributie kun je Monte Carlo-simulatie uitvoeren via de "Simuleer"-knop in de tabel.
+                    Met een distributie kun je Monte Carlo-simulatie uitvoeren via de &ldquo;Simuleer&rdquo;-knop in de tabel.
                     Triangular vereist alle drie de bedragen; uniform alleen min en max.
                   </p>
                 </div>

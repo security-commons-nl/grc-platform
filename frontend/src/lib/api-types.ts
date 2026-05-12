@@ -256,6 +256,7 @@ export interface RiskSimulationResponse {
   expected_loss: number;
   var_95: number;
   var_99: number;
+  samples?: number[];
 }
 
 // ── Controls ────────────────────────────────────────────────────────────────
@@ -431,4 +432,136 @@ export interface KnowledgeArtifactResponse {
   artifact_type: string;
   created_at: string;
   updated_at: string;
+}
+
+// ── AI Systems (M4 — AI Governance) ─────────────────────────────────────────
+
+export type AISystemType =
+  | 'chatbot'
+  | 'decision_support'
+  | 'content_generation'
+  | 'classification'
+  | 'monitoring'
+  | 'automation'
+  | 'other';
+
+export type EUAIActRisk =
+  | 'unacceptable'
+  | 'high'
+  | 'limited'
+  | 'minimal'
+  | 'not_classified';
+
+export type NistAIRMFStatus =
+  | 'govern'
+  | 'map'
+  | 'measure'
+  | 'manage'
+  | 'not_started';
+
+export type AISystemDeploymentStatus =
+  | 'planned'
+  | 'building'
+  | 'deployed'
+  | 'retired';
+
+export interface AISystemResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description?: string | null;
+  vendor?: string | null;
+  system_type: AISystemType;
+  eu_ai_act_risk: EUAIActRisk;
+  nist_ai_rmf_status: NistAIRMFStatus;
+  deployment_status: AISystemDeploymentStatus;
+  responsible_user_id?: string | null;
+  deployed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AISystemCreate {
+  name: string;
+  description?: string | null;
+  vendor?: string | null;
+  system_type?: AISystemType;
+  eu_ai_act_risk?: EUAIActRisk;
+  nist_ai_rmf_status?: NistAIRMFStatus;
+  deployment_status?: AISystemDeploymentStatus;
+  responsible_user_id?: string | null;
+  deployed_at?: string | null;
+}
+
+export type AISystemUpdate = Partial<AISystemCreate>;
+
+export interface AISystemFilters {
+  eu_ai_act_risk?: EUAIActRisk;
+  deployment_status?: AISystemDeploymentStatus;
+  system_type?: AISystemType;
+}
+
+export interface AISystemClassifyRequest {
+  system_type: string;
+  description?: string;
+  use_case?: string;
+}
+
+export interface AISystemClassifySuggestion {
+  suggested_risk: EUAIActRisk;
+  reasoning: string;
+  triggered_by: string[];
+}
+
+// ── HITL Checkpoints ────────────────────────────────────────────────────────
+
+export type HITLDecision = 'approved' | 'rejected' | 'modified' | 'pending';
+
+export interface HITLCheckpointCreate {
+  audit_log_id: string;
+  decision: HITLDecision;
+  reason?: string | null;
+}
+
+export interface HITLCheckpointResponse {
+  id: string;
+  tenant_id: string;
+  audit_log_id: string;
+  reviewer_user_id: string;
+  decision: HITLDecision;
+  reason?: string | null;
+  created_at: string;
+}
+
+export interface AIAuditLogWithReview {
+  id: string;
+  tenant_id: string;
+  user_id?: string | null;
+  agent_name: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  feedback?: string | null;
+  review_count: number;
+  last_decision?: HITLDecision | null;
+  created_at: string;
+}
+
+// ── Agent tokens (NHI) ──────────────────────────────────────────────────────
+
+export interface AgentTokenRequest {
+  tenant_id: string;
+  agent_name: string;
+  role?: string;
+  scope: string[];
+  ttl_minutes?: number;
+  ai_system_id?: string | null;
+}
+
+export interface AgentTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope?: string[] | null;
+  ai_system_id?: string | null;
 }

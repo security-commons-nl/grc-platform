@@ -8,15 +8,21 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 
 ## Modulair overzicht
 
-| Module | Naam | Status | Optioneel? |
-|--------|------|--------|------------|
-| **M0** | Platform | ✅ Operationeel | Verplicht |
-| **M1** | Normen & Mapping | ✅ Operationeel | Verplicht |
-| **M2** | GRC-engine | ✅ Operationeel | Verplicht |
-| **M3** | IMS-inrichtingswizard | ✅ Operationeel | Optioneel |
-| **M4** | AI Governance | ✅ Operationeel | Optioneel |
-| **M5** | Risicokwantificatie | ✅ Operationeel (scope-beperkt) | Optioneel |
-| **M6** | Inter-org samenwerking | 🔮 Roadmap | Optioneel |
+| Module | Naam | Backend | Frontend UI | Optioneel? |
+|--------|------|---------|-------------|------------|
+| **M0** | Platform | ✅ | n.v.t. (fundering) | Verplicht |
+| **M1** | Normen & Mapping | ✅ | n.v.t. (kennislaag) | Verplicht |
+| **M2** | GRC-engine | ✅ | ✅ `/beheer/*` | Verplicht |
+| **M3** | IMS-inrichtingswizard | ✅ | ✅ `/inrichten/*` | Optioneel |
+| **M4** | AI Governance | ✅ | ✅ AI-systemen, HITL-review, agent-tokens | Optioneel |
+| **M5** | Risicokwantificatie | ✅ scope-beperkt + historie | ⚠️ histogram + interpretatie (historie/CDF/PDF nog niet UI) | Optioneel |
+| **M6** | Inter-org samenwerking | 🔮 Roadmap | 🔮 Roadmap | Optioneel |
+
+**Statusduiding:**
+- ✅ Operationeel — tests groen in CI, eindgebruiker kan feature gebruiken via UI of API
+- ⚠️ Minimaal — basisfunctie aanwezig maar UI-ervaring is beperkt; uitbreiding gepland
+- ❌ Niet aanwezig — backend werkt, frontend ontbreekt; alleen via API bereikbaar
+- 🔮 Roadmap — nog niet gebouwd
 
 ### Afhankelijkheidsdiagram
 
@@ -84,13 +90,13 @@ Operationele GRC. Risico's met likelihood-impact-matrix, controls gekoppeld aan 
 
 AI-systemenregister, EU AI Act-risicoclassificatie, NIST AI RMF als normenkader (uitbreiding van M1), AI Conformiteitsbeoordeling als assessment-type, HITL-checkpoints in audit log, Non-Human Identity-tokens met beperkte scope.
 
-**Status:** alle zes bouwstenen operationeel.
+**Status:** backend volledig operationeel (alle zes bouwstenen, 43 tests) én **frontend UI geleverd** voor drie kernflows.
 
-- `ims_ai_systems` register (CRUD onder `/api/v1/ai-systems`)
+- `ims_ai_systems` register (CRUD onder `/api/v1/ai-systems`) — UI: `/beheer/ai-systemen` met filter, classifier-advies inline, badge per risico-categorie
 - NIST AI RMF 1.0 als `AIMS`-domein normenkader met 4 kernfunctie-requirements
 - `assessment_type='ai_conformity'` met verplichte koppeling aan AI-systeem
-- Append-only `ai_hitl_checkpoints` voor menselijk-toezicht-audittrail (EU AI Act art. 14)
-- NHI agent-tokens met scope-claim, TTL ≤ 24h, optionele koppeling aan AI-systeem
+- Append-only `ai_hitl_checkpoints` voor menselijk-toezicht-audittrail (EU AI Act art. 14) — UI: `/beheer/hitl-checkpoints` met audit-log-lijst (review-status + telling), review-form met verplichte motivatie, historie per log
+- NHI agent-tokens met scope-claim, TTL ≤ 24h, optionele koppeling aan AI-systeem — UI: `/admin/agent-tokens` met scope-multi-select, two-step confirm, one-time JWT-display
 - Deterministische EU AI Act classifier met advies-endpoint en uitlegregels
 
 Detail: [`docs/ai-governance-uitbreiding.md`](ai-governance-uitbreiding.md) (voorstel-doc) en [`docs/eu-ai-act-classification.md`](eu-ai-act-classification.md) (criteria).
@@ -106,12 +112,14 @@ Financiële impact in min/max-ranges + Monte Carlo-simulatie als aanvulling op d
 **Status:** kern operationeel:
 - `ims_risks` uitgebreid met `financial_impact_min_eur`, `financial_impact_max_eur`, `impact_distribution` (Alembic 014)
 - Service `app/services/simulation/monte_carlo.py` met uniform en triangular distributies (NumPy)
-- Endpoint `POST /api/v1/risks/{id}/simulate` met percentielen, VaR-95/99 en expected loss
+- Endpoint `POST /api/v1/risks/{id}/simulate` met percentielen, VaR-95/99 en expected loss; optionele `?include_samples=true` voor histogram-rendering
+- Simulatie-historie via `ims_risk_simulations` (Alembic 015): auto-save per run met optionele `?label` en `?note`, lijst-endpoint `GET /api/v1/risks/{id}/simulations`
 - Reproduceerbaarheid via optionele `seed`-parameter
+- Frontend: histogram (recharts) met VaR-95/99-referentielijnen, natuurlijke-taal-interpretatie, percentielen-staaf
 
 **Use case:** organisaties met kwantitatieve risk-discipline (FAIR-achtig) — controllers, concernadviseurs risicomanagement.
 
-**Bewust nog niet in deze iteratie:** organisatie-units, planning-en-control-cyclus, lognormal-distributie, portfolio-aggregatie, correlaties tussen risico's. Zie [`docs/risico-kwantificatie.md`](risico-kwantificatie.md) sectie "Wat NIET in M5 zit".
+**Bewust nog niet in deze iteratie:** organisatie-units, planning-en-control-cyclus, lognormal-distributie, portfolio-aggregatie, correlaties tussen risico's, CDF-visualisatie, scenario-vergelijking-UI, PDF-export. Zie [`docs/risico-kwantificatie.md`](risico-kwantificatie.md) sectie "Wat NIET in M5 zit" en [`docs/rfc/0005-m5-ui-uitbreiding.md`](rfc/0005-m5-ui-uitbreiding.md) voor het volledige UI-plan.
 
 ---
 

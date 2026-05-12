@@ -62,7 +62,7 @@ jobs:
           AI_MODEL_NAME: mistral
         run: alembic upgrade head
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           # conftest.py doet settings.DATABASE_URL.replace("/ims", "/ims_test"),
           # dus POSTGRES_DB=ims hier zorgt dat tests naar ims_test wijzen.
@@ -74,7 +74,20 @@ jobs:
           JWT_SECRET_KEY: test-secret-key-not-for-production
           AI_API_BASE: http://localhost:11434/v1
           AI_MODEL_NAME: mistral
-        run: pytest --tb=short -q
+        run: |
+          pytest --tb=short -q \
+            --cov=app \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload test results
         if: always()
