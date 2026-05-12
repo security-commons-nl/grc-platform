@@ -11,6 +11,7 @@ from app.schemas.assessments import (
     FindingCreate, FindingUpdate, FindingResponse,
     CorrectiveActionCreate, CorrectiveActionUpdate, CorrectiveActionResponse,
 )
+from app.services.custom_fields import validate_custom_attributes
 
 
 async def _ensure_ai_system_in_tenant(
@@ -90,7 +91,16 @@ async def create_assessment(
             detail="ai_conformity assessment requires ai_system_id",
         )
 
-    assessment = IMSAssessment(tenant_id=current_user.tenant_id, **data.model_dump())
+    # RFC 0001 — custom_attributes valideren
+    await validate_custom_attributes(
+        db, current_user.tenant_id, "assessment", data.custom_attributes,
+    )
+
+    payload = data.model_dump()
+    if payload.get("custom_attributes") is None:
+        payload["custom_attributes"] = {}
+
+    assessment = IMSAssessment(tenant_id=current_user.tenant_id, **payload)
     db.add(assessment)
     await db.flush()
     await db.refresh(assessment)
@@ -108,7 +118,14 @@ async def update_assessment(
     assessment = result.scalar_one_or_none()
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment niet gevonden")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if "custom_attributes" in update_data:
+        await validate_custom_attributes(
+            db, current_user.tenant_id, "assessment", update_data["custom_attributes"],
+        )
+        if update_data["custom_attributes"] is None:
+            update_data["custom_attributes"] = {}
+    for field, value in update_data.items():
         setattr(assessment, field, value)
     await db.flush()
     await db.refresh(assessment)
@@ -173,7 +190,13 @@ async def create_finding(
     current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
     db: AsyncSession = Depends(get_db),
 ):
-    finding = IMSFinding(tenant_id=current_user.tenant_id, **data.model_dump())
+    await validate_custom_attributes(
+        db, current_user.tenant_id, "finding", data.custom_attributes,
+    )
+    payload = data.model_dump()
+    if payload.get("custom_attributes") is None:
+        payload["custom_attributes"] = {}
+    finding = IMSFinding(tenant_id=current_user.tenant_id, **payload)
     db.add(finding)
     await db.flush()
     await db.refresh(finding)
@@ -191,7 +214,14 @@ async def update_finding(
     finding = result.scalar_one_or_none()
     if not finding:
         raise HTTPException(status_code=404, detail="Bevinding niet gevonden")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if "custom_attributes" in update_data:
+        await validate_custom_attributes(
+            db, current_user.tenant_id, "finding", update_data["custom_attributes"],
+        )
+        if update_data["custom_attributes"] is None:
+            update_data["custom_attributes"] = {}
+    for field, value in update_data.items():
         setattr(finding, field, value)
     await db.flush()
     await db.refresh(finding)

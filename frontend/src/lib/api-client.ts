@@ -232,7 +232,25 @@ export const api = {
     setupScores: () => apiFetch<SetupScoreResponse[]>('/scores/setup-scores/'),
   },
   risks: {
-    list: () => apiFetch<RiskResponse[]>('/risks/'),
+    list: (
+      filters: {
+        organizationalUnitId?: string;
+        includeDescendants?: boolean;
+        scopeId?: string;
+        status?: string;
+        domain?: string;
+      } = {},
+    ) => {
+      const params = new URLSearchParams();
+      if (filters.organizationalUnitId)
+        params.set('organizational_unit_id', filters.organizationalUnitId);
+      if (filters.includeDescendants) params.set('include_descendants', 'true');
+      if (filters.scopeId) params.set('scope_id', filters.scopeId);
+      if (filters.status) params.set('status', filters.status);
+      if (filters.domain) params.set('domain', filters.domain);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      return apiFetch<RiskResponse[]>(`/risks/${qs}`);
+    },
     get: (id: string) => apiFetch<RiskResponse>(`/risks/${id}`),
     create: (data: Record<string, unknown>) =>
       apiFetch<RiskResponse>('/risks/', {

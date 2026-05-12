@@ -14,7 +14,8 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { RiskMatrix } from '@/components/beheer/risk-matrix';
 import { SimulationResults } from '@/components/beheer/simulation-results';
-import { useRisks } from '@/lib/hooks/use-risks';
+import { CustomFieldsForm } from '@/components/shared/custom-fields-form';
+import { OrgUnitSelect } from '@/components/shared/org-unit-select';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
 import type { RiskResponse, RiskSimulationResponse, ScopeResponse } from '@/lib/api-types';
@@ -58,7 +59,24 @@ function getRiskLevelBadge(score: number) {
 }
 
 export default function RisicosPage() {
-  const { data: risks, error, isLoading, mutate } = useRisks();
+  // Filter-state — drijft useSWR-key zodat wijziging refetch triggert.
+  const [filterUnitId, setFilterUnitId] = useState<string>('');
+  const [includeDescendants, setIncludeDescendants] = useState<boolean>(false);
+
+  const {
+    data: risks,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<RiskResponse[]>(
+    ['risks-list', filterUnitId, includeDescendants],
+    () =>
+      api.risks.list({
+        organizationalUnitId: filterUnitId || undefined,
+        includeDescendants: includeDescendants && !!filterUnitId,
+      }),
+  );
+
   const { data: scopes } = useSWR<ScopeResponse[]>('/scopes/', () => api.scopes.list());
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,7 +94,10 @@ export default function RisicosPage() {
     financial_impact_min_eur: '',
     financial_impact_max_eur: '',
     impact_distribution: '',
+    // RFC 0002 — optionele organisatie-eenheid
+    organizational_unit_id: '',
   });
+  const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [showQuantitative, setShowQuantitative] = useState(false);
 
   // M5 — simulatie state
@@ -94,8 +115,9 @@ export default function RisicosPage() {
     setFormData({
       scope_id: '', domain: '', title: '', description: '', likelihood: '', impact: '',
       financial_impact_eur: '', financial_impact_min_eur: '', financial_impact_max_eur: '',
-      impact_distribution: '',
+      impact_distribution: '', organizational_unit_id: '',
     });
+    setCustomAttributes({});
     setShowQuantitative(false);
     setFormError(null);
   }
@@ -155,6 +177,12 @@ export default function RisicosPage() {
       }
       if (formData.impact_distribution) {
         payload.impact_distribution = formData.impact_distribution;
+      }
+      if (formData.organizational_unit_id) {
+        payload.organizational_unit_id = formData.organizational_unit_id;
+      }
+      if (Object.keys(customAttributes).length > 0) {
+        payload.custom_attributes = customAttributes;
       }
       await api.risks.create(payload);
       await mutate();
@@ -259,6 +287,26 @@ export default function RisicosPage() {
               </div>
             )}
 
+            {/* RFC 0002 — Optionele koppeling aan organisatie-eenheid */}
+            <div>
+              <OrgUnitSelect
+                value={formData.organizational_unit_id}
+                onChange={(id) =>
+                  setFormData({ ...formData, organizational_unit_id: id })
+                }
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Optioneel — laat leeg om het risico op tenant-niveau te houden.
+              </p>
+            </div>
+
+            {/* RFC 0001 — Tenant-specifieke custom velden */}
+            <CustomFieldsForm
+              entityType="risk"
+              value={customAttributes}
+              onChange={setCustomAttributes}
+            />
+
             {/* M5 — Kwantitatieve impact (optioneel, collapsible) */}
             <div className="border-t border-neutral-200 pt-3">
               <button
@@ -324,14 +372,54 @@ export default function RisicosPage() {
         </Card>
       )}
 
+      {/* RFC 0002 — Filter op organisatie-eenheid */}
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[260px]">
+            <OrgUnitSelect
+              label="Filter op organisatie-eenheid"
+              placeholder="Alle units (tenant-totaal)"
+              value={filterUnitId}
+              onChange={setFilterUnitId}
+            />
+          </div>
+          {filterUnitId && (
+            <label className="inline-flex items-center gap-2 text-sm text-neutral-700 mb-2">
+              <input
+                type="checkbox"
+                checked={includeDescendants}
+                onChange={(e) => setIncludeDescendants(e.target.checked)}
+              />
+              <span>Inclusief sub-units</span>
+            </label>
+          )}
+          {filterUnitId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterUnitId('');
+                setIncludeDescendants(false);
+              }}
+            >
+              Filter wissen
+            </Button>
+          )}
+        </div>
+      </Card>
+
       {isLoading && <CardSkeleton />}
 
       {!isLoading && (!risks || risks.length === 0) && (
         <Card>
           <EmptyState
             icon={ShieldExclamationIcon}
-            title="Nog geen risico's"
-            description="Voeg een risico toe om te beginnen met risicomanagement."
+            title={filterUnitId ? 'Geen risico’s in deze unit' : 'Nog geen risico’s'}
+            description={
+              filterUnitId
+                ? 'Wissel filter of zet sub-units aan om bredere matches te zien.'
+                : 'Voeg een risico toe om te beginnen met risicomanagement.'
+            }
           />
         </Card>
       )}
