@@ -46,8 +46,9 @@ async function fetchAdminToken(page: Page): Promise<string> {
     },
   });
   expect(r.ok(), `dev-token bootstrap faalt: ${await r.text()}`).toBeTruthy();
-  _cachedAdminToken = (await r.json()).access_token;
-  return _cachedAdminToken;
+  const token = (await r.json()).access_token as string;
+  _cachedAdminToken = token;
+  return token;
 }
 
 /**

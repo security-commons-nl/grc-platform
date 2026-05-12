@@ -66,6 +66,12 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: frontend
+        env:
+          # DB-helper-specs gebruiken `docker compose exec psql` voor directe
+          # asserties op de onderliggende tabellen. CI gebruikt POSTGRES_USER=ims
+          # (uit .env.example) i.p.v. de PG-default; geef die mee aan de tests.
+          POSTGRES_USER: ims
+          POSTGRES_DB: ims
         run: npx playwright test
 
       - name: Show container logs on failure

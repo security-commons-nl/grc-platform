@@ -1,5 +1,10 @@
 import { execFileSync } from 'node:child_process';
 
+// POSTGRES_USER/DB komen uit `.env` (lokaal vaak `postgres`/`ims`; in CI `ims`/`ims`).
+// Lees ze uit env zodat de helper op beide draait zonder lokale aanpassing.
+const PG_USER = process.env.POSTGRES_USER ?? 'postgres';
+const PG_DB = process.env.POSTGRES_DB ?? 'ims';
+
 const PSQL_ARGS = [
   'compose',
   'exec',
@@ -7,9 +12,9 @@ const PSQL_ARGS = [
   'db',
   'psql',
   '-U',
-  'postgres',
+  PG_USER,
   '-d',
-  'ims',
+  PG_DB,
   '-t',
   '-A',
   '-q',

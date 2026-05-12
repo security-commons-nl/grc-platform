@@ -4,6 +4,9 @@ import { queryScalar, rowExists } from './helpers/db';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
+const PG_USER = process.env.POSTGRES_USER ?? 'postgres';
+const PG_DB = process.env.POSTGRES_DB ?? 'ims';
+
 function psql(sql: string): string {
   return execFileSync(
     'docker',
@@ -14,9 +17,9 @@ function psql(sql: string): string {
       'db',
       'psql',
       '-U',
-      'postgres',
+      PG_USER,
       '-d',
-      'ims',
+      PG_DB,
       '-t',
       '-A',
       '-q',
