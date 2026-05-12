@@ -43,8 +43,10 @@ def upgrade() -> None:
             "user_id",
             UUID(as_uuid=True),
             sa.ForeignKey("users.id"),
-            nullable=False,
+            nullable=True,
         ),
+        # user_id nullable: tokens met fictieve sub (dev/agent) hebben geen
+        # bijbehorende users-row. FK blijft voor productie-traceability.
         # Input-snapshot — risico kan na deze run worden aangepast; snapshot
         # bewaart wat er werd gesimuleerd, niet wat er nu in ims_risks staat.
         sa.Column("distribution", sa.String(20), nullable=False),

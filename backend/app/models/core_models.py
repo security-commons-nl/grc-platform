@@ -1105,9 +1105,13 @@ class IMSRiskSimulation(Base):
         ForeignKey("ims_risks.id", ondelete="CASCADE"),
         nullable=False,
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+    # user_id is nullable: agent-tokens (NHI) en dev-tokens met fictieve sub
+    # produceren run-rijen zonder bestaande user-record. In productie wordt
+    # user_id altijd gezet wanneer de gebruiker echt bestaat — vandaar de FK
+    # blijft, maar het is geen vereiste.
 
     distribution: Mapped[str] = mapped_column(String(20), nullable=False)
     parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

@@ -110,7 +110,7 @@ class RiskSimulationHistoryItem(BaseModel):
 
     id: UUID
     risk_id: UUID
-    user_id: UUID
+    user_id: Optional[UUID]
     distribution: str
     parameters: dict
     iterations: int

@@ -7,7 +7,7 @@ from uuid import UUID
 
 from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
-from app.models.core_models import IMSRisk, IMSRiskControlLink, IMSRiskSimulation
+from app.models.core_models import IMSRisk, IMSRiskControlLink, IMSRiskSimulation, User
 from app.schemas.risks import (
     RiskCreate, RiskUpdate, RiskResponse,
     RiskControlLinkCreate, RiskControlLinkResponse,
@@ -234,10 +234,20 @@ async def simulate_risk_endpoint(
     }
 
     # Persist samenvatting in historie. Samples niet opslaan (reproductie via seed).
+    # user_id alleen zetten als de gebruiker echt in users-table staat — bij
+    # agent-tokens (NHI) of dev-tokens met fictieve sub klopt current_user.id
+    # niet met een users-row en zou de FK-insert falen.
+    user_check = await db.execute(
+        select(User.id).where(User.id == current_user.id)
+    )
+    persisted_user_id = (
+        current_user.id if user_check.scalar_one_or_none() is not None else None
+    )
+
     history_row = IMSRiskSimulation(
         tenant_id=current_user.tenant_id,
         risk_id=risk.id,
-        user_id=current_user.id,
+        user_id=persisted_user_id,
         distribution=sim.distribution,
         parameters=sim.parameters,
         iterations=sim.iterations,

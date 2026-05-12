@@ -56,8 +56,14 @@ test.describe('M4 — AI-systemenregister', () => {
     await page.getByLabel('Naam *').fill(systemName);
     await page.getByLabel('Leverancier').fill('OpenAI');
     await page.getByLabel('Systeem-type *').selectOption('chatbot');
-    await page.getByLabel('Beschrijving').fill('Chatbot voor klantvragen over WMO-voorzieningen.');
-    await page.getByLabel('Use case').fill('Beantwoordt vragen, draagt complexe gevallen over aan medewerker.');
+    // Beschrijving + Use case zijn textareas zonder htmlFor-koppeling —
+    // selectie via placeholder is stabieler dan via label.
+    await page
+      .getByPlaceholder('Wat doet dit AI-systeem')
+      .fill('Chatbot voor klantvragen over WMO-voorzieningen.');
+    await page
+      .getByPlaceholder('Voor wie en met welk doel')
+      .fill('Beantwoordt vragen, draagt complexe gevallen over aan medewerker.');
 
     // Classifier-advies aanvragen — endpoint is deterministisch keyword-based
     await page.getByRole('button', { name: 'Classificatie-advies opvragen' }).click();
