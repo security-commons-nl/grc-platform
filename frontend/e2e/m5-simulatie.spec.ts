@@ -90,9 +90,12 @@ test.describe('M5 — Monte Carlo simulatie', () => {
     // Monte Carlo-titel verschijnt — staat boven in de pagina (scrollTo top)
     await expect(page.getByText('Monte Carlo-simulatie')).toBeVisible({ timeout: 15_000 });
 
-    // Histogram-sectie verschijnt
+    // Histogram-sectie verschijnt. "Verdeling van schade-uitkomsten" is uniek;
+    // de tellingstekst "10.000 simulaties" komt zowel in de histogram-header
+    // als in de interpretation-tekst voor — strict-mode-conflict vermeden door
+    // de bin-count-tekst te matchen (alleen in histogram).
     await expect(page.getByText('Verdeling van schade-uitkomsten')).toBeVisible();
-    await expect(page.getByText('10.000 simulaties')).toBeVisible();
+    await expect(page.getByText('30 klassen')).toBeVisible();
 
     // Percentielen-samenvatting verschijnt
     await expect(page.getByText('Percentielen (samenvattend)')).toBeVisible();
