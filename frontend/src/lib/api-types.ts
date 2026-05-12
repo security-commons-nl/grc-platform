@@ -275,6 +275,8 @@ export interface ControlResponse {
   owner_user_id?: string | null;
   implementation_status: string;
   implementation_date?: string | null;
+  organizational_unit_id?: string | null;
+  custom_attributes?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -361,6 +363,9 @@ export interface AssessmentResponse {
   completed_at?: string | null;
   cyclus_id?: number | null;
   document_id?: string | null;
+  ai_system_id?: string | null;
+  organizational_unit_id?: string | null;
+  custom_attributes?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

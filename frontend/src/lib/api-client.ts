@@ -281,7 +281,22 @@ export const api = {
     },
   },
   controls: {
-    list: () => apiFetch<ControlResponse[]>('/controls/'),
+    list: (filters?: {
+      organizationalUnitId?: string;
+      includeDescendants?: boolean;
+    }) => {
+      const params = new URLSearchParams();
+      if (filters?.organizationalUnitId) {
+        params.set('organizational_unit_id', filters.organizationalUnitId);
+        if (filters.includeDescendants) {
+          params.set('include_descendants', 'true');
+        }
+      }
+      const qs = params.toString();
+      return apiFetch<ControlResponse[]>(
+        qs ? `/controls/?${qs}` : '/controls/',
+      );
+    },
     get: (id: string) => apiFetch<ControlResponse>(`/controls/${id}`),
     create: (data: Record<string, unknown>) =>
       apiFetch<ControlResponse>('/controls/', {
@@ -306,11 +321,31 @@ export const api = {
       }),
   },
   assessments: {
-    list: () => apiFetch<AssessmentResponse[]>('/assessments/'),
+    list: (filters?: {
+      organizationalUnitId?: string;
+      includeDescendants?: boolean;
+    }) => {
+      const params = new URLSearchParams();
+      if (filters?.organizationalUnitId) {
+        params.set('organizational_unit_id', filters.organizationalUnitId);
+        if (filters.includeDescendants) {
+          params.set('include_descendants', 'true');
+        }
+      }
+      const qs = params.toString();
+      return apiFetch<AssessmentResponse[]>(
+        qs ? `/assessments/?${qs}` : '/assessments/',
+      );
+    },
     get: (id: string) => apiFetch<AssessmentResponse>(`/assessments/${id}`),
     create: (data: Record<string, unknown>) =>
       apiFetch<AssessmentResponse>('/assessments/', {
         method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      apiFetch<AssessmentResponse>(`/assessments/${id}`, {
+        method: 'PATCH',
         body: JSON.stringify(data),
       }),
   },

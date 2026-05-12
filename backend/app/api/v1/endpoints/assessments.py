@@ -12,6 +12,7 @@ from app.schemas.assessments import (
     CorrectiveActionCreate, CorrectiveActionUpdate, CorrectiveActionResponse,
 )
 from app.services.custom_fields import validate_custom_attributes
+from app.services.org_units import descendants, validate_unit_in_tenant
 
 
 async def _ensure_ai_system_in_tenant(
@@ -42,6 +43,8 @@ async def list_assessments(
     status: str | None = None,
     domain: str | None = None,
     ai_system_id: UUID | None = None,
+    organizational_unit_id: UUID | None = None,
+    include_descendants: bool = False,
     skip: int = 0,
     limit: int = 100,
     current_user: CurrentUser = Depends(get_current_user),
@@ -56,6 +59,17 @@ async def list_assessments(
         query = query.where(IMSAssessment.domain == domain)
     if ai_system_id:
         query = query.where(IMSAssessment.ai_system_id == ai_system_id)
+    # RFC 0002 — filter op organisatie-eenheid, optioneel inclusief sub-units.
+    if organizational_unit_id is not None:
+        if include_descendants:
+            ids = await descendants(
+                db, current_user.tenant_id, organizational_unit_id
+            )
+            query = query.where(IMSAssessment.organizational_unit_id.in_(ids))
+        else:
+            query = query.where(
+                IMSAssessment.organizational_unit_id == organizational_unit_id
+            )
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -96,6 +110,17 @@ async def create_assessment(
         db, current_user.tenant_id, "assessment", data.custom_attributes,
     )
 
+    # RFC 0002 — org-unit moet binnen dezelfde tenant zitten.
+    if data.organizational_unit_id is not None:
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, data.organizational_unit_id
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
+
     payload = data.model_dump()
     if payload.get("custom_attributes") is None:
         payload["custom_attributes"] = {}
@@ -125,6 +150,18 @@ async def update_assessment(
         )
         if update_data["custom_attributes"] is None:
             update_data["custom_attributes"] = {}
+    if (
+        "organizational_unit_id" in update_data
+        and update_data["organizational_unit_id"] is not None
+    ):
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, update_data["organizational_unit_id"]
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
     for field, value in update_data.items():
         setattr(assessment, field, value)
     await db.flush()
