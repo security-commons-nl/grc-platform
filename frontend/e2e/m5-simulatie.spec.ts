@@ -97,10 +97,11 @@ test.describe('M5 — Monte Carlo simulatie', () => {
     await expect(page.getByText('Verdeling van schade-uitkomsten')).toBeVisible();
     await expect(page.getByText('30 klassen')).toBeVisible();
 
-    // Percentielen-samenvatting verschijnt
+    // Percentielen-samenvatting verschijnt. "P95"/"P99" komen ook voor in de
+    // interpretation-tekst ("P5–P95"); exact-match op de staaf-labels.
     await expect(page.getByText('Percentielen (samenvattend)')).toBeVisible();
-    await expect(page.getByText('P95')).toBeVisible();
-    await expect(page.getByText('P99')).toBeVisible();
+    await expect(page.getByText('P95', { exact: true })).toBeVisible();
+    await expect(page.getByText('P99', { exact: true })).toBeVisible();
 
     // Interpretation-blok verschijnt
     await expect(page.getByText('Interpretatie', { exact: false })).toBeVisible();

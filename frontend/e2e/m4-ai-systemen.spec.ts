@@ -35,10 +35,11 @@ test.describe('M4 — AI-systemenregister', () => {
 
     // Pagina-titel moet zichtbaar zijn (empty-state niet asserten — kan rommel
     // overhouden uit eerdere runs in zelfde test-tenant; deze suite test niet
-    // de empty-state-flow).
-    await expect(page.getByRole('heading', { name: 'AI-systemen' })).toBeVisible({
-      timeout: 10_000,
-    });
+    // de empty-state-flow). Exact: true om botsing met empty-state-tekst
+    // "Nog geen AI-systemen" te vermijden.
+    await expect(
+      page.getByRole('heading', { name: 'AI-systemen', exact: true }),
+    ).toBeVisible({ timeout: 10_000 });
 
     // Form openen
     await page.getByRole('button', { name: 'Nieuw AI-systeem' }).click();
