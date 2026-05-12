@@ -15,6 +15,9 @@ import {
   DocumentCheckIcon,
   ExclamationTriangleIcon,
   BoltIcon,
+  CpuChipIcon,
+  EyeIcon,
+  KeyIcon,
   UsersIcon,
   CogIcon,
   ChevronLeftIcon,
@@ -59,9 +62,17 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: 'AI-GOVERNANCE',
+    items: [
+      { label: 'AI-systemen', href: '/beheer/ai-systemen', icon: CpuChipIcon, minRole: 'tactisch_lid' },
+      { label: 'HITL-review', href: '/beheer/hitl-checkpoints', icon: EyeIcon, minRole: 'discipline_eigenaar' },
+    ],
+  },
+  {
     title: 'ADMIN',
     items: [
       { label: 'Gebruikers', href: '/admin/gebruikers', icon: UsersIcon, minRole: 'admin' },
+      { label: 'Agent-tokens', href: '/admin/agent-tokens', icon: KeyIcon, minRole: 'admin' },
       { label: 'Instellingen', href: '/admin/tenant', icon: CogIcon, minRole: 'admin' },
     ],
   },
@@ -74,8 +85,12 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
+  // TODO(RFC 0003 follow-up): vervang door `useSyncExternalStore` op
+  // localStorage. Voor nu acceptabel: collapsed-state één keer hydrateren
+  // bij mount.
   useEffect(() => {
     const stored = localStorage.getItem(COLLAPSED_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored === 'true') setCollapsed(true);
   }, []);
 

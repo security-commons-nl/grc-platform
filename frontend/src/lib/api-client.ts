@@ -27,6 +27,17 @@ import type {
   EvidenceResponse,
   IncidentResponse,
   KnowledgeArtifactResponse,
+  AISystemResponse,
+  AISystemCreate,
+  AISystemUpdate,
+  AISystemClassifyRequest,
+  AISystemClassifySuggestion,
+  AISystemFilters,
+  HITLCheckpointCreate,
+  HITLCheckpointResponse,
+  AIAuditLogWithReview,
+  AgentTokenRequest,
+  AgentTokenResponse,
 } from './api-types';
 
 export class ApiError extends Error {
@@ -67,6 +78,11 @@ export const api = {
   auth: {
     devToken: (data: DevTokenRequest) =>
       apiFetch<TokenResponse>('/auth/dev-token', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    agentToken: (data: AgentTokenRequest) =>
+      apiFetch<AgentTokenResponse>('/auth/agent-token', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
@@ -223,10 +239,14 @@ export const api = {
     delete: (id: string) =>
       apiFetch<void>(`/risks/${id}`, { method: 'DELETE' }),
     // M5 — Monte Carlo simulation
-    simulate: (id: string, opts: { iterations?: number; seed?: number } = {}) => {
+    simulate: (
+      id: string,
+      opts: { iterations?: number; seed?: number; includeSamples?: boolean } = {},
+    ) => {
       const params = new URLSearchParams();
       if (opts.iterations) params.set('iterations', String(opts.iterations));
       if (opts.seed !== undefined) params.set('seed', String(opts.seed));
+      if (opts.includeSamples) params.set('include_samples', 'true');
       const qs = params.toString() ? `?${params.toString()}` : '';
       return apiFetch<import('./api-types').RiskSimulationResponse>(
         `/risks/${id}/simulate${qs}`,
@@ -304,6 +324,52 @@ export const api = {
     get: (id: string) => apiFetch<KnowledgeArtifactResponse>(`/knowledge/${id}`),
     create: (data: Record<string, unknown>) =>
       apiFetch<KnowledgeArtifactResponse>('/knowledge/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  aiSystems: {
+    list: (filters?: AISystemFilters) => {
+      const params = new URLSearchParams();
+      if (filters?.eu_ai_act_risk) params.set('eu_ai_act_risk', filters.eu_ai_act_risk);
+      if (filters?.deployment_status) params.set('deployment_status', filters.deployment_status);
+      if (filters?.system_type) params.set('system_type', filters.system_type);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      return apiFetch<AISystemResponse[]>(`/ai-systems/${qs}`);
+    },
+    get: (id: string) => apiFetch<AISystemResponse>(`/ai-systems/${id}`),
+    create: (data: AISystemCreate) =>
+      apiFetch<AISystemResponse>('/ai-systems/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: AISystemUpdate) =>
+      apiFetch<AISystemResponse>(`/ai-systems/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/ai-systems/${id}`, { method: 'DELETE' }),
+    classifySuggestion: (data: AISystemClassifyRequest) =>
+      apiFetch<AISystemClassifySuggestion>('/ai-systems/classify-suggestion', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+  hitl: {
+    listAuditLogs: (opts: { onlyUnreviewed?: boolean; agentName?: string } = {}) => {
+      const params = new URLSearchParams();
+      if (opts.onlyUnreviewed) params.set('only_unreviewed', 'true');
+      if (opts.agentName) params.set('agent_name', opts.agentName);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      return apiFetch<AIAuditLogWithReview[]>(`/ai-hitl-checkpoints/audit-logs${qs}`);
+    },
+    listCheckpoints: (auditLogId?: string) => {
+      const qs = auditLogId ? `?audit_log_id=${auditLogId}` : '';
+      return apiFetch<HITLCheckpointResponse[]>(`/ai-hitl-checkpoints/${qs}`);
+    },
+    createCheckpoint: (data: HITLCheckpointCreate) =>
+      apiFetch<HITLCheckpointResponse>('/ai-hitl-checkpoints/', {
         method: 'POST',
         body: JSON.stringify(data),
       }),

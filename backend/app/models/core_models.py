@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     Computed,
@@ -1080,6 +1081,54 @@ class IMSRisk(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False,
+    )
+
+
+class IMSRiskSimulation(Base):
+    """Simulatie-historie voor Monte Carlo-runs op `ims_risks` (M5).
+
+    Bevat de input-snapshot (distribution, parameters, iterations, seed) en
+    de output-samenvatting (expected_loss, var_95/99, percentiles, statistics).
+    Ruwe samples worden bewust niet opgeslagen — reproductie via `seed`.
+    """
+
+    __tablename__ = "ims_risk_simulations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    risk_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_risks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    # user_id is nullable: agent-tokens (NHI) en dev-tokens met fictieve sub
+    # produceren run-rijen zonder bestaande user-record. In productie wordt
+    # user_id altijd gezet wanneer de gebruiker echt bestaat — vandaar de FK
+    # blijft, maar het is geen vereiste.
+
+    distribution: Mapped[str] = mapped_column(String(20), nullable=False)
+    parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    iterations: Mapped[int] = mapped_column(Integer, nullable=False)
+    seed: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    expected_loss: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    var_95: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    var_99: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    percentiles: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    statistics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+    label: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
 
 

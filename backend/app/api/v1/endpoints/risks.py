@@ -1,15 +1,18 @@
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
-from app.models.core_models import IMSRisk, IMSRiskControlLink
+from app.models.core_models import IMSRisk, IMSRiskControlLink, IMSRiskSimulation, User
 from app.schemas.risks import (
     RiskCreate, RiskUpdate, RiskResponse,
     RiskControlLinkCreate, RiskControlLinkResponse,
-    RiskSimulationResponse, SimulationStatistics, SimulationPercentiles,
+    RiskSimulationResponse, RiskSimulationHistoryItem,
+    SimulationStatistics, SimulationPercentiles,
 )
 from app.services.simulation import simulate_risk
 
@@ -147,6 +150,23 @@ async def simulate_risk_endpoint(
     risk_id: UUID,
     iterations: int = Query(10000, ge=1000, le=1000000),
     seed: int | None = Query(None, description="Optional seed for reproducibility"),
+    include_samples: bool = Query(
+        False,
+        description=(
+            "Voeg ruwe samples toe aan response voor histogram/CDF-visualisatie. "
+            "Default false — bij 10k iteraties is dit ~80kB JSON extra."
+        ),
+    ),
+    label: str | None = Query(
+        None,
+        max_length=200,
+        description="Optionele annotatie voor de simulatie-run, bv. 'Baseline' of 'Na mitigatie X'.",
+    ),
+    note: str | None = Query(
+        None,
+        max_length=2000,
+        description="Optionele vrije notitie bij de run (bv. wat is aangepast t.o.v. baseline).",
+    ),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -159,7 +179,8 @@ async def simulate_risk_endpoint(
                     + financial_impact_max_eur
 
     Returnt percentielen (P5..P99), gemiddelde, standaarddeviatie, en
-    Value-at-Risk op 95% en 99% niveau.
+    Value-at-Risk op 95% en 99% niveau. Wanneer `include_samples=true` is
+    de ruwe trekkingen-array bijgevoegd voor frontend-visualisatie.
     """
     result = await db.execute(
         select(IMSRisk).where(
@@ -197,6 +218,52 @@ async def simulate_risk_endpoint(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
+    percentiles = {
+        "p5":  sim.percentile(5),
+        "p25": sim.percentile(25),
+        "p50": sim.percentile(50),
+        "p75": sim.percentile(75),
+        "p95": sim.percentile(95),
+        "p99": sim.percentile(99),
+    }
+    statistics = {
+        "mean": sim.mean,
+        "std":  sim.std,
+        "min":  sim.sample_min,
+        "max":  sim.sample_max,
+    }
+
+    # Persist samenvatting in historie. Samples niet opslaan (reproductie via seed).
+    # user_id alleen zetten als de gebruiker echt in users-table staat — bij
+    # agent-tokens (NHI) of dev-tokens met fictieve sub klopt current_user.id
+    # niet met een users-row en zou de FK-insert falen.
+    user_check = await db.execute(
+        select(User.id).where(User.id == current_user.id)
+    )
+    persisted_user_id = (
+        current_user.id if user_check.scalar_one_or_none() is not None else None
+    )
+
+    history_row = IMSRiskSimulation(
+        tenant_id=current_user.tenant_id,
+        risk_id=risk.id,
+        user_id=persisted_user_id,
+        distribution=sim.distribution,
+        parameters=sim.parameters,
+        iterations=sim.iterations,
+        seed=seed,
+        expected_loss=Decimal(str(round(sim.mean, 2))),
+        var_95=Decimal(str(round(sim.percentile(95), 2))),
+        var_99=Decimal(str(round(sim.percentile(99), 2))),
+        percentiles=percentiles,
+        statistics=statistics,
+        label=label,
+        note=note,
+    )
+    db.add(history_row)
+    await db.flush()
+    await db.refresh(history_row)
+
     return RiskSimulationResponse(
         risk_id=risk.id,
         distribution=sim.distribution,
@@ -208,18 +275,53 @@ async def simulate_risk_endpoint(
             min=sim.sample_min,
             max=sim.sample_max,
         ),
-        percentiles=SimulationPercentiles(
-            p5=sim.percentile(5),
-            p25=sim.percentile(25),
-            p50=sim.percentile(50),
-            p75=sim.percentile(75),
-            p95=sim.percentile(95),
-            p99=sim.percentile(99),
-        ),
+        percentiles=SimulationPercentiles(**percentiles),
         expected_loss=sim.mean,
         var_95=sim.percentile(95),
         var_99=sim.percentile(99),
+        samples=sim.samples.tolist() if include_samples else None,
+        simulation_id=history_row.id,
     )
+
+
+@router.get(
+    "/{risk_id}/simulations",
+    response_model=list[RiskSimulationHistoryItem],
+)
+async def list_risk_simulations(
+    risk_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Historie van Monte Carlo-runs voor dit risico, nieuwste eerst.
+
+    Tenant-isolatie via RLS én expliciete `tenant_id`-filter. Samples zitten
+    bewust niet in de respons — alleen de samenvatting per run.
+    """
+    # Risico moet bestaan binnen tenant — anders 404, niet lege lijst.
+    risk_q = await db.execute(
+        select(IMSRisk).where(
+            IMSRisk.id == risk_id,
+            IMSRisk.tenant_id == current_user.tenant_id,
+        )
+    )
+    if not risk_q.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Risico niet gevonden")
+
+    query = (
+        select(IMSRiskSimulation)
+        .where(
+            IMSRiskSimulation.tenant_id == current_user.tenant_id,
+            IMSRiskSimulation.risk_id == risk_id,
+        )
+        .order_by(desc(IMSRiskSimulation.created_at))
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 # ── Risk-Control Links ─────────────────────────────────────────────────────

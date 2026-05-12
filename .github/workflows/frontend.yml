@@ -3,7 +3,7 @@ name: Frontend
 # Draait op iedere push/PR naar main (geen paths-filter) zodat deze check
 # als required status check op main gezet kan worden — anders zou GitHub
 # een PR die geen frontend-bestanden raakt blokkeren omdat de "verwachte"
-# check niet verschijnt. De workflow zelf is licht (npm ci + build, ~2 min).
+# check niet verschijnt.
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    name: Frontend build
+    name: Frontend lint + typecheck + test + build
     runs-on: ubuntu-latest
 
     defaults:
@@ -33,11 +33,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Lint tijdelijk uitgeschakeld — eslint 10.3.0 + eslint-config-next
-      # crashen op 'contextOrFilename.getFilename is not a function'.
-      # Aanzetten zodra eslint-plugin-react compat met eslint 10.3+ heeft.
-      # - name: Lint
-      #   run: npm run lint
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests + coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Build
         env:

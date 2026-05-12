@@ -36,9 +36,18 @@ SERVER_ACCESS.md
 .claude/
 reference-docs/
 frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/
 frontend/node_modules/
 frontend/.next/
 frontend/tsconfig.tsbuildinfo
+
+# Backend test/coverage artefacten
+backend/.coverage
+backend/coverage.xml
+backend/htmlcov/
+backend/pytest-results.xml
+backend/.pytest_cache/
 
 # AI-tooling (lokaal per ontwikkelaar, niet delen)
 .claude/

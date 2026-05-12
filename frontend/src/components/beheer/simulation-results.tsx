@@ -1,8 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SimulationInterpretation } from '@/components/beheer/simulation-interpretation';
 import type { RiskSimulationResponse } from '@/lib/api-types';
+
+// Lazy-load histogram zodat recharts-bundle (~120kB) niet in elke pagina-bundle landt.
+const SimulationHistogram = dynamic(
+  () => import('@/components/beheer/simulation-histogram').then((m) => m.SimulationHistogram),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-lg border border-neutral-200 bg-neutral-50" />
+    ),
+  },
+);
 
 const euro = new Intl.NumberFormat('nl-NL', {
   style: 'currency',
@@ -95,13 +108,24 @@ export function SimulationResults({
             <span className="text-base text-neutral-500"> / {euro.format(result.var_99)}</span>
           </div>
           <div className="text-xs text-neutral-500 mt-1">
-            In 95% van de scenario's blijft de schade onder VaR-95
+            In 95% van de scenario&apos;s blijft de schade onder VaR-95
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg bg-white border border-neutral-200 p-3">
-        <div className="text-xs uppercase tracking-wide text-neutral-500 mb-2">Verdeling van uitkomsten</div>
+      {result.samples && result.samples.length > 0 && (
+        <div className="mb-4">
+          <SimulationHistogram
+            samples={result.samples}
+            var95={result.var_95}
+            var99={result.var_99}
+            expectedLoss={result.expected_loss}
+          />
+        </div>
+      )}
+
+      <div className="rounded-lg bg-white border border-neutral-200 p-3 mb-4">
+        <div className="text-xs uppercase tracking-wide text-neutral-500 mb-2">Percentielen (samenvattend)</div>
         <div className="space-y-1.5">
           <PercentileBar label="P5"  value={result.percentiles.p5}  max={max} />
           <PercentileBar label="P25" value={result.percentiles.p25} max={max} />
@@ -111,9 +135,11 @@ export function SimulationResults({
           <PercentileBar label="P99" value={result.percentiles.p99} max={max} emphasis />
         </div>
         <div className="mt-2 text-xs text-neutral-500">
-          P50 is de mediaan. P95 en P99 zijn de drempels waaronder respectievelijk 95% en 99% van de scenario's vallen.
+          P50 is de mediaan. P95 en P99 zijn de drempels waaronder respectievelijk 95% en 99% van de scenario&apos;s vallen.
         </div>
       </div>
+
+      <SimulationInterpretation result={result} />
     </Card>
   );
 }
