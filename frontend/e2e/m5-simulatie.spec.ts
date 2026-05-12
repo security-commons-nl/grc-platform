@@ -1,19 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
-
-async function getDevToken(request: APIRequestContext): Promise<string> {
-  const r = await request.post(`${API_BASE}/api/v1/auth/dev-token`, {
-    data: {
-      user_id: '00000000-0000-0000-0000-000000000001',
-      tenant_id: '00000000-0000-0000-0000-000000000001',
-      role: 'admin',
-    },
-  });
-  expect(r.ok()).toBeTruthy();
-  const body = await r.json();
-  return body.access_token;
-}
+import { API_BASE, getDevToken, loginAsAdmin } from './helpers/auth';
 
 async function createScope(
   request: APIRequestContext,
@@ -55,12 +41,8 @@ async function createRiskWithTriangular(
   return body.id;
 }
 
-async function loginViaUI(page: Page) {
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Inloggen' }).click();
-  await page.waitForURL(/\/inrichten/, { timeout: 15_000, waitUntil: 'domcontentloaded' });
-}
+// Gebruik de gecachede helper — voorkomt RATE_LIMIT_AUTH (10/min) bij veel logins.
+const loginViaUI = loginAsAdmin;
 
 test.describe('M5 — Monte Carlo simulatie', () => {
   test('simuleer triangular risico → histogram, percentielen en interpretatie verschijnen', async ({

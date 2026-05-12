@@ -37,8 +37,13 @@ services:
       - api
     security_opt:
       - no-new-privileges:true
-    mem_limit: 512m
-    pids_limit: 100
+    # Next.js dev (Turbopack) heeft méér geheugen nodig dan 512m — onder
+    # e2e-druk werd het proces consequent OOM-killed midden in een compile,
+    # waardoor de container restart en tests ERR_EMPTY_RESPONSE krijgen.
+    # Voor productie (npm run start) is 512m wel voldoende; deze grens geldt
+    # alleen voor de dev-image die we hier draaien.
+    mem_limit: 2g
+    pids_limit: 200
 
 volumes:
   postgres_data:

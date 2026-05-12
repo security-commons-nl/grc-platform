@@ -1,18 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
-
-async function getDevToken(request: APIRequestContext): Promise<string> {
-  const r = await request.post(`${API_BASE}/api/v1/auth/dev-token`, {
-    data: {
-      user_id: '00000000-0000-0000-0000-000000000001',
-      tenant_id: '00000000-0000-0000-0000-000000000001',
-      role: 'admin',
-    },
-  });
-  expect(r.ok()).toBeTruthy();
-  return (await r.json()).access_token;
-}
+import { API_BASE, getDevToken } from './helpers/auth';
 
 test.describe('RFC 0001 + 0002 — API-flow voor extensions', () => {
   test('custom-fields lifecycle: create → list → use op risico → delete', async ({ request }) => {

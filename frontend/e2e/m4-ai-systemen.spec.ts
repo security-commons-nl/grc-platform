@@ -1,26 +1,9 @@
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { test, expect, type APIRequestContext } from '@playwright/test';
+import { API_BASE, getDevToken, loginAsAdmin } from './helpers/auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
-
-async function getDevToken(request: APIRequestContext): Promise<string> {
-  const r = await request.post(`${API_BASE}/api/v1/auth/dev-token`, {
-    data: {
-      user_id: '00000000-0000-0000-0000-000000000001',
-      tenant_id: '00000000-0000-0000-0000-000000000001',
-      role: 'admin',
-    },
-  });
-  expect(r.ok()).toBeTruthy();
-  const body = await r.json();
-  return body.access_token;
-}
-
-async function loginViaUI(page: Page) {
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Inloggen' }).click();
-  await page.waitForURL(/\/inrichten/, { timeout: 15_000, waitUntil: 'domcontentloaded' });
-}
+// Alias om bestaande test-code te bewaren — gebruikt nu gecachede helper i.p.v.
+// een verse dev-token-call per test (RATE_LIMIT_AUTH bedraagt 10/min).
+const loginViaUI = loginAsAdmin;
 
 test.describe('M4 — AI-systemenregister', () => {
   test('aanmaken via UI met classifier-advies → tabel + filter werken', async ({
