@@ -17,10 +17,10 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 
 | Categorie | Aantal |
 |-----------|--------|
-| Databasetabellen | 33 |
-| Alembic-migraties | 15 (schema, RLS, AI Governance, M5-risicokwantificatie + simulatie-historie) |
-| API-routers | 17 |
-| Backend tests | 220+ (pytest) |
+| Databasetabellen | 35 |
+| Alembic-migraties | 17 (schema, RLS, AI Governance, M5-risicokwantificatie + simulatie-historie, custom_attributes, organizational_units) |
+| API-routers | 19 |
+| Backend tests | 240+ (pytest) |
 | Frontend unit tests | 20 (Vitest + RTL + MSW) |
 | Frontend e2e tests | 5 specs (Playwright — auth, navigation, inrichting, M5-simulatie, M4-ai-systemen) |
 | Frontend routes | 19 |

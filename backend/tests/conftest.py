@@ -55,6 +55,8 @@ async def clean_tables(engine):
             "ims_knowledge_chunks, ims_grc_scores, ims_setup_scores, ims_maturity_profiles, "
             "ims_incidents, ims_evidence, ims_corrective_actions, ims_findings, "
             "ims_assessments, ims_risk_simulations, ims_risk_control_links, ims_controls, ims_risks, ims_scopes, "
+            "ims_custom_field_definitions, "
+            "ims_organizational_units, "
             "ims_standard_ingestions, ims_tenant_normenkader, "
             "ims_document_versions, ims_documents, "
             "ims_step_output_fulfillments, ims_decisions, ims_step_executions, "

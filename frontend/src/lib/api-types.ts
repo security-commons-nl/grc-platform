@@ -228,6 +228,10 @@ export interface RiskResponse {
   owner_user_id?: string | null;
   cyclus_id?: number | null;
   treatment_decision_id?: string | null;
+  // RFC 0001 — extensible attributes
+  custom_attributes?: Record<string, unknown>;
+  // RFC 0002 — optionele koppeling aan organisatie-eenheid
+  organizational_unit_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -565,3 +569,63 @@ export interface AgentTokenResponse {
   scope?: string[] | null;
   ai_system_id?: string | null;
 }
+
+// ── Custom fields (RFC 0001) ────────────────────────────────────────────────
+
+export type CustomFieldEntityType = 'risk' | 'control' | 'assessment' | 'finding';
+
+export interface CustomFieldDefinition {
+  id: string;
+  tenant_id: string;
+  entity_type: CustomFieldEntityType;
+  field_name: string;
+  display_label: string;
+  help_text?: string | null;
+  json_schema: Record<string, unknown>;
+  is_required: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomFieldDefinitionCreate {
+  entity_type: CustomFieldEntityType;
+  field_name: string;
+  display_label: string;
+  help_text?: string | null;
+  json_schema: Record<string, unknown>;
+  is_required?: boolean;
+  display_order?: number;
+}
+
+export type CustomFieldDefinitionUpdate = Partial<
+  Omit<CustomFieldDefinitionCreate, 'entity_type' | 'field_name'>
+>;
+
+// ── Organizational units (RFC 0002) ─────────────────────────────────────────
+
+export interface OrganizationalUnitResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  code?: string | null;
+  unit_type: string;
+  parent_id?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationalUnitTreeNode extends OrganizationalUnitResponse {
+  children: OrganizationalUnitTreeNode[];
+}
+
+export interface OrganizationalUnitCreate {
+  name: string;
+  code?: string | null;
+  unit_type: string;
+  parent_id?: string | null;
+  is_active?: boolean;
+}
+
+export type OrganizationalUnitUpdate = Partial<OrganizationalUnitCreate>;

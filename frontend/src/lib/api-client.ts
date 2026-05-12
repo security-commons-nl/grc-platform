@@ -38,6 +38,14 @@ import type {
   AIAuditLogWithReview,
   AgentTokenRequest,
   AgentTokenResponse,
+  CustomFieldDefinition,
+  CustomFieldDefinitionCreate,
+  CustomFieldDefinitionUpdate,
+  CustomFieldEntityType,
+  OrganizationalUnitCreate,
+  OrganizationalUnitResponse,
+  OrganizationalUnitTreeNode,
+  OrganizationalUnitUpdate,
 } from './api-types';
 
 export class ApiError extends Error {
@@ -355,6 +363,52 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+  },
+  customFields: {
+    list: (entityType?: CustomFieldEntityType) => {
+      const qs = entityType ? `?entity_type=${entityType}` : '';
+      return apiFetch<CustomFieldDefinition[]>(`/custom-fields/${qs}`);
+    },
+    get: (id: string) => apiFetch<CustomFieldDefinition>(`/custom-fields/${id}`),
+    create: (data: CustomFieldDefinitionCreate) =>
+      apiFetch<CustomFieldDefinition>('/custom-fields/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: CustomFieldDefinitionUpdate) =>
+      apiFetch<CustomFieldDefinition>(`/custom-fields/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/custom-fields/${id}`, { method: 'DELETE' }),
+  },
+  organizationalUnits: {
+    list: (opts: { isActive?: boolean } = {}) => {
+      const qs =
+        opts.isActive !== undefined ? `?is_active=${opts.isActive}` : '';
+      return apiFetch<OrganizationalUnitResponse[]>(
+        `/organizational-units/${qs}`,
+      );
+    },
+    tree: () =>
+      apiFetch<OrganizationalUnitTreeNode[]>('/organizational-units/tree'),
+    get: (id: string) =>
+      apiFetch<OrganizationalUnitResponse>(`/organizational-units/${id}`),
+    descendants: (id: string) =>
+      apiFetch<string[]>(`/organizational-units/${id}/descendants`),
+    create: (data: OrganizationalUnitCreate) =>
+      apiFetch<OrganizationalUnitResponse>('/organizational-units/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: OrganizationalUnitUpdate) =>
+      apiFetch<OrganizationalUnitResponse>(`/organizational-units/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/organizational-units/${id}`, { method: 'DELETE' }),
   },
   hitl: {
     listAuditLogs: (opts: { onlyUnreviewed?: boolean; agentName?: string } = {}) => {

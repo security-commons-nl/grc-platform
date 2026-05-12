@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from uuid import UUID
-from typing import Optional
+from typing import Any, Optional
 from decimal import Decimal
 
 
@@ -26,6 +26,11 @@ class RiskCreate(BaseModel):
     financial_impact_max_eur: Optional[Decimal] = None
     impact_distribution: ImpactDistribution = None
     treatment_decision_id: Optional[UUID] = None
+    custom_attributes: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Tenant-specifieke uitbreidingen (RFC 0001).",
+    )
+    organizational_unit_id: Optional[UUID] = None
 
 
 class RiskUpdate(BaseModel):
@@ -41,6 +46,8 @@ class RiskUpdate(BaseModel):
     financial_impact_max_eur: Optional[Decimal] = None
     impact_distribution: ImpactDistribution = None
     treatment_decision_id: Optional[UUID] = None
+    custom_attributes: Optional[dict[str, Any]] = None
+    organizational_unit_id: Optional[UUID] = None
 
 
 class RiskResponse(BaseModel):
@@ -62,6 +69,8 @@ class RiskResponse(BaseModel):
     owner_user_id: Optional[UUID]
     cyclus_id: Optional[int]
     treatment_decision_id: Optional[UUID]
+    custom_attributes: dict[str, Any] = {}
+    organizational_unit_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
 

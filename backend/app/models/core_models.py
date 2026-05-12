@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -1073,6 +1074,17 @@ class IMSRisk(Base):
     treatment_decision_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_decisions.id"), nullable=True
     )
+    # RFC 0001 — tenant-specifieke uitbreidingen, gevalideerd tegen
+    # ims_custom_field_definitions van dezelfde tenant.
+    custom_attributes: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    # RFC 0002 — optionele koppeling aan organisatie-eenheid (NULL = tenant-niveau).
+    organizational_unit_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_organizational_units.id"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -1154,6 +1166,16 @@ class IMSControl(Base):
         String(20), nullable=False
     )
     implementation_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    # RFC 0001 — extensible attributes (tenant-specifiek, JSON-Schema-valid).
+    custom_attributes: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    # RFC 0002 — optionele koppeling aan organisatie-eenheid.
+    organizational_unit_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_organizational_units.id"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -1211,6 +1233,16 @@ class IMSAssessment(Base):
     ai_system_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_ai_systems.id"), nullable=True
     )
+    # RFC 0001 — extensible attributes
+    custom_attributes: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    # RFC 0002 — optionele koppeling aan organisatie-eenheid.
+    organizational_unit_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_organizational_units.id"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -1241,6 +1273,10 @@ class IMSFinding(Base):
     requirement_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ims_requirements.id"), nullable=True
     )
+    # RFC 0001 — extensible attributes
+    custom_attributes: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -1249,6 +1285,102 @@ class IMSFinding(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False,
+    )
+
+
+class IMSOrganizationalUnit(Base):
+    """Sub-tenant hiërarchie voor decentrale risicosturing (RFC 0002).
+
+    Strikte boom (`parent_id` self-FK; één parent per unit). Matrix-organisaties
+    in V1 niet ondersteund — bij vraag in vervolg-RFC promoveren naar M2M.
+    """
+
+    __tablename__ = "ims_organizational_units"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_organizational_units.id"),
+        nullable=True,
+    )
+
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    code: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    unit_type: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "code", name="uq_org_unit_code_per_tenant"),
+        CheckConstraint("id <> parent_id", name="ck_org_unit_no_self_parent"),
+    )
+
+
+class IMSCustomFieldDefinition(Base):
+    """Tenant-specifieke veldDefinitie voor extensible attributes (RFC 0001).
+
+    Per tenant + entity_type een set veld-definities met JSON-Schema voor
+    validatie. `field_name` mag niet botsen met core-schema-kolommen (check
+    in service-laag) en moet aan `^[a-z][a-z0-9_]{0,63}$` voldoen
+    (DB-constraint).
+    """
+
+    __tablename__ = "ims_custom_field_definitions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    # 'risk' | 'control' | 'assessment' | 'finding'
+
+    field_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    display_label: Mapped[str] = mapped_column(Text, nullable=False)
+    help_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    json_schema: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    is_required: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "entity_type",
+            "field_name",
+            name="uq_custom_field_per_tenant_entity",
+        ),
     )
 
 
@@ -1438,6 +1570,12 @@ class IMSGRCScore(Base):
     cyclus_year: Mapped[int] = mapped_column(Integer, nullable=False)
     score_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
     components_json: Mapped[Any] = mapped_column(JSONB, nullable=False)
+    # RFC 0002 — score kan per organisatie-eenheid berekend worden (NULL = tenant-totaal).
+    organizational_unit_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ims_organizational_units.id"),
+        nullable=True,
+    )
     calculated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
