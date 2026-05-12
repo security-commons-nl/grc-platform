@@ -14,6 +14,11 @@ from app.schemas.risks import (
     RiskSimulationResponse, RiskSimulationHistoryItem,
     SimulationStatistics, SimulationPercentiles,
 )
+from app.services.custom_fields import validate_custom_attributes
+from app.services.org_units import (
+    descendants as org_unit_descendants,
+    validate_unit_in_tenant,
+)
 from app.services.simulation import simulate_risk
 
 router = APIRouter()
@@ -37,6 +42,8 @@ async def list_risks(
     domain: str | None = None,
     status: str | None = None,
     scope_id: UUID | None = None,
+    organizational_unit_id: UUID | None = None,
+    include_descendants: bool = False,
     skip: int = 0,
     limit: int = 100,
     current_user: CurrentUser = Depends(get_current_user),
@@ -49,6 +56,20 @@ async def list_risks(
         query = query.where(IMSRisk.status == status)
     if scope_id:
         query = query.where(IMSRisk.scope_id == scope_id)
+    if organizational_unit_id is not None:
+        if include_descendants:
+            # Recursive CTE — geeft unit + alle descendants.
+            ids = await org_unit_descendants(
+                db, current_user.tenant_id, organizational_unit_id
+            )
+            if not ids:
+                # Unit niet gevonden → lege resultaat (geen 404 op een list-endpoint)
+                return []
+            query = query.where(IMSRisk.organizational_unit_id.in_(ids))
+        else:
+            query = query.where(
+                IMSRisk.organizational_unit_id == organizational_unit_id
+            )
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -73,12 +94,32 @@ async def create_risk(
     current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
     db: AsyncSession = Depends(get_db),
 ):
+    # RFC 0001 — custom-attributes valideren tegen tenant-definities.
+    # Raised HTTPException(422) als payload niet voldoet.
+    await validate_custom_attributes(
+        db, current_user.tenant_id, "risk", data.custom_attributes,
+    )
+
+    # RFC 0002 — organizational_unit_id moet in dezelfde tenant zijn.
+    if data.organizational_unit_id is not None:
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, data.organizational_unit_id
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
+
     risk_score = data.likelihood * data.impact
     risk_level = calculate_risk_level(risk_score)
 
     risk_data = data.model_dump()
     risk_data.pop("likelihood", None)
     risk_data.pop("impact", None)
+    # custom_attributes default → {} bij None zodat JSONB-kolom altijd geldig is.
+    if risk_data.get("custom_attributes") is None:
+        risk_data["custom_attributes"] = {}
 
     risk = IMSRisk(
         tenant_id=current_user.tenant_id,
@@ -106,6 +147,31 @@ async def update_risk(
         raise HTTPException(status_code=404, detail="Risico niet gevonden")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # RFC 0001 — bij update van custom_attributes opnieuw valideren.
+    if "custom_attributes" in update_data:
+        await validate_custom_attributes(
+            db,
+            current_user.tenant_id,
+            "risk",
+            update_data["custom_attributes"],
+        )
+        if update_data["custom_attributes"] is None:
+            update_data["custom_attributes"] = {}
+
+    # RFC 0002 — organizational_unit_id moet in dezelfde tenant zijn.
+    if (
+        "organizational_unit_id" in update_data
+        and update_data["organizational_unit_id"] is not None
+    ):
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, update_data["organizational_unit_id"]
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
 
     for field, value in update_data.items():
         setattr(risk, field, value)

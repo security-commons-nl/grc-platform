@@ -7,6 +7,7 @@ from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
 from app.models.core_models import IMSControl, IMSRiskControlLink
 from app.schemas.controls import ControlCreate, ControlUpdate, ControlResponse
+from app.services.custom_fields import validate_custom_attributes
 
 router = APIRouter()
 
@@ -52,7 +53,13 @@ async def create_control(
     current_user: CurrentUser = Depends(require_role("discipline_eigenaar")),
     db: AsyncSession = Depends(get_db),
 ):
-    control = IMSControl(tenant_id=current_user.tenant_id, **data.model_dump())
+    await validate_custom_attributes(
+        db, current_user.tenant_id, "control", data.custom_attributes,
+    )
+    payload = data.model_dump()
+    if payload.get("custom_attributes") is None:
+        payload["custom_attributes"] = {}
+    control = IMSControl(tenant_id=current_user.tenant_id, **payload)
     db.add(control)
     await db.flush()
     await db.refresh(control)
@@ -70,7 +77,14 @@ async def update_control(
     control = result.scalar_one_or_none()
     if not control:
         raise HTTPException(status_code=404, detail="Control niet gevonden")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if "custom_attributes" in update_data:
+        await validate_custom_attributes(
+            db, current_user.tenant_id, "control", update_data["custom_attributes"],
+        )
+        if update_data["custom_attributes"] is None:
+            update_data["custom_attributes"] = {}
+    for field, value in update_data.items():
         setattr(control, field, value)
     await db.flush()
     await db.refresh(control)

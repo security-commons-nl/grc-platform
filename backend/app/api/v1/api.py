@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
-    agents, ai_hitl, ai_systems, auth, health, tenants, steps, decisions, documents,
-    standards, scopes, risks, controls, assessments,
-    evidence, incidents, scores, knowledge,
+    agents, ai_hitl, ai_systems, auth, custom_fields, health, tenants, steps,
+    decisions, documents, organizational_units, standards, scopes, risks,
+    controls, assessments, evidence, incidents, scores, knowledge,
 )
 
 api_router = APIRouter()
@@ -24,3 +24,5 @@ api_router.include_router(knowledge.router, prefix="/knowledge", tags=["knowledg
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
 api_router.include_router(ai_systems.router, prefix="/ai-systems", tags=["ai-governance"])
 api_router.include_router(ai_hitl.router, prefix="/ai-hitl-checkpoints", tags=["ai-governance"])
+api_router.include_router(custom_fields.router, prefix="/custom-fields", tags=["custom-fields"])
+api_router.include_router(organizational_units.router, prefix="/organizational-units", tags=["organizational-units"])
