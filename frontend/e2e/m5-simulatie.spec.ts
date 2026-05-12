@@ -103,8 +103,10 @@ test.describe('M5 — Monte Carlo simulatie', () => {
     await expect(page.getByText('P95', { exact: true })).toBeVisible();
     await expect(page.getByText('P99', { exact: true })).toBeVisible();
 
-    // Interpretation-blok verschijnt
-    await expect(page.getByText('Interpretatie', { exact: false })).toBeVisible();
+    // Interpretation-blok verschijnt. Label "Interpretatie" en de uitleg
+    // "Interpretatie is een hulpmiddel ..." matchen beide bij substring →
+    // exact-match op de uppercase-label-tekst.
+    await expect(page.getByText('Interpretatie', { exact: true })).toBeVisible();
     await expect(
       page.getByText(/In 1 op de 20 gevallen .*5%.* loopt de schade op tot meer dan/),
     ).toBeVisible();
