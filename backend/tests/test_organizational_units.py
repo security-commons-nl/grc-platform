@@ -261,3 +261,144 @@ async def test_risk_filter_include_descendants(client, tenant_token):
         headers={"Authorization": f"Bearer {tenant_token}"},
     )
     assert sorted([x["title"] for x in r_all.json()]) == ["On cluster", "On team"]
+
+
+# ── Controls + Assessments koppelen aan org-units (RFC 0002 uitbreiding) ───
+
+
+@pytest.mark.asyncio
+async def test_control_create_with_unit(client, tenant_token):
+    """Een control met geldige org-unit komt aan."""
+    unit = (await _create_unit(client, tenant_token, "Cluster X")).json()
+    r = await client.post(
+        "/api/v1/controls/",
+        json={
+            "title": "Toegangscontrole op cluster",
+            "description": "Test",
+            "domain": "ISMS",
+            "implementation_status": "operationeel",
+            "organizational_unit_id": unit["id"],
+        },
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["organizational_unit_id"] == unit["id"]
+
+
+@pytest.mark.asyncio
+async def test_control_cross_tenant_unit_rejected(client, tenant_token, admin_token):
+    """Control met org-unit van andere tenant → 422."""
+    other_resp = await client.post(
+        "/api/v1/tenants/",
+        json={"name": "Andere-Ctrl", "type": "regio"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    other_token = make_token(tenant_id=other_resp.json()["id"], role="admin")
+    other_unit = (await _create_unit(client, other_token, "Andere-cluster-ctrl")).json()
+
+    r = await client.post(
+        "/api/v1/controls/",
+        json={
+            "title": "Cross-tenant",
+            "description": "Test",
+            "domain": "ISMS",
+            "implementation_status": "operationeel",
+            "organizational_unit_id": other_unit["id"],
+        },
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_control_filter_by_unit_with_descendants(client, tenant_token):
+    """Controls-list filtert op unit + include_descendants."""
+    cluster = (await _create_unit(client, tenant_token, "Cluster Ctl")).json()
+    team = (
+        await _create_unit(client, tenant_token, "Team Ctl", parent_id=cluster["id"])
+    ).json()
+
+    async def _mk(title, unit_id):
+        await client.post(
+            "/api/v1/controls/",
+            json={
+                "title": title,
+                "description": "Test",
+                "domain": "ISMS",
+                "implementation_status": "operationeel",
+                "organizational_unit_id": unit_id,
+            },
+            headers={"Authorization": f"Bearer {tenant_token}"},
+        )
+
+    await _mk("Control on cluster", cluster["id"])
+    await _mk("Control on team", team["id"])
+
+    direct = await client.get(
+        f"/api/v1/controls/?organizational_unit_id={cluster['id']}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert sorted([x["title"] for x in direct.json()]) == ["Control on cluster"]
+
+    deep = await client.get(
+        f"/api/v1/controls/?organizational_unit_id={cluster['id']}&include_descendants=true",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert sorted([x["title"] for x in deep.json()]) == [
+        "Control on cluster",
+        "Control on team",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_assessment_create_with_unit(client, tenant_token):
+    """Assessment met org-unit komt aan en is filterbaar."""
+    unit = (await _create_unit(client, tenant_token, "Cluster Assm")).json()
+    r = await client.post(
+        "/api/v1/assessments/",
+        json={
+            "assessment_type": "audit",
+            "domain": "ISMS",
+            "status": "gepland",
+            "planned_at": "2026-09-01",
+            "organizational_unit_id": unit["id"],
+        },
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["organizational_unit_id"] == unit["id"]
+
+    filt = await client.get(
+        f"/api/v1/assessments/?organizational_unit_id={unit['id']}",
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert any(a["organizational_unit_id"] == unit["id"] for a in filt.json())
+
+
+@pytest.mark.asyncio
+async def test_assessment_cross_tenant_unit_rejected(
+    client, tenant_token, admin_token
+):
+    """Assessment met cross-tenant org-unit → 422."""
+    other_resp = await client.post(
+        "/api/v1/tenants/",
+        json={"name": "Andere-Assm", "type": "regio"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    other_token = make_token(tenant_id=other_resp.json()["id"], role="admin")
+    other_unit = (
+        await _create_unit(client, other_token, "Andere-cluster-assm")
+    ).json()
+
+    r = await client.post(
+        "/api/v1/assessments/",
+        json={
+            "assessment_type": "audit",
+            "domain": "ISMS",
+            "status": "gepland",
+            "planned_at": "2026-09-15",
+            "organizational_unit_id": other_unit["id"],
+        },
+        headers={"Authorization": f"Bearer {tenant_token}"},
+    )
+    assert r.status_code == 422

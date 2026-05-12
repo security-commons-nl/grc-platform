@@ -18,6 +18,7 @@ class AssessmentCreate(BaseModel):
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
     ai_system_id: Optional[UUID] = None  # M4: alleen voor assessment_type='ai_conformity'
+    organizational_unit_id: Optional[UUID] = None
     custom_attributes: Optional[dict[str, Any]] = None
 
 
@@ -32,6 +33,7 @@ class AssessmentUpdate(BaseModel):
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
     ai_system_id: Optional[UUID] = None
+    organizational_unit_id: Optional[UUID] = None
     custom_attributes: Optional[dict[str, Any]] = None
 
 
@@ -48,6 +50,7 @@ class AssessmentResponse(BaseModel):
     cyclus_id: Optional[int]
     document_id: Optional[UUID]
     ai_system_id: Optional[UUID]
+    organizational_unit_id: Optional[UUID]
     custom_attributes: dict[str, Any] = {}
     created_at: datetime
     updated_at: datetime

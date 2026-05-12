@@ -8,6 +8,7 @@ from app.core.db import get_db
 from app.models.core_models import IMSControl, IMSRiskControlLink
 from app.schemas.controls import ControlCreate, ControlUpdate, ControlResponse
 from app.services.custom_fields import validate_custom_attributes
+from app.services.org_units import descendants, validate_unit_in_tenant
 
 router = APIRouter()
 
@@ -17,6 +18,8 @@ async def list_controls(
     domain: str | None = None,
     implementation_status: str | None = None,
     requirement_id: UUID | None = None,
+    organizational_unit_id: UUID | None = None,
+    include_descendants: bool = False,
     skip: int = 0,
     limit: int = 100,
     current_user: CurrentUser = Depends(get_current_user),
@@ -29,6 +32,17 @@ async def list_controls(
         query = query.where(IMSControl.implementation_status == implementation_status)
     if requirement_id:
         query = query.where(IMSControl.requirement_id == requirement_id)
+    # RFC 0002 — filter op organisatie-eenheid, optioneel inclusief sub-units.
+    if organizational_unit_id is not None:
+        if include_descendants:
+            ids = await descendants(
+                db, current_user.tenant_id, organizational_unit_id
+            )
+            query = query.where(IMSControl.organizational_unit_id.in_(ids))
+        else:
+            query = query.where(
+                IMSControl.organizational_unit_id == organizational_unit_id
+            )
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -56,6 +70,16 @@ async def create_control(
     await validate_custom_attributes(
         db, current_user.tenant_id, "control", data.custom_attributes,
     )
+    # RFC 0002 — org-unit moet binnen dezelfde tenant zitten.
+    if data.organizational_unit_id is not None:
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, data.organizational_unit_id
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
     payload = data.model_dump()
     if payload.get("custom_attributes") is None:
         payload["custom_attributes"] = {}
@@ -84,6 +108,18 @@ async def update_control(
         )
         if update_data["custom_attributes"] is None:
             update_data["custom_attributes"] = {}
+    if (
+        "organizational_unit_id" in update_data
+        and update_data["organizational_unit_id"] is not None
+    ):
+        unit = await validate_unit_in_tenant(
+            db, current_user.tenant_id, update_data["organizational_unit_id"]
+        )
+        if not unit:
+            raise HTTPException(
+                status_code=422,
+                detail="organizational_unit_id verwijst niet naar een unit binnen deze tenant",
+            )
     for field, value in update_data.items():
         setattr(control, field, value)
     await db.flush()

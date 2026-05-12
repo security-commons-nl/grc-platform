@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import useSWR from 'swr';
 import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card } from '@/components/ui/card';
@@ -11,7 +12,8 @@ import { Select } from '@/components/ui/select';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CardSkeleton } from '@/components/ui/loading-skeleton';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { useApi } from '@/lib/hooks/use-api';
+import { OrgUnitSelect } from '@/components/shared/org-unit-select';
+import { CustomFieldsForm } from '@/components/shared/custom-fields-form';
 import { api, ApiError } from '@/lib/api-client';
 import { formatApiError } from '@/lib/format-error';
 import type { AssessmentResponse } from '@/lib/api-types';
@@ -35,10 +37,24 @@ const DOMAIN_OPTIONS = [
 ];
 
 export default function AssessmentsPage() {
-  const { data: assessments, error, isLoading, mutate } = useApi<AssessmentResponse[]>(
-    '/assessments/',
-    '/assessments/',
+  // RFC 0002 — filter-state stuurt SWR-key.
+  const [filterUnitId, setFilterUnitId] = useState<string>('');
+  const [includeDescendants, setIncludeDescendants] = useState<boolean>(false);
+
+  const {
+    data: assessments,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<AssessmentResponse[]>(
+    ['assessments-list', filterUnitId, includeDescendants],
+    () =>
+      api.assessments.list({
+        organizationalUnitId: filterUnitId || undefined,
+        includeDescendants: includeDescendants && !!filterUnitId,
+      }),
   );
+
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -47,10 +63,18 @@ export default function AssessmentsPage() {
     assessment_type: '',
     domain: '',
     planned_at: '',
+    organizational_unit_id: '',
   });
+  const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
 
   function resetForm() {
-    setFormData({ assessment_type: '', domain: '', planned_at: '' });
+    setFormData({
+      assessment_type: '',
+      domain: '',
+      planned_at: '',
+      organizational_unit_id: '',
+    });
+    setCustomAttributes({});
     setFormError(null);
   }
 
@@ -69,8 +93,14 @@ export default function AssessmentsPage() {
         assessment_type: formData.assessment_type,
         domain: formData.domain,
         status: 'gepland',
+        planned_at: formData.planned_at,
       };
-      payload.planned_at = formData.planned_at;
+      if (formData.organizational_unit_id) {
+        payload.organizational_unit_id = formData.organizational_unit_id;
+      }
+      if (Object.keys(customAttributes).length > 0) {
+        payload.custom_attributes = customAttributes;
+      }
       await api.assessments.create(payload);
       await mutate();
       setShowForm(false);
@@ -100,7 +130,7 @@ export default function AssessmentsPage() {
     >
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Fout bij laden van assessments: {error.message || 'Onbekende fout'}
+          Fout bij laden van assessments: {(error as Error).message || 'Onbekende fout'}
         </div>
       )}
 
@@ -128,6 +158,27 @@ export default function AssessmentsPage() {
                 onChange={(e) => setFormData({ ...formData, planned_at: e.target.value })}
               />
             </div>
+
+            {/* RFC 0002 — Optionele koppeling aan organisatie-eenheid */}
+            <div>
+              <OrgUnitSelect
+                value={formData.organizational_unit_id}
+                onChange={(id) =>
+                  setFormData({ ...formData, organizational_unit_id: id })
+                }
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Optioneel — laat leeg om het assessment op tenant-niveau te houden.
+              </p>
+            </div>
+
+            {/* RFC 0001 — Tenant-specifieke custom velden */}
+            <CustomFieldsForm
+              entityType="assessment"
+              value={customAttributes}
+              onChange={setCustomAttributes}
+            />
+
             {formError && (
               <p className="text-sm text-red-600">{formError}</p>
             )}
@@ -148,14 +199,54 @@ export default function AssessmentsPage() {
         </Card>
       )}
 
+      {/* RFC 0002 — Filter op organisatie-eenheid */}
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[260px]">
+            <OrgUnitSelect
+              label="Filter op organisatie-eenheid"
+              placeholder="Alle units (tenant-totaal)"
+              value={filterUnitId}
+              onChange={setFilterUnitId}
+            />
+          </div>
+          {filterUnitId && (
+            <label className="inline-flex items-center gap-2 text-sm text-neutral-700 mb-2">
+              <input
+                type="checkbox"
+                checked={includeDescendants}
+                onChange={(e) => setIncludeDescendants(e.target.checked)}
+              />
+              <span>Inclusief sub-units</span>
+            </label>
+          )}
+          {filterUnitId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterUnitId('');
+                setIncludeDescendants(false);
+              }}
+            >
+              Filter wissen
+            </Button>
+          )}
+        </div>
+      </Card>
+
       {isLoading && <CardSkeleton />}
 
       {!isLoading && (!assessments || assessments.length === 0) && (
         <Card>
           <EmptyState
             icon={ClipboardDocumentCheckIcon}
-            title="Nog geen assessments"
-            description="Plan een assessment om te beginnen met verificatie."
+            title={filterUnitId ? 'Geen assessments in deze unit' : 'Nog geen assessments'}
+            description={
+              filterUnitId
+                ? 'Wissel filter of zet sub-units aan om bredere matches te zien.'
+                : 'Plan een assessment om te beginnen met verificatie.'
+            }
           />
         </Card>
       )}

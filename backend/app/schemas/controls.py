@@ -12,6 +12,7 @@ class ControlCreate(BaseModel):
     owner_user_id: Optional[UUID] = None
     implementation_status: str = "niet_gestart"
     implementation_date: Optional[date] = None
+    organizational_unit_id: Optional[UUID] = None
     custom_attributes: Optional[dict[str, Any]] = None
 
 
@@ -23,6 +24,7 @@ class ControlUpdate(BaseModel):
     owner_user_id: Optional[UUID] = None
     implementation_status: Optional[str] = None
     implementation_date: Optional[date] = None
+    organizational_unit_id: Optional[UUID] = None
     custom_attributes: Optional[dict[str, Any]] = None
 
 
@@ -36,6 +38,7 @@ class ControlResponse(BaseModel):
     owner_user_id: Optional[UUID]
     implementation_status: str
     implementation_date: Optional[date]
+    organizational_unit_id: Optional[UUID]
     custom_attributes: dict[str, Any] = {}
     created_at: datetime
     updated_at: datetime
