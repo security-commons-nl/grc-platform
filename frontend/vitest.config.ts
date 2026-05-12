@@ -28,16 +28,16 @@ export default defineConfig({
         'src/app/**/layout.tsx',
       ],
       thresholds: {
-        // V0-drempels — bewust laag bij start. Plan in RFC 0003:
-        //   V1 (na ~25 tests):  20 / 15 / 20 / 20
+        // V1-ratchet: na 51 tests halen we ~27/76/49/27 — drempel staat nu
+        // strakker zodat de coverage niet ongemerkt terug-zakt. Volgende stap:
         //   V2 (na ~100 tests): 50 / 40 / 50 / 50
         //   V3 (volwassen):     70 / 60 / 70 / 70
         // Verhoog deze drempels iedere keer als coverage er ruim overheen gaat,
         // anders is de drempel niet meer dan een vinkje.
-        statements: 1,
-        branches: 1,
-        functions: 1,
-        lines: 1,
+        statements: 20,
+        branches: 50,
+        functions: 40,
+        lines: 20,
       },
     },
   },
