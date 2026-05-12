@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import date, datetime
 from uuid import UUID
-from typing import Optional
+from typing import Any, Optional
 
 
 # ── IMSAssessment ───────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ class AssessmentCreate(BaseModel):
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
     ai_system_id: Optional[UUID] = None  # M4: alleen voor assessment_type='ai_conformity'
+    custom_attributes: Optional[dict[str, Any]] = None
 
 
 class AssessmentUpdate(BaseModel):
@@ -31,6 +32,7 @@ class AssessmentUpdate(BaseModel):
     cyclus_id: Optional[int] = None
     document_id: Optional[UUID] = None
     ai_system_id: Optional[UUID] = None
+    custom_attributes: Optional[dict[str, Any]] = None
 
 
 class AssessmentResponse(BaseModel):
@@ -46,6 +48,7 @@ class AssessmentResponse(BaseModel):
     cyclus_id: Optional[int]
     document_id: Optional[UUID]
     ai_system_id: Optional[UUID]
+    custom_attributes: dict[str, Any] = {}
     created_at: datetime
     updated_at: datetime
 
@@ -62,6 +65,7 @@ class FindingCreate(BaseModel):
     severity: str
     status: str = "open"
     requirement_id: Optional[UUID] = None
+    custom_attributes: Optional[dict[str, Any]] = None
 
 
 class FindingUpdate(BaseModel):
@@ -70,6 +74,7 @@ class FindingUpdate(BaseModel):
     severity: Optional[str] = None
     status: Optional[str] = None
     requirement_id: Optional[UUID] = None
+    custom_attributes: Optional[dict[str, Any]] = None
 
 
 class FindingResponse(BaseModel):
@@ -81,6 +86,7 @@ class FindingResponse(BaseModel):
     severity: str
     status: str
     requirement_id: Optional[UUID]
+    custom_attributes: dict[str, Any] = {}
     created_at: datetime
     updated_at: datetime
 

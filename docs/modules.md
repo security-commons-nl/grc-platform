@@ -12,7 +12,7 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 |--------|------|---------|-------------|------------|
 | **M0** | Platform | ✅ | n.v.t. (fundering) | Verplicht |
 | **M1** | Normen & Mapping | ✅ | n.v.t. (kennislaag) | Verplicht |
-| **M2** | GRC-engine | ✅ + extensible attributes (RFC 0001) + org-units (RFC 0002) | ✅ `/beheer/*` (UI-uitbreiding voor custom fields + units volgt) | Verplicht |
+| **M2** | GRC-engine | ✅ + extensible attributes (RFC 0001, alle 4 entiteiten) + org-units (RFC 0002) | ✅ `/beheer/*` + `/admin/organisatie` (boom-editor) + `/admin/velden` (form-builder) + org-unit-filter & custom-fields op risico-pagina | Verplicht |
 | **M3** | IMS-inrichtingswizard | ✅ | ✅ `/inrichten/*` | Optioneel |
 | **M4** | AI Governance | ✅ | ✅ AI-systemen, HITL-review, agent-tokens | Optioneel |
 | **M5** | Risicokwantificatie | ✅ scope-beperkt + historie | ⚠️ histogram + interpretatie (historie/CDF/PDF nog niet UI) | Optioneel |
