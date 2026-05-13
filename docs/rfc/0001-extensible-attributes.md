@@ -1,8 +1,14 @@
 # RFC 0001 — Extensible Attributes (custom fields per tenant)
 
-> **Status:** Concept · **Auteur:** open-source projectteam · **Datum:** 2026-05-12
+> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Architectuur · **Module-impact:** M0 (platform), M2 (GRC-engine), M5 (risicokwantificatie)
 > **Beslissing nodig vóór:** commitment aan klanten dat tenant-specifieke velden zonder code-wijziging mogelijk zijn
+>
+> **Implementatie-stand (2026-05-13)**
+> - Backend: `custom_attributes` JSONB-kolom op `ims_risks`, `ims_controls`, `ims_assessments`, `ims_findings` (Alembic 016). `ims_custom_field_definitions`-tabel met RLS, GIN-index en CHECK op snake_case `field_name`. JSON-Schema-validatie via compound-schema (`additionalProperties=false`) + reserved-namespace-check tegen kernkolommen.
+> - API: CRUD `/api/v1/custom-fields/` (admin-only). POST/PATCH op risk/control/assessment/finding valideren payload tegen tenant-definities.
+> - UI: form-builder `/admin/velden` met 4 veldtypes (string / number / boolean / enum). Herbruikbare `CustomFieldsForm`-component rendert dynamische inputs in create-forms voor risk, control en assessment.
+> - Tests: backend pytest in `tests/test_custom_fields.py`; 7 vitest-tests op `CustomFieldsForm`; e2e via `admin-velden`, `beheer-risicos-ui`, `beheer-controls-extensies`, `beheer-assessments-extensies` met directe DB-verificatie van `custom_attributes->>'field_name'`.
 
 ---
 

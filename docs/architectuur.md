@@ -9,7 +9,7 @@
 ```
 Laag 1: MODEL (Data)       — PostgreSQL 16 + SQLAlchemy 2.0
 Laag 2: API   (Logica)     — FastAPI + JWT + RBAC + RLS
-Laag 3: TOOLS (UI)         — Next.js 15
+Laag 3: TOOLS (UI)         — Next.js 16 + React 19
 Laag 4: AI    (Agents/RAG) — OpenAI-compatible client (OpenRouter / Ollama / EU-hosted)
 ```
 
@@ -92,7 +92,7 @@ backend/app/api/v1/endpoints/
 
 ## Frontend (Laag 3)
 
-**Next.js 15 + TypeScript + TailwindCSS v4**
+**Next.js 16 + React 19 + TypeScript + TailwindCSS v4**
 
 De frontend bevat geen businesslogica. Alle validatie en berekeningen zitten in de API. De UI fetcht data, toont die, en stuurt mutaties naar de API.
 

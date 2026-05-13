@@ -1,8 +1,15 @@
 # RFC 0003 — Frontend Test-strategie
 
-> **Status:** Concept · **Auteur:** open-source projectteam · **Datum:** 2026-05-12
-> **Type:** Tooling + CI · **Module-impact:** alle modules met UI (M2, M3, M5, en aankomende M4)
+> **Status:** V1 actief — ratchet op V1 (20/50/40/20) · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Type:** Tooling + CI · **Module-impact:** alle modules met UI (M2, M3, M4, M5)
 > **Beslissing nodig vóór:** uitbreiding e2e-suite naar M4/M5 + activatie van eslint in CI
+>
+> **Implementatie-stand (2026-05-13)**
+> - **Vitest 3 + RTL 16 + MSW 2** geconfigureerd; `src/test/setup.ts` start MSW met `onUnhandledRequest='error'`. SWR-isolatie per test via `<SWRConfig provider={() => new Map()}>` zodat caches niet over tests heen lekken.
+> - **51 unit-tests over 11 spec-files** (was 20 / 4): `lib/constants`, `lib/format-error`, `lib/api-client`, `components/shared/org-unit-select`, `components/shared/custom-fields-form`, `components/beheer/simulation-interpretation`, plus page-tests voor `/beheer/ai-systemen`, `/beheer/hitl-checkpoints`, `/admin/agent-tokens`, `/beheer/controls`, `/beheer/assessments`.
+> - **Coverage-ratchet**: thresholds in `vitest.config.ts` van 1/1/1/1 → 20/50/40/20. Actuals ~27/76/49/27. Volgende stop: V2 (50/40/50/50) na hook- en `auth-provider`-tests.
+> - **17 Playwright e2e-specs** met UI → API → DB-verificatie via `docker compose exec psql`-helper (`frontend/e2e/helpers/db.ts`). Cached dev-token-helper (`frontend/e2e/helpers/auth.ts`) omzeilt `RATE_LIMIT_AUTH=10/min` door één JWT te delen over de hele suite.
+> - CI groen op alle 3 jobs (Backend pytest, Frontend lint+typecheck+test+build, Playwright e2e); twee opeenvolgende full-runs zonder retries of container-restarts.
 
 ---
 

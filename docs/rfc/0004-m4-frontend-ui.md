@@ -1,8 +1,16 @@
 # RFC 0004 — M4 Frontend UI (AI Governance beheer-routes)
 
-> **Status:** Concept · **Auteur:** open-source projectteam · **Datum:** 2026-05-12
+> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Frontend-uitbreiding · **Module-impact:** M4 (AI Governance) volledig
 > **Beslissing nodig vóór:** demo aan organisaties met AI-systemen die EU AI Act-compliance moeten aantonen
+>
+> **Implementatie-stand (2026-05-13)**
+> - `/beheer/ai-systemen` — CRUD met classifier-advies inline, badge per EU AI Act-risico, filter op risico-categorie en deployment-status.
+> - `/beheer/hitl-checkpoints` — audit-log-lijst met review-telling + laatste decision, review-paneel met verplichte motivatie, append-only historie, filter "alleen niet-gereviewd".
+> - `/admin/agent-tokens` — scope-multi-select uit 8 presets, two-step confirm, eenmalige JWT-display, optionele koppeling aan AI-systeem voor traceability.
+> - Audit-logs-endpoint `/ai-hitl-checkpoints/audit-logs` met review-telling + last_decision per log voedt de werklijst.
+> - Tests: 5 vitest-tests per AI-systemen, HITL, agent-tokens; e2e `m4-ai-systemen`, `admin-agent-tokens`, `beheer-hitl-review` met directe DB-verificatie.
+> - **V2-werk in `[Unreleased]` van CHANGELOG**: detail-pagina per AI-systeem, edit-flow, `classification_override_note`-veld, HITL `parent_checkpoint_id` voor genest review.
 
 ---
 

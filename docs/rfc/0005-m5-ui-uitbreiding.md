@@ -1,8 +1,14 @@
 # RFC 0005 — M5 UI-uitbreiding (Monte Carlo-visualisatie en simulatie-historie)
 
-> **Status:** Concept · **Auteur:** open-source projectteam · **Datum:** 2026-05-12
+> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Frontend + lichte backend-uitbreiding · **Module-impact:** M5 (risicokwantificatie)
 > **Beslissing nodig vóór:** demo aan eerste pilot-gemeente (controllers / concernadviseur risicomanagement)
+>
+> **Implementatie-stand (2026-05-13)**
+> - Backend: `app/services/simulation/monte_carlo.py` met uniform + triangular distributies (NumPy), reproduceerbaar via `?seed=`. `POST /api/v1/risks/{id}/simulate` met percentielen p5–p99, VaR-95/99, expected loss en optioneel `?include_samples=true` voor histogram-rendering. Simulatie-historie via `ims_risk_simulations` (Alembic 015) met auto-save per run, optionele `?label`+`?note`, lijst-endpoint `GET /risks/{id}/simulations`.
+> - Frontend: `SimulationHistogram` (recharts, 30 klassen, VaR-95/99 referentielijnen) + `SimulationInterpretation` (natuurlijke-taal-uitleg met conditionele waarschuwingen voor grote spreiding en materieel staartrisico). Beide lazy-loaded via `next/dynamic`.
+> - Tests: 5 vitest-tests op `simulation-interpretation`; e2e `m5-simulatie` valideert UI + API + historie + reproduceerbaarheid (seed).
+> - **V2-werk in `[Unreleased]` van CHANGELOG**: CDF-curve, scenario-vergelijking-UI, PDF-export via weasyprint, dedicated `/beheer/risicos/[id]/simulaties`-route, lognormal-distributie, portfolio-aggregatie.
 
 ---
 

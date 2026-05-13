@@ -17,17 +17,17 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 
 | Categorie | Aantal |
 |-----------|--------|
-| Databasetabellen | 35 |
+| Databasetabellen | 41 |
 | Alembic-migraties | 17 (schema, RLS, AI Governance, M5-risicokwantificatie + simulatie-historie, custom_attributes, organizational_units) |
-| API-routers | 19 |
-| Backend tests | 240+ (pytest) |
-| Frontend unit tests | 20 (Vitest + RTL + MSW) |
-| Frontend e2e tests | 5 specs (Playwright — auth, navigation, inrichting, M5-simulatie, M4-ai-systemen) |
+| API-routers | 22 |
+| Backend tests | 245+ (pytest) |
+| Frontend unit tests | 51 (Vitest + RTL + MSW, coverage ~27/76/49/27) |
+| Frontend e2e tests | 17 specs / 46 tests (Playwright — auth, navigation, inrichting, M4 AI-systemen, M5 simulatie, RFC-extensions, admin + beheer flows met UI → API → DB-checks) |
 | Frontend routes | 19 |
 | RBAC-rollen | 6 |
-| RLS-policies | 21 tabellen |
+| RLS-policies | 27 tabellen |
 | Seed-stappen | 24 (22 uniek + 2a/2b, 3a/3b) |
-| Normenkaders | 5 (BIO, ISO 27001, ISO 27701, ISO 22301, AVG) |
+| Normenkaders | 6 (BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG, NIST AI RMF 1.0) |
 
 ---
 
@@ -39,7 +39,7 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 | **ORM** | SQLAlchemy 2.0 async |
 | **Database** | PostgreSQL 16 + pgvector |
 | **Migraties** | Alembic |
-| **Frontend** | Next.js 15 + TypeScript + TailwindCSS v4 |
+| **Frontend** | Next.js 16 + React 19 + TypeScript + TailwindCSS v4 |
 | **Auth** | JWT (HS256), OIDC-ready |
 | **Containers** | Docker Compose (db, api, frontend) |
 | **Tests** | pytest + httpx async (backend); Vitest + React Testing Library + MSW (frontend unit); Playwright (e2e) |
@@ -52,7 +52,7 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 ```
 Laag 1: MODEL (Data)     — SQLAlchemy 2.0 + PostgreSQL — single source of truth
 Laag 2: API   (Logica)   — FastAPI + JWT + RBAC + RLS — gatekeeper
-Laag 3: TOOLS (UI)       — Next.js 15 — dunne glasplaat, geen business logic
+Laag 3: TOOLS (UI)       — Next.js 16 + React 19 — dunne glasplaat, geen business logic
 Laag 4: AI    (Support)  — Mistral/Ollama (EU) — altijd adviserend, nooit beslissend
 ```
 
@@ -93,21 +93,26 @@ grc-platform/
 ├── backend/                    # FastAPI backend
 │   ├── app/
 │   │   ├── main.py            # App + CORS + lifespan
-│   │   ├── core/              # config, db, auth
-│   │   ├── models/            # SQLAlchemy 2.0 modellen (32 tabellen)
-│   │   ├── schemas/           # Pydantic v2 schemas (14 modules)
-│   │   └── api/v1/endpoints/  # 15 CRUD-routers
-│   ├── alembic/versions/      # 3 migraties
-│   └── tests/                 # 15 testbestanden, 105 tests
-├── frontend/                   # Next.js 15 frontend
-│   └── src/
-│       ├── app/               # 16 routes (login, inrichten, beheer, admin)
-│       ├── components/        # UI, layout, inrichten, beheer, ai, shared
-│       ├── lib/               # API client, types, hooks, auth
-│       └── providers/         # Auth, tenant, SWR
+│   │   ├── core/              # config, db, auth, rate-limit
+│   │   ├── models/            # SQLAlchemy 2.0 modellen (41 tabellen)
+│   │   ├── schemas/           # Pydantic v2 schemas (per module)
+│   │   ├── services/          # custom_fields, org_units, simulation, agents/*
+│   │   └── api/v1/endpoints/  # 22 CRUD-routers
+│   ├── alembic/versions/      # 17 migraties
+│   └── tests/                 # 245+ tests (pytest async)
+├── frontend/                   # Next.js 16 + React 19 frontend
+│   ├── src/
+│   │   ├── app/               # 19 routes (login, inrichten/*, beheer/*, admin/*)
+│   │   ├── components/        # UI, layout, beheer, shared (OrgUnitSelect, CustomFieldsForm)
+│   │   ├── lib/               # API client, types, hooks, auth
+│   │   ├── providers/         # AuthProvider
+│   │   └── test/              # MSW handlers + setup
+│   ├── e2e/                   # 17 Playwright-specs incl. UI → API → DB-helpers
+│   └── vitest.config.ts       # coverage-ratchet 20/50/40/20 (V1)
 ├── ims-proces/                 # Procesbeschrijving IMS-inrichtingswizard
-├── docs/                       # Gebruikers- en contributordocumentatie
+├── docs/                       # Gebruikers- + contributordocumentatie + 5 RFCs
 ├── ROADMAP.md                  # Publieke roadmap
+├── CHANGELOG.md                # Wijzigingen per release/werkperiode
 └── docker-compose.yml          # 3 containers: db, api, frontend
 ```
 

@@ -12,7 +12,7 @@ Dit document beschrijft de modulaire opbouw. Zie [`ROADMAP.md`](../ROADMAP.md) v
 |--------|------|---------|-------------|------------|
 | **M0** | Platform | ✅ | n.v.t. (fundering) | Verplicht |
 | **M1** | Normen & Mapping | ✅ | n.v.t. (kennislaag) | Verplicht |
-| **M2** | GRC-engine | ✅ + extensible attributes (RFC 0001, alle 4 entiteiten) + org-units (RFC 0002) | ✅ `/beheer/*` + `/admin/organisatie` (boom-editor) + `/admin/velden` (form-builder) + org-unit-filter & custom-fields op risico-pagina | Verplicht |
+| **M2** | GRC-engine | ✅ + extensible attributes (RFC 0001, alle 4 entiteiten) + org-units (RFC 0002, risk + control + assessment + scoring) | ✅ `/beheer/*` (risk + control + assessment hebben alle drie org-unit-koppeling, custom-fields-form en filter) + `/admin/organisatie` (boom-editor) + `/admin/velden` (form-builder) | Verplicht |
 | **M3** | IMS-inrichtingswizard | ✅ | ✅ `/inrichten/*` | Optioneel |
 | **M4** | AI Governance | ✅ | ✅ AI-systemen, HITL-review, agent-tokens | Optioneel |
 | **M5** | Risicokwantificatie | ✅ scope-beperkt + historie | ⚠️ histogram + interpretatie (historie/CDF/PDF nog niet UI) | Optioneel |
@@ -40,7 +40,7 @@ M0 (Platform)
 
 ## M0 — Platform
 
-Multi-tenant fundering: auth (JWT), RBAC (6 rollen), Row Level Security op 21 tabellen, audit log, AI-client, config-management.
+Multi-tenant fundering: auth (JWT), RBAC (6 rollen), Row Level Security op 27 tabellen, audit log, AI-client, config-management, rate-limiting via SlowAPI.
 
 **Code-locatie:** `backend/app/core/*`, `backend/app/models/core_models.py` (tabellen `tenants`, `users`, `roles`, `ai_audit_logs`)
 
@@ -156,12 +156,12 @@ Modules zijn de **verticale** indeling: ze groeperen samenhangende functionalite
 
 ```
                    M0    M1    M2    M3    M4    M5    M6
-Laag 1 (Model)    [x]   [x]   [x]   [x]   [-]   [-]   [-]
-Laag 2 (API)      [x]   [x]   [x]   [x]   [-]   [-]   [-]
-Laag 3 (UI)       [-]   [-]   [x]   [x]   [-]   [-]   [-]
-Laag 4 (AI)       [x]   [-]   [-]   [x]   [-]   [-]   [-]
+Laag 1 (Model)    [x]   [x]   [x]   [x]   [x]   [x]   [-]
+Laag 2 (API)      [x]   [x]   [x]   [x]   [x]   [x]   [-]
+Laag 3 (UI)       [-]   [-]   [x]   [x]   [x]   [~]   [-]
+Laag 4 (AI)       [x]   [-]   [-]   [x]   [x]   [-]   [-]
 ```
 
-`[x]` = aanwezig, `[-]` = (nog) niet aanwezig.
+`[x]` = aanwezig, `[~]` = gedeeltelijk (kern aanwezig, uitbreiding gepland), `[-]` = (nog) niet aanwezig.
 
-M0 heeft geen UI-routes — het is fundering. M1 heeft geen UI-routes — het is kennis-laag. M4–M6 moeten over alle vier lagen nog gebouwd worden.
+M0 heeft geen UI-routes — het is fundering. M1 heeft geen UI-routes — het is kennis-laag. M5 UI heeft histogram + interpretatie; CDF / scenario-vergelijking / PDF-export in vervolg-iteratie. M6 staat volledig op de roadmap.

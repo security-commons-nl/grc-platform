@@ -4,11 +4,35 @@ Alle noemenswaardige wijzigingen aan dit platform worden hier vastgelegd, georde
 
 Format: gebaseerd op [Keep a Changelog](https://keepachangelog.com/). Versies worden bij majeur-mijlpalen geknipt; tot dan groeit `[Unreleased]` mee met `main`. Conventional commits in git log blijven de feitelijke audit-trail.
 
-## [Unreleased] — 2026-05-12
+## [Unreleased] — 2026-05-13
 
-Eindstand na zes feature-PR's (#54–#59) in één werkdag rond de 15-mei-deadline voor inbreng Tom/Luuk/Vasilis/Nick.
+Tien feature-PR's (#54–#65) in de aanloop naar de 15-mei-deadline voor inbreng van Tom (Luuk Spronk via Bas), Vasilis (concernadviseur Risicomanagement Leiden) en Nick.
 
 ### Toegevoegd
+
+**Comprehensive UI → API → DB e2e-coverage (PR #62)**
+- Nieuw `frontend/e2e/helpers/`-pakket: gecachede dev-token-helper (omzeilt `RATE_LIMIT_AUTH=10/min`) en `queryScalar`/`rowExists` als dunne wrapper rond `docker compose exec psql`.
+- 9 nieuwe Playwright-specs (20 tests) die elke beheer-/admin-UI-route door de happy-path lopen en na elke actie de onderliggende DB-rij direct in `ims_*` verifiëren — geen mocks: echte UI → API → DB.
+- Specs: admin-organisatie (boom-CRUD, cycle-prevention), admin-velden (form-builder, JSON-Schema enum), admin-agent-tokens (NHI two-step + JWT-claim), beheer-hitl-review, beheer-controls CRUD, beheer-assessments + bevindingen + bewijs, beheer-incidenten, beheer-risicos extensies, dashboard + admin-read.
+
+**Stabiliteits-fixes voor dev-stack onder e2e-druk (PR #62)**
+- `docker-compose.yml`: frontend `mem_limit` 512m → 2g. Turbopack OOM'de tijdens on-demand-compile van zware routes (`/beheer/risicos` 7s); container herstartte telkens en tests kregen `ERR_EMPTY_RESPONSE`.
+- `frontend/.dockerignore` toegevoegd zodat `COPY . .` geen stale lokale `node_modules` (next@16.2.4) over `npm ci`-resultaten (next@16.2.6) heen kopieert. Dit verwijderde de `Mismatching @next/swc version`-waarschuwing en dev-server-instabiliteit.
+- Twee opeenvolgende full-suite-runs: 40/40 e2e pass, 0 retries, 0 container-restarts, geheugen stabiel ~1.3GB / 2GB.
+
+**Node-base-image bump (PR #63)**
+- `frontend/Dockerfile` node 25-slim → 26-slim. Vervangt dependabot #61 die op een stale branch zat van vóór de mem_limit-fix.
+
+**M2 — RFC 0001 + 0002 door naar controls + assessments (PR #64)**
+- Backend: `organizational_unit_id` (Optional) in Control/Assessment schemas (Create/Update/Response). POST/PATCH valideren cross-tenant (422). GET ondersteunt `?organizational_unit_id=&include_descendants=` met recursive-CTE-walk — identiek pattern als risico's. `custom_attributes` was er al, nu volledig in Response geëxposeerd. `ai_system_id` ook expliciet in `AssessmentResponse`.
+- Frontend: `/beheer/controls` + `/beheer/assessments` krijgen `OrgUnitSelect` + `CustomFieldsForm` in create-form en filter-kaart op de lijst (zelfde pattern als `/beheer/risicos`). api-client `.list({ organizationalUnitId, includeDescendants })` op controls + assessments, plus `assessments.update()`.
+- Tests: +5 pytest in `test_organizational_units.py` (control create-with-unit, cross-tenant-reject, descendants-filter; assessment create-with-unit + cross-tenant-reject). +6 e2e in twee nieuwe specs die UI-flow doorlopen en daarna direct in `ims_controls` / `ims_assessments` verifiëren via psql.
+
+**Vitest-coverage uitgebreid (PR #65)**
+- 20 → **51 vitest-tests** (+31), 4 → 11 spec-files.
+- Nieuwe tests: `OrgUnitSelect` (4), `CustomFieldsForm` (7), AI-systemen-page (5), HITL-checkpoints-page (5), agent-tokens-page (4), Controls-page (3), Assessments-page (3).
+- SWR-isolatie: elke test wrapt component in `<SWRConfig provider={() => new Map()}>` zodat caches niet over tests heen lekken.
+- Coverage-ratchet: `vitest.config.ts` thresholds 1/1/1/1 → 20/50/40/20 (V1 uit RFC 0003). Actuals: ~27/76/49/27.
 
 **M2 — GRC-engine uitbreidingen (RFC 0001 + 0002)**
 - Custom-attributes (JSONB) op risk/control/assessment/finding met tenant-specifieke veld-definities (`ims_custom_field_definitions`), JSON-Schema-validatie, reserved-namespace-check tegen kernkolommen, additionalProperties=false op compound-schema.
@@ -74,17 +98,17 @@ Eindstand na zes feature-PR's (#54–#59) in één werkdag rond de 15-mei-deadli
 
 | Categorie | Aantal |
 |-----------|--------|
-| Databasetabellen | 35 |
+| Databasetabellen | 41 |
 | Alembic-migraties | 17 |
-| API-routers | 19 |
+| API-routers | 22 |
 | Backend Python-bestanden | 78 |
-| Backend tests (pytest) | 240+ |
-| Frontend TypeScript-bestanden | 59 |
-| Frontend unit tests (Vitest) | 20 |
-| Frontend e2e-specs (Playwright) | 5 |
+| Backend tests (pytest) | 245+ |
+| Frontend TypeScript-bestanden | 62 |
+| Frontend unit tests (Vitest) | 51 (11 spec-files, coverage ~27/76/49/27) |
+| Frontend e2e-specs (Playwright) | 17 specs (46 tests) |
 | Normenkaders | 6 (BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG, NIST AI RMF) |
 | RBAC-rollen | 6 |
-| RLS-policies | 23 tabellen |
+| RLS-policies | 27 tabellen |
 
 ---
 
@@ -94,7 +118,7 @@ Eindstand na zes feature-PR's (#54–#59) in één werkdag rond de 15-mei-deadli
 |--------|---------|----------|
 | **M0** Platform | ✅ multi-tenant + RBAC + RLS + audit + rate-limit + monitoring + backup | n.v.t. (fundering) |
 | **M1** Normen & Mapping | ✅ 6 normenkaders + Rosetta Stone + RAG-store | n.v.t. (kennislaag) |
-| **M2** GRC-engine | ✅ + extensible attributes (RFC 0001) + org-units (RFC 0002) | ✅ `/beheer/*` + `/admin/organisatie` + `/admin/velden` |
+| **M2** GRC-engine | ✅ + extensible attributes (RFC 0001, alle 4 entiteiten) + org-units (RFC 0002, risk + control + assessment + scoring) | ✅ `/beheer/*` (risk + control + assessment met org-unit + custom-fields + filter) + `/admin/organisatie` + `/admin/velden` |
 | **M3** IMS-inrichtingswizard | ✅ 22 stappen + 7 AI-agents + RAG | ✅ `/inrichten/*` |
 | **M4** AI Governance | ✅ alle 6 bouwstenen | ✅ 3 routes (AI-systemen + HITL + agent-tokens) |
 | **M5** Risicokwantificatie | ✅ kern + historie + range + Monte Carlo + VaR | ⚠️ histogram + interpretatie (CDF/vergelijking/PDF in V2) |
@@ -106,12 +130,10 @@ Eindstand na zes feature-PR's (#54–#59) in één werkdag rond de 15-mei-deadli
 
 Niet vastgelegd in een gepland release, wel direct openstaand werk:
 - Edit-flows voor org-units (verplaatsen binnen boom) en custom-fields (definities aanpassen).
-- Custom-fields-UI op controls/assessments-pagina's (backend werkt al).
-- `organizational_unit_id` als veld in control-create-UI en assessment-create-UI.
-- Frontend-vitest-tests voor `OrgUnitSelect`, `CustomFieldsForm`, AI-systemen-form, HITL-review-form, agent-tokens-form.
 - Refactor `setState-in-effect` in `auth-provider` en `sidebar` naar `useSyncExternalStore` (suppressed met `TODO(RFC 0003)`-marker).
 - RFC 0005 V2: CDF-curve, scenario-vergelijking-UI, PDF-export via weasyprint, dedicated `/beheer/risicos/[id]/simulaties`-route.
 - RFC 0004 V2: detail-pagina per AI-systeem, edit-flow, `classification_override_note` als DB-veld, HITL `parent_checkpoint_id` voor genest review.
+- Vitest-coverage richting V2-ratchet (50/40/50/50) na vervolg-tests op `auth-provider`, hooks, en de inrichtings-pagina's.
 
 ---
 
@@ -120,4 +142,4 @@ Niet vastgelegd in een gepland release, wel direct openstaand werk:
 1. **Wat erin** — wijzigingen worden hier gegroepeerd onder `Toegevoegd` / `Veranderd` / `Gefixt` / `Verwijderd` / `Beveiliging`.
 2. **Wat eruit** — pure refactors of intern-CI gaan niet in changelog (zie git log).
 3. **Versie-knip** — bij ROADMAP-milestone (bv. v1.0 productie-rijp) wordt `[Unreleased]` versplitst en datum gestempeld.
-4. **Bron** — elke PR die public-facing functionaliteit raakt zou een changelog-line moeten toevoegen. Voor nu retrofit: deze entry dekt PR #38 t/m #59.
+4. **Bron** — elke PR die public-facing functionaliteit raakt zou een changelog-line moeten toevoegen. Voor nu retrofit: deze entry dekt PR #38 t/m #65.
