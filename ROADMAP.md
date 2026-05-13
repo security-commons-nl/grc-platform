@@ -4,14 +4,16 @@
 
 ## Huidige staat
 
-Het GRC-platform is functioneel voor de inrichtingsmodus én dagelijks GRC-gebruik.
+Het GRC-platform is functioneel voor de inrichtingsmodus, dagelijks GRC-gebruik, AI-governance en kwantitatieve risicokwantificatie.
 
-**Operationeel (M0 + M1 + M2 + M3):**
-- **M0** Platform — multi-tenant met RBAC en Row Level Security
-- **M1** Normen & Mapping — BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG, RAG-pipeline op normatieve documenten
-- **M2** GRC-engine — risico's, controls, assessments, evidence, incidenten
+**Operationeel (M0 + M1 + M2 + M3 + M4 + M5):**
+- **M0** Platform — multi-tenant met RBAC, Row Level Security op 27 tabellen, rate-limiting, audit-trail, monitoring, backup-pipeline
+- **M1** Normen & Mapping — BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG, NIST AI RMF 1.0, RAG-pipeline op normatieve documenten
+- **M2** GRC-engine — risico's, controls, assessments, evidence, incidenten, plus org-units (RFC 0002) en tenant-specifieke custom velden (RFC 0001) op alle vier kernentiteiten
 - **M3** IMS-inrichtingswizard — 22 stappen door 4 fasen, 7 AI-domeinagenten, AIAuditLog
-- Docker-gebaseerde installatie
+- **M4** AI Governance — AI-systemenregister + EU AI Act-classifier, HITL-checkpoints, NHI agent-tokens, AI Conformity Assessment
+- **M5** Risicokwantificatie — Monte Carlo simulatie (uniform + triangular), simulatie-historie, histogram + natuurlijke-taal-interpretatie
+- Docker-gebaseerde installatie + comprehensive e2e UI → API → DB-tests (17 Playwright-specs / 46 tests; 51 vitest unit-tests; 245+ pytest backend-tests)
 
 ---
 

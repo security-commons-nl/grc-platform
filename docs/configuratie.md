@@ -67,7 +67,7 @@ Het platform bestaat uit drie containers:
 |-----------|-------|-------|
 | `db` | PostgreSQL 16 | 5432 (intern) |
 | `api` | FastAPI (Python 3.12) | 8000 |
-| `frontend` | Next.js 15 | 3000 |
+| `frontend` | Next.js 16 + React 19 | 3000 |
 
 ### Starten
 

@@ -13,7 +13,7 @@ IMS (Integrated Management System) is een Governance, Risk, and Compliance (GRC)
 # Start alle containers (db, api, frontend)
 docker-compose up -d --build
 
-# Database-migraties (3 migraties: schema → RLS → seed data)
+# Database-migraties (17 migraties: schema → RLS → seed data → M4/M5/RFC-uitbreidingen)
 docker-compose exec api alembic upgrade head
 
 # Endpoints:
@@ -67,7 +67,7 @@ cd frontend && npm install && npm run dev
 
 1. **Layer 1 (Model)**: SQLAlchemy 2.0 modellen in `backend/app/models/core_models.py` — single source of truth
 2. **Layer 2 (API)**: FastAPI in `backend/app/api/` — gatekeeper die RBAC en validatie afdwingt
-3. **Layer 3 (Tools)**: Next.js 15 frontend in `frontend/` — geen business logic
+3. **Layer 3 (Tools)**: Next.js 16 + React 19 frontend in `frontend/` — geen business logic
 4. **Layer 4 (AI)**: Mistral via Scaleway (EU) of lokaal Ollama
 
 ### Backend structuur
@@ -79,24 +79,31 @@ backend/
 ├── alembic/
 │   ├── env.py
 │   └── versions/
-│       ├── 001_initial_schema.py   ← 32 tabellen, 67 indexen
-│       ├── 002_enable_rls.py       ← Row Level Security op 21 tabellen
-│       └── 003_seed_reference_data.py ← 24 stappen, 26 afhankelijkheden, 5 standaarden, tenant Leiden
-├── tests/                           ← 15 testbestanden, 105 tests
+│       ├── 001_initial_schema.py   ← initiële 35 tabellen, 67 indexen
+│       ├── 002_enable_rls.py       ← Row Level Security op 21 tenant-tabellen
+│       ├── 003–009                  ← seed reference data + agent-conversaties
+│       ├── 010–013                  ← M4 AI Governance (AI-systemen, NIST RMF, HITL, conformity)
+│       ├── 014–015                  ← M5 risicokwantificatie (range + simulatie-historie)
+│       ├── 016_custom_fields.py    ← RFC 0001 (custom_attributes + definities)
+│       └── 017_organizational_units.py ← RFC 0002 (sub-tenant hiërarchie)
+├── tests/                           ← 245+ tests (pytest async)
 └── app/
     ├── main.py           # FastAPI app + CORS + lifespan
     ├── core/
-    │   ├── config.py     # pydantic-settings (DB, AI, JWT, CORS via .env)
+    │   ├── config.py     # pydantic-settings (DB, AI, JWT, CORS, rate-limit via .env)
     │   ├── db.py         # async engine + AsyncSessionLocal + get_db
-    │   └── auth.py       # JWT create/decode, get_current_user, require_role()
-    ├── schemas/           # 14 Pydantic v2 schema-modules (Create/Update/Response)
+    │   ├── auth.py       # JWT create/decode, get_current_user, require_role()
+    │   └── rate_limit.py # SlowAPI-config (per-endpoint limits)
+    ├── schemas/           # Pydantic v2 schema-modules (Create/Update/Response)
+    ├── services/          # custom_fields, org_units, simulation/, agents/
     ├── api/v1/
-    │   ├── api.py        # 15 routers
+    │   ├── api.py        # 22 routers
     │   └── endpoints/    # auth, tenants, steps, decisions, documents, standards,
     │                     # scopes, risks, controls, assessments, evidence,
-    │                     # incidents, scores, knowledge, health
+    │                     # incidents, scores, knowledge, health, ai_systems,
+    │                     # ai_hitl, custom_fields, organizational_units, agents
     └── models/
-        └── core_models.py  # 32 SQLAlchemy 2.0 models, 6 domeinen
+        └── core_models.py  # 41 SQLAlchemy 2.0 models, 7 domeinen
 ```
 
 ### Frontend structuur
@@ -142,20 +149,24 @@ frontend/
     └── providers/          # Auth, tenant, SWR providers
 ```
 
-### Data-modellen (6 domeinen, 32 tabellen)
+### Data-modellen (7 domeinen, 41 tabellen)
 
 - **Platform-breed**: tenants, regions, users, user_tenant_roles, user_region_roles, ai_audit_logs
-- **Inrichtingsmodus**: ims_steps, ims_step_dependencies, ims_step_executions, ims_decisions, ims_documents, ims_document_versions, ims_step_input_documents, ims_gap_analysis_results
+- **Inrichtingsmodus**: ims_steps, ims_step_dependencies, ims_step_executions, ims_decisions, ims_documents, ims_document_versions, ims_step_input_documents, ims_gap_analysis_results, agent_conversations, agent_messages
 - **Normen & mapping**: ims_standards, ims_requirements, ims_requirement_mappings, ims_tenant_normenkader, ims_standard_ingestions
-- **GRC-kern**: ims_scopes, ims_risks, ims_controls, ims_risk_control_links, ims_assessments, ims_findings, ims_corrective_actions, ims_evidence, ims_incidents
+- **GRC-kern**: ims_scopes, ims_risks, ims_controls, ims_risk_control_links, ims_assessments, ims_findings, ims_corrective_actions, ims_evidence, ims_incidents (alle vier kernentiteiten hebben `custom_attributes` JSONB + optionele `organizational_unit_id`)
 - **Scores**: ims_maturity_profiles, ims_setup_scores, ims_grc_scores
+- **Risicokwantificatie (M5)**: ims_risk_simulations (append-only historie)
+- **AI Governance (M4)**: ims_ai_systems, ai_hitl_checkpoints
+- **Extensible attributes + org-units**: ims_custom_field_definitions, ims_organizational_units
 - **RAG-store**: ims_knowledge_chunks (pgvector, twee lagen: normatief + organisatie)
 
 ### Authenticatie & autorisatie
 
-- **JWT** met dev-token (development) en agent-token (service accounts)
+- **JWT** met dev-token (development) en agent-token (service accounts, scope-beperkt, max 24u TTL)
 - **RBAC**: 6 rollen met hiërarchie: admin > strategisch_lid > tactisch_lid > discipline_eigenaar > lijnmanager > viewer
-- **RLS**: Row Level Security op 21 tenant-scoped tabellen
+- **RLS**: Row Level Security op 27 tenant-scoped tabellen
+- **Rate-limiting**: SlowAPI met `RATE_LIMIT_DEFAULT=100/min` en `RATE_LIMIT_AUTH=10/min` (configurabel via `.env`)
 - **OIDC-ready**: auth-laag is voorbereid op externe identity providers
 
 ### Configuratie

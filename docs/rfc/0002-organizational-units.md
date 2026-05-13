@@ -1,8 +1,14 @@
 # RFC 0002 — Organizational Units (sub-tenant hiërarchie)
 
-> **Status:** Concept · **Auteur:** open-source projectteam · **Datum:** 2026-05-12
+> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Schema-uitbreiding · **Module-impact:** M5 (risicokwantificatie), M2 (GRC-engine), raakt aggregatie M0
 > **Beslissing nodig vóór:** commitment aan klanten dat decentrale risicosturing op team/cluster-niveau mogelijk is
+>
+> **Implementatie-stand (2026-05-13)**
+> - Backend: `ims_organizational_units` met parent-self-FK (Alembic 017), `MAX_DEPTH=6`, CHECK `ck_org_unit_no_self_parent`, server-side cycle-detection via recursive CTE. Nullable FK-kolom `organizational_unit_id` op `ims_risks`, `ims_controls`, `ims_assessments` en `ims_grc_scores`.
+> - API: CRUD `/api/v1/organizational-units/` + `/tree` + `/{id}/descendants`. POST/PATCH op risk/control/assessment valideren cross-tenant koppelingen (HTTP 422). GET op risico/control/assessment ondersteunt `?organizational_unit_id=&include_descendants=` met recursive descendants-walk.
+> - UI: boom-editor `/admin/organisatie` met `OrgUnitSelect`-dropdown gedeeld over create-forms en filter-kaarten op `/beheer/risicos`, `/beheer/controls` en `/beheer/assessments`.
+> - Tests: 12 pytest-tests in `tests/test_organizational_units.py` (CRUD, cycle-detection, depth-limit, cross-tenant-reject, filter incl. descendants op risk + control + assessment); 4 vitest-tests op `OrgUnitSelect`; e2e in `admin-organisatie`, `rfc-extensions`, `beheer-risicos-ui`, `beheer-controls-extensies`, `beheer-assessments-extensies` met directe DB-verificatie van `organizational_unit_id`-FK.
 
 ---
 

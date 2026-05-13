@@ -51,7 +51,7 @@
 
 | # | Item | Status | Toelichting |
 |---|------|--------|-------------|
-| 4.1 | Row Level Security op tenant-tabellen | ✅ | 21 tabellen, geactiveerd in migration `002_enable_rls.py` |
+| 4.1 | Row Level Security op tenant-tabellen | ✅ | 27 tabellen, geactiveerd in migrations `002_enable_rls.py` + `004` + `010` + `013` + `015–017` |
 | 4.2 | `tenant_id` uit JWT, nooit uit user-input | ✅ | `set_tenant_context()` in `app/core/auth.py` |
 | 4.3 | `POSTGRES_PASSWORD` ≥ 24 tekens, uniek | 🛠️ | Genereren met `openssl rand -base64 24` |
 | 4.4 | Database in eigen Docker-volume | ✅ | `postgres_data` volume in `docker-compose.yml` |

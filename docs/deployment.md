@@ -136,10 +136,18 @@ docker compose ps
 docker compose exec api alembic upgrade head
 ```
 
-Drie migraties draaien:
-1. Schema aanmaken (32 tabellen)
-2. Row Level Security policies activeren
-3. Seed-data laden (normenkaders, standaardrollen, eerste beheerder)
+17 migraties draaien, in volgorde:
+1. **001** — Initiële schema (35 tabellen, 67 indexen)
+2. **002** — Row Level Security policies op 21 tenant-tabellen + speciale policy voor `ims_knowledge_chunks`
+3. **003–008** — Seed reference data (IMS-stappen, normenkaders, step-output-definities, agent-conversaties)
+4. **010** — AI-systemenregister (M4)
+5. **011** — NIST AI RMF 1.0 als zesde normenkader
+6. **012–013** — AI Conformity Assessment + HITL-checkpoints (M4)
+7. **014–015** — Financiële range + Monte Carlo simulatie-historie (M5)
+8. **016** — Custom-attributes JSONB + `ims_custom_field_definitions` (RFC 0001)
+9. **017** — Organizational units met parent-self-FK (RFC 0002)
+
+Eindstand: **41 tabellen, 27 RLS-policies**.
 
 ### 3.2 Eerste beheerder
 
