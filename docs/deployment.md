@@ -126,6 +126,27 @@ docker compose ps
 # verwacht: db, api, frontend, caddy — allemaal Up
 ```
 
+### 2.4 Production-modus (aanbevolen voor liveomgeving)
+
+`docker-compose.yml` start de frontend in Next.js-dev-modus (Turbopack, hot-reload, hoog geheugengebruik). Voor een productiedeployment naast bestaande sites is er **`docker-compose.prod.yml`** in de repo:
+
+- Frontend wordt gebouwd via `frontend/Dockerfile.prod` (multi-stage `next build` + `next start`) — geheugen ~80 MB i.p.v. >1 GB
+- Container-namen: `grc-db`, `grc-api`, `grc-frontend` (zodat ze niet botsen met andere stacks op dezelfde host)
+- Ports: API op `127.0.0.1:8010`, frontend op `127.0.0.1:3010` (niet 8000/3000) — bedoeld om achter een gedeelde reverse-proxy te draaien
+- Health-checks op alle drie containers met `depends_on: condition: service_healthy`
+- Eigen volume `grc_postgres_data` (geen botsing met dev-volume)
+
+Gebruik:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml build
+sudo docker compose -f docker-compose.prod.yml up -d
+sleep 10
+sudo docker exec grc-api alembic upgrade head
+```
+
+`NEXT_PUBLIC_API_URL` wordt tijdens de build geïnlined; pas de build-arg in `docker-compose.prod.yml` aan op je eigen domein (default: `https://liviq.nl/api/v1` — verander dit naar je eigen URL vóór de build).
+
 ---
 
 ## Fase 3 — Initialiseren
