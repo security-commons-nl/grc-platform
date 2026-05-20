@@ -145,7 +145,12 @@ sleep 10
 sudo docker exec grc-api alembic upgrade head
 ```
 
-`NEXT_PUBLIC_API_URL` wordt tijdens de build geïnlined; pas de build-arg in `docker-compose.prod.yml` aan op je eigen domein (default: `https://liviq.nl/api/v1` — verander dit naar je eigen URL vóór de build).
+`NEXT_PUBLIC_API_URL` wordt tijdens de build geïnlined. Default is relatief (`/api/v1`) wat werkt als API en frontend onder hetzelfde domein draaien achter dezelfde reverse-proxy. Voor een absolute URL (of een aparte API-host) zet je het via env-var:
+
+```bash
+NEXT_PUBLIC_API_URL=https://grc.example.org/api/v1 \
+  sudo docker compose -f docker-compose.prod.yml build
+```
 
 ---
 

@@ -6,7 +6,7 @@ Format: gebaseerd op [Keep a Changelog](https://keepachangelog.com/). Versies wo
 
 ## [Unreleased] — 2026-05-13
 
-Tien feature-PR's (#54–#65) in de aanloop naar de 15-mei-deadline voor inbreng van Tom (Luuk Spronk via Bas), Vasilis (concernadviseur Risicomanagement Leiden) en Nick.
+Tien feature-PR's (#54–#65) in de aanloop naar de 15-mei-deadline voor inbreng van eerste-ronde-reviewers (CISO + concernadviseur risicomanagement bij pilot-gemeente).
 
 ### Toegevoegd
 

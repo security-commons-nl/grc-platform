@@ -16,9 +16,9 @@
 
 Het platform kent vandaag exact één hiërarchische laag: `tenant`. Een gemeente of organisatie *is* een tenant, en al haar gebruikers, risico's, controls, assessments hangen direct onder die tenant.
 
-De eerste pilot-gemeente (Leiden, via Concernadviseur Risicomanagement) vraagt expliciet om decentrale risicosturing **in de lijn**: clusters, teams en afdelingen moeten zelfstandig hun risico- en controlportefeuille kunnen beheren én aggregaten op cluster- of organisatie-niveau kunnen genereren voor MT-rapportage.
+De eerste pilot-gemeente (via de concernadviseur risicomanagement) vraagt expliciet om decentrale risicosturing **in de lijn**: clusters, teams en afdelingen moeten zelfstandig hun risico- en controlportefeuille kunnen beheren én aggregaten op cluster- of organisatie-niveau kunnen genereren voor MT-rapportage.
 
-Concrete eisen (zie [`../../C--Users-shgst-OneDrive---Gemeente-Leiden-CISO-GRC-platform-intern`](../) interne werkdocumenten):
+Concrete eisen uit de interne werkdocumenten van de pilot-gemeente:
 
 - **N1.4** Geaggregeerde overzichten op team-, cluster- en organisatie-niveau
 - **N1.5** Risicomanagement primair in de lijn (RBAC al passend; entiteit ontbreekt)
