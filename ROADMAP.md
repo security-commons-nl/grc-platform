@@ -52,6 +52,21 @@ Detailvoorstel: [`docs/ai-governance-uitbreiding.md`](docs/ai-governance-uitbrei
 
 Gepland, maar bewust uitgesteld tot de actieve sporen zijn afgerond. Niet geschrapt — wel niet *nu*.
 
+### M4 V2 — EU AI Act 2027 readiness (geparkeerd)
+
+Aanleiding: Europese Commissie publiceerde 12 mei 2026 een 167-pagina ontwerp-richtsnoer voor classificatie van high-risk AI-systemen. Compliance-deadline verschoven naar 2 december 2027 (politiek akkoord EU-raad). Onze huidige M4-implementatie dekt de basis (register + keyword-classifier + HITL); de nieuwe guidelines voegen detail toe dat we kunnen verwerken.
+
+**Quick wins (totaal ~2 dagen werk):**
+- [ ] Annex III sub-categorieën als gestructureerde keuzes in `/beheer/ai-systemen` (road traffic management, evaluating learning outcomes, credit scoring, ...) met voorbeelden in tooltip. Classifier kan dan veel preciezer adviseren — M4
+- [ ] Article 6(3) "narrow procedural task" exemption-wizard binnen het AI-systeem-formulier, met motivatie als bewijslast op `ims_ai_systems` — M4
+- [ ] 167-page guidelines-PDF ingesten in `ims_knowledge_chunks` (normatief, tenant_id=NULL) zodat onze 7 AI-agents in de inrichtingsmodus eruit kunnen citeren — M1 / M4
+
+**Vervolg-RFCs (uit comments-discussie):**
+- [ ] **RFC 0006 — HITL review-kwaliteit-indicators**. Aanleiding: Nathan Schoenkin's punt dat "rubber stamp" approvals geen meaningful oversight zijn (art. 14). Toevoegen: review-tijd, motivatie-lengte-drempel, expliciete bias-checklist-velden. Doel: automation-bias detectie binnen audit-trail.
+- [ ] **RFC 0007 — Operationele governance-dashboard per AI-systeem**. Aanleiding: Matthew Grabois' punt dat Articles 9-14 (risk management, data quality, technical documentation, record-keeping, transparency, human oversight, accuracy + robustness + cybersecurity) operationeel moeten kloppen, niet alleen op papier. Dashboard: status per artikel + bewijslinks naar evidence/controls/incidenten.
+
+**Bron:** [`docs/eu-ai-act-classification.md`](docs/eu-ai-act-classification.md) (huidige criteria), [draft Commission guidelines](https://digital-strategy.ec.europa.eu/en/library/draft-commission-guidelines-classification-high-risk-ai-systems).
+
 ### M6 — Inter-organisatorische samenwerking (geparkeerd)
 
 Schaalbaar naar meerdere organisaties en regio's.
