@@ -536,7 +536,7 @@ export interface HITLCheckpointResponse {
   id: string;
   tenant_id: string;
   audit_log_id: string;
-  reviewer_user_id: string;
+  reviewer_user_id?: string | null;
   decision: HITLDecision;
   reason?: string | null;
   created_at: string;

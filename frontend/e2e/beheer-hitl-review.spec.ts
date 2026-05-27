@@ -102,7 +102,8 @@ test.describe('Beheer — HITL-review', () => {
     const auditId = seedAuditLog(reviewedAgent);
     // Direct in DB een review toevoegen (geen tussenkomst van UI). id + created_at
     // expliciet zetten omdat de DB hier geen default heeft (ORM doet uuid.uuid4()).
-    // reviewer_user_id is NOT NULL → seed-admin gebruiken.
+    // reviewer_user_id is sinds migratie 018 nullable, maar de seed-admin
+    // geeft een nettere audit-trail in de test (consistente reviewer-naam).
     const seedAdminId = '00000000-0000-0000-0000-000000000002';
     psql(
       `INSERT INTO ai_hitl_checkpoints (id, tenant_id, audit_log_id, reviewer_user_id, decision, reason, created_at) ` +

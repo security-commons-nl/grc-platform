@@ -20,7 +20,7 @@ class HITLCheckpointResponse(BaseModel):
     id: UUID
     tenant_id: UUID
     audit_log_id: UUID
-    reviewer_user_id: UUID
+    reviewer_user_id: Optional[UUID]
     decision: HITLDecision
     reason: Optional[str]
     created_at: datetime

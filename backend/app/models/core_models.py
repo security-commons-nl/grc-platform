@@ -1715,8 +1715,12 @@ class AIHITLCheckpoint(Base):
     audit_log_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ai_audit_logs.id"), nullable=False
     )
-    reviewer_user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    # Nullable: dev-tokens en agent-tokens hebben geen echte users-rij.
+    # Migratie 018 zet de DB-constraint op nullable; endpoint doet een
+    # existence-check en zet NULL bij onbekende user (zelfde patroon
+    # als ai_audit_logs.user_id en ims_risk_simulations.user_id).
+    reviewer_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
 
     # Decision values: approved, rejected, modified, pending
