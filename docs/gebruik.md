@@ -143,7 +143,9 @@ Audits, DPIA's, pentests, BC-oefeningen, gap-analyses, management reviews.
 
 ### Bevindingen — `/beheer/bevindingen`
 
-Bevindingen worden aangemaakt **vanuit een assessment** (niet rechtstreeks). Op de bevindingen-pagina filter je op ernst en status.
+- **Nieuwe bevinding** — knop bovenaan opent een formulier met verplichte velden: assessment (dropdown), titel, ernst (laag/midden/hoog/kritiek), status (open/in_behandeling/afgesloten), optionele beschrijving.
+- Een bevinding hangt **altijd aan een assessment** (audit-trail-conventie). Als er nog geen assessments zijn, is de knop disabled met een waarschuwingsbalk die je naar `/beheer/assessments` verwijst.
+- Op de pagina filter je verder op ernst en status. Corrective actions kun je via de API koppelen aan een bevinding (UI-knop volgt in vervolg-iteratie).
 
 ### Bewijs — `/beheer/bewijs`
 
