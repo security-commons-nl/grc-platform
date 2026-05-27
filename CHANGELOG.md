@@ -4,11 +4,18 @@ Alle noemenswaardige wijzigingen aan dit platform worden hier vastgelegd, georde
 
 Format: gebaseerd op [Keep a Changelog](https://keepachangelog.com/). Versies worden bij majeur-mijlpalen geknipt; tot dan groeit `[Unreleased]` mee met `main`. Conventional commits in git log blijven de feitelijke audit-trail.
 
-## [Unreleased] — 2026-05-13
+## [Unreleased] — 2026-05-27
 
-Tien feature-PR's (#54–#65) in de aanloop naar de 15-mei-deadline voor inbreng van eerste-ronde-reviewers (CISO + concernadviseur risicomanagement bij pilot-gemeente).
+Vijftien feature-PR's (#54–#81) tussen 12 mei en 27 mei. Eerste-ronde-reviewers (pilot-gemeente) ontvingen demo-toegang; tweede demo-ronde gepland 28 mei voor finale keuze-moment (doorbouwen / open-source-community / stoppen).
 
 ### Toegevoegd
+
+**Bevindingen aanmaken via UI (PR #81)**
+- `/beheer/bevindingen` had alleen een lees-overzicht en filter; backend (`POST /assessments/findings/`) werkte al. Tijdens validatie voor de demo van 28 mei sluit deze PR de UI-gap.
+- "Nieuwe bevinding"-knop bovenaan + create-form met verplichte velden (assessment-dropdown, titel, ernst, status) en optionele beschrijving. Assessment-dropdown toont "type · domein · datum" zodat reviewers snel het juiste assessment kiezen.
+- Knop is disabled + waarschuwingsbalk wanneer er nog geen assessments zijn (bevinding hangt altijd aan een assessment — audit-trail-conventie).
+- api-client krijgt `api.findings.create()` + `api.findings.update()`.
+- Tests: 4 nieuwe vitest in `bevindingen/page.test.tsx` (empty-state, validatie, create-flow met API-spy, ernst-filter) + 2 e2e in `beheer-bevindingen-create.spec.ts` (UI → API → DB-verificatie via psql).
 
 **Comprehensive UI → API → DB e2e-coverage (PR #62)**
 - Nieuw `frontend/e2e/helpers/`-pakket: gecachede dev-token-helper (omzeilt `RATE_LIMIT_AUTH=10/min`) en `queryScalar`/`rowExists` als dunne wrapper rond `docker compose exec psql`.
@@ -102,10 +109,10 @@ Tien feature-PR's (#54–#65) in de aanloop naar de 15-mei-deadline voor inbreng
 | Alembic-migraties | 17 |
 | API-routers | 22 |
 | Backend Python-bestanden | 78 |
-| Backend tests (pytest) | 245+ |
-| Frontend TypeScript-bestanden | 62 |
-| Frontend unit tests (Vitest) | 51 (11 spec-files, coverage ~27/76/49/27) |
-| Frontend e2e-specs (Playwright) | 17 specs (46 tests) |
+| Backend tests (pytest) | 247 |
+| Frontend TypeScript-bestanden | 63 |
+| Frontend unit tests (Vitest) | 55 (12 spec-files, coverage ratchet 20/50/40/20) |
+| Frontend e2e-specs (Playwright) | 18 specs (48 tests) |
 | Normenkaders | 6 (BIO 2.0, ISO 27001, ISO 27701, ISO 22301, AVG, NIST AI RMF) |
 | RBAC-rollen | 6 |
 | RLS-policies | 27 tabellen |

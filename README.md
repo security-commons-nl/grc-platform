@@ -20,9 +20,9 @@ Het GRC-platform is een Governance, Risk & Compliance-platform dat **normen, ris
 | Databasetabellen | 41 |
 | Alembic-migraties | 17 (schema, RLS, AI Governance, M5-risicokwantificatie + simulatie-historie, custom_attributes, organizational_units) |
 | API-routers | 22 |
-| Backend tests | 245+ (pytest) |
-| Frontend unit tests | 51 (Vitest + RTL + MSW, coverage ~27/76/49/27) |
-| Frontend e2e tests | 17 specs / 46 tests (Playwright — auth, navigation, inrichting, M4 AI-systemen, M5 simulatie, RFC-extensions, admin + beheer flows met UI → API → DB-checks) |
+| Backend tests | 247 (pytest) |
+| Frontend unit tests | 55 (Vitest + RTL + MSW, 12 spec-files) |
+| Frontend e2e tests | 18 specs / 48 tests (Playwright — auth, navigation, inrichting, M4 AI-systemen, M5 simulatie, RFC-extensions, admin + beheer flows met UI → API → DB-checks incl. findings-create) |
 | Frontend routes | 19 |
 | RBAC-rollen | 6 |
 | RLS-policies | 27 tabellen |
@@ -99,7 +99,7 @@ grc-platform/
 │   │   ├── services/          # custom_fields, org_units, simulation, agents/*
 │   │   └── api/v1/endpoints/  # 22 CRUD-routers
 │   ├── alembic/versions/      # 17 migraties
-│   └── tests/                 # 245+ tests (pytest async)
+│   └── tests/                 # 247 tests (pytest async)
 ├── frontend/                   # Next.js 16 + React 19 frontend
 │   ├── src/
 │   │   ├── app/               # 19 routes (login, inrichten/*, beheer/*, admin/*)
