@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.db import get_db
-from app.models.core_models import AIHITLCheckpoint, AIAuditLog
+from app.models.core_models import AIHITLCheckpoint, AIAuditLog, User
 from app.schemas.ai_hitl import HITLCheckpointCreate, HITLCheckpointResponse
 
 router = APIRouter()
@@ -172,10 +172,19 @@ async def create_hitl_checkpoint(
             detail="audit_log_id not found in this tenant",
         )
 
+    # Existence-check op user: dev-tokens en agent-tokens hebben geen
+    # echte users-rij. Bij ontbreken zetten we reviewer_user_id op NULL
+    # i.p.v. de FK-write te laten falen (zelfde patroon als bij
+    # ai_audit_logs.user_id en ims_risk_simulations.user_id).
+    user_check = await db.execute(
+        select(User).where(User.id == current_user.id)
+    )
+    reviewer_user_id = current_user.id if user_check.scalar_one_or_none() else None
+
     checkpoint = AIHITLCheckpoint(
         tenant_id=current_user.tenant_id,
         audit_log_id=data.audit_log_id,
-        reviewer_user_id=current_user.id,
+        reviewer_user_id=reviewer_user_id,
         decision=data.decision,
         reason=data.reason,
     )

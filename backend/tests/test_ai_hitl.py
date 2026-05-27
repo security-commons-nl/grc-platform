@@ -183,3 +183,34 @@ async def test_reviewer_is_authenticated_user_not_payload(
     # De reviewer komt uit de token (sub claim), niet uit het payload veld
     # (dat is daarom ook niet eens een geldig veld in HITLCheckpointCreate)
     assert "reviewer_user_id" in body
+
+
+@pytest.mark.asyncio
+async def test_create_checkpoint_with_unknown_user_falls_back_to_null(
+    client, audit_log_id, test_tenant
+):
+    """Dev-tokens / agent-tokens hebben geen echte users-rij. De endpoint
+    moet dan reviewer_user_id op NULL zetten i.p.v. een FK-violation te
+    laten optreden — anders crasht de demo-flow voor stakeholders die
+    via de UI random UUIDs genereren bij login."""
+    from tests.conftest import make_token
+
+    random_user_id = uuid.uuid4()
+    token = make_token(
+        user_id=str(random_user_id),
+        tenant_id=test_tenant["id"],
+        role="admin",
+    )
+    r = await client.post(
+        "/api/v1/ai-hitl-checkpoints/",
+        json={
+            "audit_log_id": str(audit_log_id),
+            "decision": "approved",
+            "reason": "Geen echte users-rij voor deze token",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["reviewer_user_id"] is None
+    assert body["decision"] == "approved"
