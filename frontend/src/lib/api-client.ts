@@ -352,6 +352,16 @@ export const api = {
   findings: {
     list: () => apiFetch<FindingResponse[]>('/assessments/findings/'),
     get: (id: string) => apiFetch<FindingResponse>(`/assessments/findings/${id}`),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<FindingResponse>('/assessments/findings/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      apiFetch<FindingResponse>(`/assessments/findings/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
   },
   correctiveActions: {
     list: () => apiFetch<CorrectiveActionResponse[]>('/assessments/corrective-actions/'),
