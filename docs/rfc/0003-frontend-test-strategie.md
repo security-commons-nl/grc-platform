@@ -1,6 +1,6 @@
 # RFC 0003 — Frontend Test-strategie
 
-> **Status:** V1 actief — ratchet op V1 (20/50/40/20) · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Status:** V1 actief — ratchet op V1 (20/50/40/20) · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Tooling + CI · **Module-impact:** alle modules met UI (M2, M3, M4, M5)
 > **Beslissing nodig vóór:** uitbreiding e2e-suite naar M4/M5 + activatie van eslint in CI
 >

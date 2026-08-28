@@ -1,6 +1,6 @@
 # RFC 0004 — M4 Frontend UI (AI Governance beheer-routes)
 
-> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Status:** V1 geïmplementeerd · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Frontend-uitbreiding · **Module-impact:** M4 (AI Governance) volledig
 > **Beslissing nodig vóór:** demo aan organisaties met AI-systemen die EU AI Act-compliance moeten aantonen
 >

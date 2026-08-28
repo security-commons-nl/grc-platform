@@ -1,6 +1,6 @@
 # RFC 0001 — Extensible Attributes (custom fields per tenant)
 
-> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Status:** V1 geïmplementeerd · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Architectuur · **Module-impact:** M0 (platform), M2 (GRC-engine), M5 (risicokwantificatie)
 > **Beslissing nodig vóór:** commitment aan klanten dat tenant-specifieke velden zonder code-wijziging mogelijk zijn
 >

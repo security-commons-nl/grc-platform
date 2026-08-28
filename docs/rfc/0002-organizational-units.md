@@ -1,6 +1,6 @@
 # RFC 0002 — Organizational Units (sub-tenant hiërarchie)
 
-> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Status:** V1 geïmplementeerd · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Schema-uitbreiding · **Module-impact:** M5 (risicokwantificatie), M2 (GRC-engine), raakt aggregatie M0
 > **Beslissing nodig vóór:** commitment aan klanten dat decentrale risicosturing op team/cluster-niveau mogelijk is
 >

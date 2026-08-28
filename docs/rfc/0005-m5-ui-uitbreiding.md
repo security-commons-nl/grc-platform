@@ -1,6 +1,6 @@
 # RFC 0005 — M5 UI-uitbreiding (Monte Carlo-visualisatie en simulatie-historie)
 
-> **Status:** V1 geïmplementeerd · **Auteur:** open-source projectteam · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
+> **Status:** V1 geïmplementeerd · **Datum:** 2026-05-12 (status bijgewerkt 2026-05-13)
 > **Type:** Frontend + lichte backend-uitbreiding · **Module-impact:** M5 (risicokwantificatie)
 > **Beslissing nodig vóór:** demo aan eerste pilot-gemeente (controllers / concernadviseur risicomanagement)
 >
