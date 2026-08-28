@@ -101,7 +101,7 @@ async def test_create_user(client: AsyncClient, test_tenant, tenant_token):
         "/api/v1/tenants/users/",
         json={
             "name": "Jan de Vries",
-            "email": "jan@leiden.nl",
+            "email": "jan@voorbeeldgemeente.nl",
             "external_id": f"jan-{uuid.uuid4().hex[:8]}",
             "tenant_id": test_tenant["id"],
         },

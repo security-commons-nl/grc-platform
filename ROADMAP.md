@@ -63,7 +63,7 @@ Aanleiding: Europese Commissie publiceerde 12 mei 2026 een 167-pagina ontwerp-ri
 
 **Vervolg-RFCs (uit comments-discussie):**
 - [ ] **RFC 0006 — HITL review-kwaliteit-indicators**. Aanleiding: Nathan Schoenkin's punt dat "rubber stamp" approvals geen meaningful oversight zijn (art. 14). Toevoegen: review-tijd, motivatie-lengte-drempel, expliciete bias-checklist-velden. Doel: automation-bias detectie binnen audit-trail.
-- [ ] **RFC 0007 — Operationele governance-dashboard per AI-systeem**. Aanleiding: Matthew Grabois' punt dat Articles 9-14 (risk management, data quality, technical documentation, record-keeping, transparency, human oversight, accuracy + robustness + cybersecurity) operationeel moeten kloppen, niet alleen op papier. Dashboard: status per artikel + bewijslinks naar evidence/controls/incidenten.
+- [ ] **RFC 0007 — Operationele governance-dashboard per AI-systeem**. Aanleiding: het in de AI Act-praktijk gemaakte punt dat Articles 9-14 (risk management, data quality, technical documentation, record-keeping, transparency, human oversight, accuracy + robustness + cybersecurity) operationeel moeten kloppen, niet alleen op papier. Dashboard: status per artikel + bewijslinks naar evidence/controls/incidenten.
 
 **Bron:** [`docs/eu-ai-act-classification.md`](docs/eu-ai-act-classification.md) (huidige criteria), [draft Commission guidelines](https://digital-strategy.ec.europa.eu/en/library/draft-commission-guidelines-classification-high-risk-ai-systems).
 

@@ -53,10 +53,10 @@ def upgrade() -> None:
 
     # Rename tenant and region (if Leiden defaults exist)
     op.execute(sa.text(
-        "UPDATE tenants SET name = 'Voorbeeldgemeente' WHERE name = 'Gemeente Leiden'"
+        "UPDATE tenants SET name = 'Voorbeeldgemeente' WHERE name = 'Gemeente [oude naam]'"
     ))
     op.execute(sa.text(
-        "UPDATE regions SET name = 'Voorbeeldregio' WHERE name = 'Leidse Regio'"
+        "UPDATE regions SET name = 'Voorbeeldregio' WHERE name = 'Regio [oude naam]'"
     ))
 
 
@@ -80,8 +80,8 @@ def downgrade() -> None:
         "UPDATE user_tenant_roles SET role = 'tims_lid' WHERE role = 'tactisch_lid'"
     ))
     op.execute(sa.text(
-        "UPDATE tenants SET name = 'Gemeente Leiden' WHERE name = 'Voorbeeldgemeente'"
+        "UPDATE tenants SET name = 'Gemeente [oude naam]' WHERE name = 'Voorbeeldgemeente'"
     ))
     op.execute(sa.text(
-        "UPDATE regions SET name = 'Leidse Regio' WHERE name = 'Voorbeeldregio'"
+        "UPDATE regions SET name = 'Regio [oude naam]' WHERE name = 'Voorbeeldregio'"
     ))
