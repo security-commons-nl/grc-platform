@@ -2,6 +2,10 @@ version: 2
 updates:
   # Python backend
   - package-ecosystem: "pip"
+    groups:
+      python:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     directory: "/backend"
     schedule:
       interval: "weekly"
@@ -15,6 +19,10 @@ updates:
 
   # Next.js frontend
   - package-ecosystem: "npm"
+    groups:
+      npm:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     directory: "/frontend"
     schedule:
       interval: "weekly"
@@ -28,6 +36,10 @@ updates:
 
   # GitHub Actions versies
   - package-ecosystem: "github-actions"
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     directory: "/"
     schedule:
       interval: "weekly"

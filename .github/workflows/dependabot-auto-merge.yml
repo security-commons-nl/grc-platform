@@ -3,6 +3,9 @@ name: Dependabot auto-merge
 # Auto-merge patch + minor dependency updates from Dependabot once CI is green.
 # Major bumps blijven handmatig — review en mergen via GitHub UI.
 
+# Geen goedkeurstap: GitHub staat niet toe dat Actions een pull request goedkeuren
+# ("GitHub Actions is not permitted to approve pull requests"), en geen enkele
+# main-branch hier eist een review. De stap liet de workflow alleen maar rood staan.
 on: pull_request
 
 permissions:
@@ -20,13 +23,6 @@ jobs:
         uses: dependabot/fetch-metadata@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Approve PR
-        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge
         if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
